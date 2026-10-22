@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nba-shots"
+version = "0.1.0"
+description = "Reproducible NBA shot probability experiments for CMSC473"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "numpy>=1.26,<3",
+  "pandas>=2.2,<3",
+  "scikit-learn>=1.5,<2",
+  "xgboost>=2.1,<4",
+  "matplotlib>=3.9,<4",
+  "pyarrow>=17,<30",
+  "joblib>=1.4,<2",
+  "requests>=2.32,<3",
+]
+
+[project.optional-dependencies]
+vision = ["ultralytics>=8.3,<9", "opencv-python>=4.10,<5", "nba_api>=1.10,<2"]
+agents = ["crewai[litellm]>=1.0,<2", "pydantic>=2.8,<3"]
+
+[dependency-groups]
+dev = ["pytest>=8.3,<10", "ruff>=0.9,<1"]
+
+[project.scripts]
+nba-shots = "nba_shots.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nba_shots"]

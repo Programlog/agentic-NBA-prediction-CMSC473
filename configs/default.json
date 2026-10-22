@@ -1,0 +1,21 @@
+{
+  "seed": 42,
+  "train_fraction": 0.7,
+  "validation_fraction": 0.15,
+  "numeric_features": [
+    "shot_distance", "defender_distance", "game_clock_seconds", "shot_clock",
+    "period", "dribbles", "touch_time", "shot_value"
+  ],
+  "categorical_features": ["location"],
+  "include_player_history": false,
+  "xgboost": {
+    "n_estimators": 300,
+    "max_depth": 4,
+    "learning_rate": 0.05,
+    "min_child_weight": 10,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 5,
+    "n_jobs": 4
+  }
+}
