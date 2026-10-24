@@ -61,18 +61,20 @@ def test_resolve_clip_path_auto_discovery(tmp_path):
 
 def test_update_manifest_row_persistence(tmp_path):
     manifest_path = tmp_path / "manifest.csv"
-    df = pd.DataFrame([
-        {
-            "shot_id": "nba:001:10",
-            "game_id": "001",
-            "game_event_id": "10",
-            "clip_path": "",
-            "release_frame": "",
-            "shooter_box": "",
-            "defender_box": "",
-            "shooting_side": "",
-        }
-    ])
+    df = pd.DataFrame(
+        [
+            {
+                "shot_id": "nba:001:10",
+                "game_id": "001",
+                "game_event_id": "10",
+                "clip_path": "",
+                "release_frame": "",
+                "shooter_box": "",
+                "defender_box": "",
+                "shooting_side": "",
+            }
+        ]
+    )
     df.to_csv(manifest_path, index=False)
 
     update_manifest_row(
@@ -104,18 +106,20 @@ def test_update_manifest_row_persistence(tmp_path):
 
 def test_annotation_http_server_endpoints(tmp_path):
     manifest_path = tmp_path / "manifest.csv"
-    df = pd.DataFrame([
-        {
-            "shot_id": "nba:001:10",
-            "game_id": "001",
-            "game_event_id": "10",
-            "clip_path": "",
-            "release_frame": "",
-            "shooter_box": "",
-            "defender_box": "",
-            "shooting_side": "",
-        }
-    ])
+    df = pd.DataFrame(
+        [
+            {
+                "shot_id": "nba:001:10",
+                "game_id": "001",
+                "game_event_id": "10",
+                "clip_path": "",
+                "release_frame": "",
+                "shooter_box": "",
+                "defender_box": "",
+                "shooting_side": "",
+            }
+        ]
+    )
     df.to_csv(manifest_path, index=False)
 
     class CustomHandler(AnnotationRequestHandler):
@@ -148,13 +152,15 @@ def test_annotation_http_server_endpoints(tmp_path):
             assert shots[0]["shot_id"] == "nba:001:10"
 
         # 3. POST /api/save updates manifest
-        save_payload = json.dumps({
-            "shot_id": "nba:001:10",
-            "release_frame": 42,
-            "shooter_box": [50, 60, 150, 200],
-            "defender_box": None,
-            "shooting_side": "left",
-        }).encode("utf-8")
+        save_payload = json.dumps(
+            {
+                "shot_id": "nba:001:10",
+                "release_frame": 42,
+                "shooter_box": [50, 60, 150, 200],
+                "defender_box": None,
+                "shooting_side": "left",
+            }
+        ).encode("utf-8")
 
         req = urllib.request.Request(
             f"{base_url}/api/save",

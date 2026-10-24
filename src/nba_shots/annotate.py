@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
-import mimetypes
-import os
 import re
-import sys
 import threading
 import urllib.parse
 import webbrowser
@@ -19,8 +16,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .common import write_json
-from .vision import load_manifest, read_release_frame
+from .vision import read_release_frame
 
 
 def resolve_clip_path(row: dict, manifest_dir: Path, video_dir: Path | None = None) -> Path | None:
@@ -39,7 +35,11 @@ def resolve_clip_path(row: dict, manifest_dir: Path, video_dir: Path | None = No
         return None
 
     filename = shot_id.replace(":", "_") + ".mp4"
-    search_dirs = [d for d in [video_dir, manifest_dir, manifest_dir / "videos", Path("data/recent/videos")] if d and d.is_dir()]
+    search_dirs = [
+        d
+        for d in [video_dir, manifest_dir, manifest_dir / "videos", Path("data/recent/videos")]
+        if d and d.is_dir()
+    ]
     for directory in search_dirs:
         candidate = directory / filename
         if candidate.is_file():
@@ -69,7 +69,9 @@ def validate_box(box_value: Any) -> list[float] | None:
 
     arr = np.asarray(parsed, dtype=float)
     if arr.shape != (4,) or not np.isfinite(arr).all() or arr[2] <= arr[0] or arr[3] <= arr[1]:
-        raise ValueError(f"Person box must be [x1, y1, x2, y2] with positive area, got: {box_value}")
+        raise ValueError(
+            f"Person box must be [x1, y1, x2, y2] with positive area, got: {box_value}"
+        )
     return [round(float(v), 2) for v in arr]
 
 
@@ -96,12 +98,18 @@ def detect_frame_boxes(
     detected_boxes = []
     if prediction.boxes is not None and len(prediction.boxes):
         xyxy = prediction.boxes.xyxy.cpu().numpy()
-        confs = prediction.boxes.conf.cpu().numpy() if prediction.boxes.conf is not None else np.ones(len(xyxy))
+        confs = (
+            prediction.boxes.conf.cpu().numpy()
+            if prediction.boxes.conf is not None
+            else np.ones(len(xyxy))
+        )
         for box, conf in zip(xyxy, confs):
-            detected_boxes.append({
-                "box": [round(float(b), 2) for b in box],
-                "confidence": round(float(conf), 3),
-            })
+            detected_boxes.append(
+                {
+                    "box": [round(float(b), 2) for b in box],
+                    "confidence": round(float(conf), 3),
+                }
+            )
 
     # Encode frame to JPEG
     ok, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
@@ -133,7 +141,7 @@ def update_manifest_row(
     for col in ["clip_path", "shooter_box", "defender_box", "shooting_side"]:
         if col in df.columns:
             df[col] = df[col].astype(object)
-    
+
     if shot_id not in df["shot_id"].values:
         raise ValueError(f"shot_id {shot_id!r} not found in manifest")
 
@@ -178,7 +186,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+        sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -382,7 +391,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           </div>
         </div>
         <div class="controls-row shortcuts-help">
-          <span>Shortcuts: <kbd>Space</kbd> Play/Pause &bull; <kbd>←</kbd>/<kbd>→</kbd> Prev/Next Frame &bull; <kbd>R</kbd> Set Release Frame &bull; <kbd>S</kbd> Save &bull; Click detected box to assign Shooter/Defender</span>
+          <span>Shortcuts: <kbd>Space</kbd> Play/Pause &bull; <kbd>←</kbd>/<kbd>→</kbd> Prev/Next
+            &bull; <kbd>R</kbd> Set Release &bull; <kbd>S</kbd> Save &bull; Click to assign</span>
         </div>
       </div>
     </div>
@@ -394,7 +404,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     let detectedBoxes = [];
     let shooterBox = null;
     let defenderBox = null;
-    let assignMode = 'shooter'; // 'shooter' or 'defender'
+    let assignMode = 'shooter';
     const video = document.getElementById('video-player');
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
@@ -419,14 +429,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         if (isDone) doneCount++;
         const li = document.createElement('li');
         li.className = 'shot-item' + (idx === currentShotIndex ? ' active' : '');
-        li.innerHTML = `
-          <span>${shot.shot_id}</span>
-          <span class="badge ${isDone ? 'done' : 'pending'}">${isDone ? 'Annotated' : 'Pending'}</span>
-        `;
+        const badgeClass = isDone ? 'done' : 'pending';
+        const badgeLabel = isDone ? 'Annotated' : 'Pending';
+        li.innerHTML = `<span>${shot.shot_id}</span>` +
+          `<span class="badge ${badgeClass}">${badgeLabel}</span>`;
         li.onclick = () => selectShot(idx);
         list.appendChild(li);
       });
-      document.getElementById('manifest-stats').innerText = `${doneCount} of ${manifestData.length} shots annotated (${Math.round(doneCount / manifestData.length * 100 || 0)}%)`;
+      const pct = Math.round((doneCount / manifestData.length) * 100 || 0);
+      document.getElementById('manifest-stats').innerText =
+        `${doneCount} of ${manifestData.length} shots annotated (${pct}%)`;
       document.getElementById('queue-count').innerText = manifestData.length;
     }
 
@@ -535,7 +547,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       const x = (e.clientX - rect.left) * scaleX;
       const y = (e.clientY - rect.top) * scaleY;
 
-      // Find clicked box
       for (const box of detectedBoxes) {
         if (x >= box[0] && x <= box[2] && y >= box[1] && y <= box[3]) {
           if (assignMode === 'shooter') {
@@ -552,7 +563,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     function redrawOverlay() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw all detected boxes in gray
       detectedBoxes.forEach((box, i) => {
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 2;
@@ -562,21 +572,25 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         ctx.fillText(`Person ${i + 1}`, box[0] + 4, box[1] + 16);
       });
 
-      // Draw shooter box in blue
       if (shooterBox) {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 4;
-        ctx.strokeRect(shooterBox[0], shooterBox[1], shooterBox[2] - shooterBox[0], shooterBox[3] - shooterBox[1]);
+        ctx.strokeRect(
+          shooterBox[0], shooterBox[1],
+          shooterBox[2] - shooterBox[0], shooterBox[3] - shooterBox[1]
+        );
         ctx.fillStyle = '#3b82f6';
         ctx.font = 'bold 14px sans-serif';
         ctx.fillText('🎯 SHOOTER', shooterBox[0] + 4, shooterBox[1] + 20);
       }
 
-      // Draw defender box in red
       if (defenderBox) {
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 4;
-        ctx.strokeRect(defenderBox[0], defenderBox[1], defenderBox[2] - defenderBox[0], defenderBox[3] - defenderBox[1]);
+        ctx.strokeRect(
+          defenderBox[0], defenderBox[1],
+          defenderBox[2] - defenderBox[0], defenderBox[3] - defenderBox[1]
+        );
         ctx.fillStyle = '#ef4444';
         ctx.font = 'bold 14px sans-serif';
         ctx.fillText('🛡️ DEFENDER', defenderBox[0] + 4, defenderBox[1] + 20);
@@ -609,7 +623,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       if (data.ok) {
         manifestData[currentShotIndex].release_frame = payload.release_frame;
         manifestData[currentShotIndex].shooter_box = JSON.stringify(payload.shooter_box);
-        manifestData[currentShotIndex].defender_box = payload.defender_box ? JSON.stringify(payload.defender_box) : "";
+        const defJson = payload.defender_box ? JSON.stringify(payload.defender_box) : "";
+        manifestData[currentShotIndex].defender_box = defJson;
         manifestData[currentShotIndex].shooting_side = payload.shooting_side;
         renderShotList();
         if (currentShotIndex + 1 < manifestData.length) {
@@ -664,7 +679,7 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
 
-        if path == "/" or path == "/index.html":
+        if path in {"/", "/index.html"}:
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
@@ -672,9 +687,11 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/shots":
-            df = pd.read_csv(self.manifest_path, dtype={"shot_id": str, "game_id": str, "game_event_id": str})
+            df = pd.read_csv(
+                self.manifest_path,
+                dtype={"shot_id": str, "game_id": str, "game_event_id": str},
+            )
             records = df.to_dict("records")
-            # Replace NaNs with empty string or None for JSON serialization
             clean_records = []
             for r in records:
                 clean_records.append({k: ("" if pd.isna(v) else v) for k, v in r.items()})
@@ -690,14 +707,20 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
                 self.send_error(HTTPStatus.BAD_REQUEST, "Missing shot_index")
                 return
             shot_idx = int(shot_idx_list[0])
-            df = pd.read_csv(self.manifest_path, dtype={"shot_id": str, "game_id": str, "game_event_id": str})
+            df = pd.read_csv(
+                self.manifest_path,
+                dtype={"shot_id": str, "game_id": str, "game_event_id": str},
+            )
             if shot_idx < 0 or shot_idx >= len(df):
                 self.send_error(HTTPStatus.NOT_FOUND, "Shot index out of range")
                 return
             row = df.iloc[shot_idx].to_dict()
             clip = resolve_clip_path(row, self.manifest_path.parent, self.video_dir)
             if not clip or not clip.is_file():
-                self.send_error(HTTPStatus.NOT_FOUND, f"Video clip not found for shot {row.get('shot_id')}")
+                self.send_error(
+                    HTTPStatus.NOT_FOUND,
+                    f"Video clip not found for shot {row.get('shot_id')}",
+                )
                 return
 
             self.serve_file(clip)
@@ -714,7 +737,10 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/detect-frame":
             shot_idx = body.get("shot_index", 0)
             frame_idx = body.get("frame_index", 0)
-            df = pd.read_csv(self.manifest_path, dtype={"shot_id": str, "game_id": str, "game_event_id": str})
+            df = pd.read_csv(
+                self.manifest_path,
+                dtype={"shot_id": str, "game_id": str, "game_event_id": str},
+            )
             row = df.iloc[shot_idx].to_dict()
             clip = resolve_clip_path(row, self.manifest_path.parent, self.video_dir)
             if not clip or not clip.is_file():
@@ -807,11 +833,11 @@ def start_annotation_server(
 
     server = ThreadingHTTPServer((host, port), handler)
     url = f"http://{host}:{port}"
-    print(f"\n==================================================")
+    print("\n==================================================")
     print(f"🏀 NBA Shot Video Annotation Tool started at {url}")
     print(f"   Manifest: {manifest_path}")
-    print(f"   Press Ctrl+C to stop the server.")
-    print(f"==================================================\n")
+    print("   Press Ctrl+C to stop the server.")
+    print("==================================================\n")
 
     if open_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
