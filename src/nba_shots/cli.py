@@ -68,6 +68,18 @@ def main(argv=None):
     cv.add_argument("--output", type=Path, required=True)
     cv.add_argument("--weights", default="yolo11n-pose.pt")
     cv.add_argument("--device", default="cpu")
+    annotate = sub.add_parser(
+        "annotate", help="Interactive tool to annotate release frames and player boxes"
+    )
+    annotate.add_argument("--manifest", type=Path, required=True)
+    annotate.add_argument("--videos", type=Path, help="Directory containing downloaded video clips")
+    annotate.add_argument("--weights", default="yolo11n-pose.pt")
+    annotate.add_argument("--device", default="cpu")
+    annotate.add_argument("--port", type=int, default=8765)
+    annotate.add_argument("--host", default="127.0.0.1")
+    annotate.add_argument(
+        "--no-browser", action="store_true", help="Do not automatically launch browser"
+    )
     agents = sub.add_parser("predict-llm", help="Run a free local Ollama/CrewAI comparison")
     agents.add_argument("--shots", type=Path, required=True)
     agents.add_argument("--cv", type=Path)
@@ -160,6 +172,19 @@ def execute(args):
         if args.command == "fetch-videos":
             return vision.fetch_videos(args.manifest, args.output, args.limit)
         return vision.extract_cv(args.manifest, args.output, args.weights, args.device)
+    if args.command == "annotate":
+        from .annotate import start_annotation_server
+
+        start_annotation_server(
+            manifest_path=args.manifest,
+            video_dir=args.videos,
+            host=args.host,
+            port=args.port,
+            weights=args.weights,
+            device=args.device,
+            open_browser=not args.no_browser,
+        )
+        return {"status": "completed"}
     if args.command == "predict-llm":
         from .agents import run_agents
 
