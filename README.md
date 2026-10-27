@@ -39,10 +39,12 @@ uv sync --frozen --all-extras
 
 ### Video Annotation Tool
 
-Use the interactive browser tool to scrub video clips, set release frames (`R`), run YOLO person detection, and click to tag shooter and contest defender:
+Use the browser tool to inspect exact decoded frames, set release frames (`R`),
+run YOLO detection, and tag the shooter and contest defender. Prepare the manifest
+using the [experiment instructions](docs/experiments.md) first:
 
 ```bash
-uv run nba-shots annotate --manifest data/recent/manifest.csv --videos data/recent/videos
+uv run nba-shots annotate --manifest data/video/manifest.csv --videos data/video/clips
 ```
 
 See [experiment instructions](docs/experiments.md) for video collection, release

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
 import threading
 import urllib.parse
@@ -24,11 +25,11 @@ def resolve_clip_path(row: dict, manifest_dir: Path, video_dir: Path | None = No
     clip_val = row.get("clip_path")
     if pd.notna(clip_val) and str(clip_val).strip():
         raw_path = Path(str(clip_val).strip())
-        if raw_path.is_file():
-            return raw_path
         relative = manifest_dir / raw_path
         if relative.is_file():
             return relative
+        if raw_path.is_file():
+            return raw_path
 
     shot_id = str(row.get("shot_id", "")).strip()
     if not shot_id:
@@ -46,6 +47,39 @@ def resolve_clip_path(row: dict, manifest_dir: Path, video_dir: Path | None = No
             return candidate
 
     return None
+
+
+def video_metadata(clip_path: Path) -> dict:
+    """Read clip timing; never guess a frame rate for annotation."""
+    import cv2
+
+    capture = cv2.VideoCapture(str(clip_path))
+    try:
+        if not capture.isOpened():
+            raise ValueError("Video cannot be opened")
+        fps = capture.get(cv2.CAP_PROP_FPS)
+        count = capture.get(cv2.CAP_PROP_FRAME_COUNT)
+        if not np.isfinite(fps) or fps <= 0 or not np.isfinite(count) or count < 1:
+            raise ValueError("Video has no usable frame rate or frame count")
+        return {"fps": float(fps), "frame_count": int(count)}
+    finally:
+        capture.release()
+
+
+def frame_preview(clip_path: Path, frame_index: int) -> dict:
+    """Display the exact indexed frame used by detection and extraction."""
+    import cv2
+
+    frame = read_release_frame(clip_path, frame_index, cv2)
+    ok, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+    if not ok:
+        raise ValueError("Failed to encode frame to JPEG")
+    return {
+        "frame_index": frame_index,
+        "width": frame.shape[1],
+        "height": frame.shape[0],
+        "jpeg_data_url": "data:image/jpeg;base64," + base64.b64encode(buffer).decode("ascii"),
+    }
 
 
 def validate_box(box_value: Any) -> list[float] | None:
@@ -145,7 +179,7 @@ def update_manifest_row(
     if shot_id not in df["shot_id"].values:
         raise ValueError(f"shot_id {shot_id!r} not found in manifest")
 
-    if release_frame < 0:
+    if isinstance(release_frame, bool) or not isinstance(release_frame, int) or release_frame < 0:
         raise ValueError("release_frame must be a non-negative integer")
     if shooting_side not in {"left", "right"}:
         raise ValueError("shooting_side must be 'left' or 'right'")
@@ -269,13 +303,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       align-items: center;
       min-height: 480px;
     }
-    video, canvas {
+    video, canvas, #frame-preview {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
       object-fit: contain;
     }
     canvas { pointer-events: auto; cursor: crosshair; }
+    [hidden] { display: none !important; }
+    button:disabled { opacity: 0.5; cursor: default; }
     .controls {
       background: var(--card);
       border: 1px solid var(--border);
@@ -361,6 +397,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="content">
       <div class="video-viewport" id="viewport">
         <video id="video-player" playsinline></video>
+        <img id="frame-preview" alt="Selected release-time video frame" hidden>
         <canvas id="overlay-canvas"></canvas>
       </div>
       <div class="controls">
@@ -394,6 +431,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           <span>Shortcuts: <kbd>Space</kbd> Play/Pause &bull; <kbd>←</kbd>/<kbd>→</kbd> Prev/Next
             &bull; <kbd>R</kbd> Set Release &bull; <kbd>S</kbd> Save &bull; Click to assign</span>
         </div>
+        <div id="frame-status" role="status" class="shortcuts-help"></div>
       </div>
     </div>
   </div>
@@ -405,7 +443,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     let shooterBox = null;
     let defenderBox = null;
     let assignMode = 'shooter';
+    let clipMetadata = null;
+    let selectedFrame = 0;
+    let previewReady = false;
+    let selectionVersion = 0;
+    let frameVersion = 0;
+    let detectionVersion = 0;
     const video = document.getElementById('video-player');
+    const preview = document.getElementById('frame-preview');
+    const frameStatus = document.getElementById('frame-status');
     const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
     const frameSlider = document.getElementById('frame-slider');
@@ -442,7 +488,28 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('queue-count').innerText = manifestData.length;
     }
 
-    function selectShot(index) {
+    function updateControls() {
+      const ready = previewReady && video.paused;
+      for (const id of ['btn-mark-release', 'btn-run-yolo', 'btn-save']) {
+        document.getElementById(id).disabled = !ready;
+      }
+      for (const id of ['btn-play-pause', 'btn-prev-frame', 'btn-next-frame']) {
+        document.getElementById(id).disabled = !clipMetadata;
+      }
+      frameSlider.disabled = !clipMetadata;
+    }
+
+    async function selectShot(index) {
+      const version = ++selectionVersion;
+      ++frameVersion;
+      ++detectionVersion;
+      clipMetadata = null;
+      previewReady = false;
+      preview.hidden = true;
+      video.onpause = null;
+      video.pause();
+      updateControls();
+      frameStatus.innerText = 'Loading clip metadata...';
       currentShotIndex = index;
       renderShotList();
       const shot = manifestData[index];
@@ -453,36 +520,82 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
       video.src = `/api/video?shot_index=${index}`;
       video.load();
-      video.onloadedmetadata = () => {
-        resizeCanvas();
-        frameSlider.max = Math.floor(video.duration * 30);
-        if (shot.release_frame !== "" && shot.release_frame !== null) {
-          seekToFrame(parseInt(shot.release_frame));
-        } else {
-          seekToFrame(0);
+      try {
+        const response = await fetch(`/api/video-info?shot_index=${index}`);
+        const data = await response.json();
+        if (version !== selectionVersion) return;
+        if (!response.ok) throw new Error(data.error);
+        clipMetadata = data;
+        frameSlider.max = data.frame_count - 1;
+        const initial = shot.release_frame !== '' && shot.release_frame !== null
+          ? Number(shot.release_frame) : 0;
+        selectedFrame = initial;
+        await seekToFrame(initial);
+      } catch (error) {
+        if (version === selectionVersion) {
+          frameStatus.innerText = 'Clip unavailable: ' + error.message;
         }
-      };
-    }
-
-    function resizeCanvas() {
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 360;
-      redrawOverlay();
+      }
     }
 
     function currentFrameIndex() {
-      return Math.round(video.currentTime * 30);
+      if (video.paused) return selectedFrame;
+      return Math.min(clipMetadata.frame_count - 1,
+        Math.max(0, Math.floor(video.currentTime * clipMetadata.fps)));
     }
 
-    function seekToFrame(frame) {
+    async function seekToFrame(frame) {
+      if (!clipMetadata) return;
+      const version = ++frameVersion;
+      const shotVersion = selectionVersion;
+      ++detectionVersion;
+      const target = Math.max(0, Math.min(clipMetadata.frame_count - 1, frame));
+      // Boxes belong only to the image on which they were assigned.
+      if (target !== selectedFrame) {
+        detectedBoxes = [];
+        shooterBox = null;
+        defenderBox = null;
+      }
+      selectedFrame = target;
+      previewReady = false;
+      video.onpause = null;
       video.pause();
-      video.currentTime = Math.max(0, frame / 30);
-      frameSlider.value = frame;
-      frameCounter.innerText = `Frame: ${frame}`;
+      video.currentTime = target / clipMetadata.fps;
+      frameSlider.value = target;
+      frameCounter.innerText = `Frame: ${target}`;
+      frameStatus.innerText = 'Loading exact frame...';
+      updateControls();
       redrawOverlay();
+      try {
+        const response = await fetch(
+          `/api/frame?shot_index=${currentShotIndex}&frame_index=${target}`);
+        const data = await response.json();
+        if (version !== frameVersion || shotVersion !== selectionVersion) return;
+        if (!response.ok) throw new Error(data.error);
+        // Only enable annotation once this exact decoded image is displayed.
+        await new Promise((resolve, reject) => {
+          preview.onload = resolve;
+          preview.onerror = () => reject(new Error('Cannot display decoded frame'));
+          preview.src = data.jpeg_data_url;
+        });
+        if (version !== frameVersion || shotVersion !== selectionVersion) return;
+        canvas.width = data.width;
+        canvas.height = data.height;
+        preview.hidden = false;
+        previewReady = true;
+        frameStatus.innerText = `Exact frame ${target} / ${clipMetadata.frame_count - 1}` +
+          ` (${clipMetadata.fps.toFixed(3)} FPS).`;
+        redrawOverlay();
+      } catch (error) {
+        if (version === frameVersion && shotVersion === selectionVersion) {
+          frameStatus.innerText = 'Frame unavailable: ' + error.message;
+        }
+      }
+      updateControls();
     }
 
     video.ontimeupdate = () => {
+      if (!clipMetadata || video.paused) return;
       const f = currentFrameIndex();
       frameSlider.value = f;
       frameCounter.innerText = `Frame: ${f}`;
@@ -492,12 +605,30 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     frameSlider.oninput = (e) => seekToFrame(parseInt(e.target.value));
 
     document.getElementById('btn-play-pause').onclick = () => {
-      if (video.paused) { video.play(); } else { video.pause(); }
+      if (!clipMetadata) return;
+      if (video.paused) {
+        ++frameVersion;
+        ++detectionVersion;
+        preview.hidden = true;
+        previewReady = false;
+        detectedBoxes = [];
+        shooterBox = null;
+        defenderBox = null;
+        redrawOverlay();
+        video.play().catch(error => { frameStatus.innerText = error.message; });
+      } else {
+        seekToFrame(Math.floor(video.currentTime * clipMetadata.fps));
+      }
+      updateControls();
+    };
+    video.onended = () => {
+      if (clipMetadata) seekToFrame(clipMetadata.frame_count - 1);
     };
     document.getElementById('btn-prev-frame').onclick = () => seekToFrame(currentFrameIndex() - 1);
     document.getElementById('btn-next-frame').onclick = () => seekToFrame(currentFrameIndex() + 1);
 
     document.getElementById('btn-mark-release').onclick = () => {
+      if (!previewReady || !video.paused) return;
       const f = currentFrameIndex();
       manifestData[currentShotIndex].release_frame = f;
       alert(`Release frame set to ${f}. Running YOLO person detection...`);
@@ -505,13 +636,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     };
 
     async function runYolo(frameIdx) {
+      if (!previewReady || !video.paused) return;
       const f = frameIdx !== undefined ? frameIdx : currentFrameIndex();
+      const version = ++detectionVersion;
+      const shotVersion = selectionVersion;
       const res = await fetch('/api/detect-frame', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shot_index: currentShotIndex, frame_index: f })
       });
       const data = await res.json();
+      if (version !== detectionVersion || shotVersion !== selectionVersion ||
+          f !== selectedFrame || !previewReady) return;
       if (data.error) {
         alert('YOLO error: ' + data.error);
         return;
@@ -541,11 +677,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     };
 
     canvas.onclick = (e) => {
+      if (!previewReady || !video.paused) return;
       const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const x = (e.clientX - rect.left) * scaleX;
-      const y = (e.clientY - rect.top) * scaleY;
+      const scale = Math.min(rect.width / canvas.width, rect.height / canvas.height);
+      const x = (e.clientX - rect.left - (rect.width - canvas.width * scale) / 2) / scale;
+      const y = (e.clientY - rect.top - (rect.height - canvas.height * scale) / 2) / scale;
 
       for (const box of detectedBoxes) {
         if (x >= box[0] && x <= box[2] && y >= box[1] && y <= box[3]) {
@@ -598,7 +734,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     async function saveCurrent() {
-      const relFrame = manifestData[currentShotIndex].release_frame;
+      if (!previewReady || !video.paused) return;
+      const shotIndex = currentShotIndex;
+      const shotVersion = selectionVersion;
+      const relFrame = manifestData[shotIndex].release_frame;
       if (relFrame === "" || relFrame === null || relFrame === undefined) {
         alert('Please mark the release frame first (Press R or click Set Release Frame).');
         return;
@@ -607,8 +746,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         alert('Please assign a Shooter box before saving.');
         return;
       }
+      if (Number(relFrame) !== selectedFrame) {
+        alert('Mark the displayed frame as the release frame before saving.');
+        return;
+      }
       const payload = {
-        shot_id: manifestData[currentShotIndex].shot_id,
+        shot_id: manifestData[shotIndex].shot_id,
         release_frame: parseInt(relFrame),
         shooter_box: shooterBox,
         defender_box: defenderBox,
@@ -621,12 +764,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       });
       const data = await res.json();
       if (data.ok) {
-        manifestData[currentShotIndex].release_frame = payload.release_frame;
-        manifestData[currentShotIndex].shooter_box = JSON.stringify(payload.shooter_box);
+        manifestData[shotIndex].release_frame = payload.release_frame;
+        manifestData[shotIndex].shooter_box = JSON.stringify(payload.shooter_box);
         const defJson = payload.defender_box ? JSON.stringify(payload.defender_box) : "";
-        manifestData[currentShotIndex].defender_box = defJson;
-        manifestData[currentShotIndex].shooting_side = payload.shooting_side;
+        manifestData[shotIndex].defender_box = defJson;
+        manifestData[shotIndex].shooting_side = payload.shooting_side;
         renderShotList();
+        if (shotVersion !== selectionVersion || selectedFrame !== payload.release_frame) return;
         if (currentShotIndex + 1 < manifestData.length) {
           selectShot(currentShotIndex + 1);
         } else {
@@ -657,6 +801,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       }
     });
 
+    updateControls();
     loadShots();
   </script>
 </body>
@@ -673,6 +818,17 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         # Suppress noisy HTTP logs during interactive usage
         pass
+
+    def clip_for_index(self, shot_index: int) -> Path:
+        df = pd.read_csv(self.manifest_path, dtype={"shot_id": str})
+        if shot_index < 0 or shot_index >= len(df):
+            raise ValueError("Shot index out of range")
+        clip = resolve_clip_path(
+            df.iloc[shot_index].to_dict(), self.manifest_path.parent, self.video_dir
+        )
+        if clip is None:
+            raise FileNotFoundError("Clip file not found")
+        return clip.resolve()
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -701,29 +857,19 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(clean_records).encode("utf-8"))
             return
 
-        if path == "/api/video":
-            shot_idx_list = query.get("shot_index")
-            if not shot_idx_list:
-                self.send_error(HTTPStatus.BAD_REQUEST, "Missing shot_index")
-                return
-            shot_idx = int(shot_idx_list[0])
-            df = pd.read_csv(
-                self.manifest_path,
-                dtype={"shot_id": str, "game_id": str, "game_event_id": str},
-            )
-            if shot_idx < 0 or shot_idx >= len(df):
-                self.send_error(HTTPStatus.NOT_FOUND, "Shot index out of range")
-                return
-            row = df.iloc[shot_idx].to_dict()
-            clip = resolve_clip_path(row, self.manifest_path.parent, self.video_dir)
-            if not clip or not clip.is_file():
-                self.send_error(
-                    HTTPStatus.NOT_FOUND,
-                    f"Video clip not found for shot {row.get('shot_id')}",
-                )
-                return
-
-            self.serve_file(clip)
+        if path in {"/api/video", "/api/video-info", "/api/frame"}:
+            try:
+                clip = self.clip_for_index(int(query["shot_index"][0]))
+                if path == "/api/video":
+                    self.serve_file(clip)
+                elif path == "/api/video-info":
+                    self.send_json(video_metadata(clip))
+                else:
+                    self.send_json(frame_preview(clip, int(query["frame_index"][0])))
+            except FileNotFoundError as error:
+                self.send_json({"error": str(error)}, status=HTTPStatus.NOT_FOUND)
+            except (KeyError, ValueError) as error:
+                self.send_json({"error": str(error)}, status=HTTPStatus.BAD_REQUEST)
             return
 
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
@@ -755,6 +901,20 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
 
         if path == "/api/save":
             try:
+                df = pd.read_csv(self.manifest_path, dtype={"shot_id": str})
+                matches = df.index[df.shot_id.eq(body["shot_id"])]
+                if len(matches) != 1:
+                    raise ValueError("Shot ID must identify exactly one manifest row")
+                clip = self.clip_for_index(int(matches[0]))
+                release = body["release_frame"]
+                if (
+                    isinstance(release, bool)
+                    or not isinstance(release, int)
+                    or not 0 <= release < video_metadata(clip)["frame_count"]
+                ):
+                    raise ValueError("Release frame must be an integer within this clip")
+                # Extraction resolves paths relative to the manifest, independent of cwd.
+                stored_path = os.path.relpath(clip, self.manifest_path.parent.resolve())
                 update_manifest_row(
                     self.manifest_path,
                     shot_id=body["shot_id"],
@@ -762,6 +922,7 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
                     shooter_box=body["shooter_box"],
                     shooting_side=body["shooting_side"],
                     defender_box=body.get("defender_box"),
+                    clip_path=stored_path,
                 )
                 self.send_json({"ok": True})
             except Exception as e:

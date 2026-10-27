@@ -1,19 +1,64 @@
+import base64
 import json
+import sys
 import urllib.error
 import urllib.request
 from http.server import HTTPServer
 from threading import Thread
+from types import SimpleNamespace
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from nba_shots.annotate import (
     AnnotationRequestHandler,
+    frame_preview,
     resolve_clip_path,
     update_manifest_row,
     validate_box,
+    video_metadata,
 )
-from nba_shots.vision import load_manifest
+from nba_shots.vision import extract_cv, load_manifest
+
+
+def write_clip(path, fps=60, frames=120):
+    cv2 = pytest.importorskip("cv2")
+    writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (64, 64))
+    assert writer.isOpened()
+    try:
+        for index in range(frames):
+            writer.write(np.full((64, 64, 3), index, dtype=np.uint8))
+    finally:
+        writer.release()
+
+
+@pytest.mark.parametrize("fps", [24, 29.97, 60])
+def test_metadata_and_preview_use_actual_clip_frames(tmp_path, fps):
+    cv2 = pytest.importorskip("cv2")
+    path = tmp_path / "clip.mp4"
+    write_clip(path, fps)
+    metadata = video_metadata(path)
+    assert metadata["fps"] == pytest.approx(fps, abs=0.01)
+    assert metadata["frame_count"] == 120
+    index = round(fps)
+    preview = frame_preview(path, index)
+    image = cv2.imdecode(
+        np.frombuffer(base64.b64decode(preview["jpeg_data_url"].split(",")[1]), np.uint8),
+        cv2.IMREAD_COLOR,
+    )
+    assert preview["frame_index"] == index
+    assert preview["width"] == preview["height"] == 64
+    # Each synthetic frame has its index as its pixel intensity (allow codec loss).
+    assert float(image.mean()) == pytest.approx(index, abs=5)
+    with pytest.raises(ValueError):
+        frame_preview(path, 120)
+
+
+def test_metadata_rejects_missing_video(tmp_path):
+    pytest.importorskip("cv2")
+    with pytest.raises(ValueError, match="cannot be opened"):
+        video_metadata(tmp_path / "missing.mp4")
 
 
 def test_validate_box_formats_and_errors():
@@ -102,9 +147,12 @@ def test_update_manifest_row_persistence(tmp_path):
         update_manifest_row(manifest_path, "nba:001:10", 35, [10, 10, 20, 20], "center")
     with pytest.raises(ValueError, match="not found"):
         update_manifest_row(manifest_path, "nba:999:99", 35, [10, 10, 20, 20], "right")
+    for invalid in [1.5, True]:
+        with pytest.raises(ValueError, match="integer"):
+            update_manifest_row(manifest_path, "nba:001:10", invalid, [10, 10, 20, 20], "right")
 
 
-def test_annotation_http_server_endpoints(tmp_path):
+def test_annotation_http_server_endpoints(tmp_path, monkeypatch):
     manifest_path = tmp_path / "manifest.csv"
     df = pd.DataFrame(
         [
@@ -121,12 +169,16 @@ def test_annotation_http_server_endpoints(tmp_path):
         ]
     )
     df.to_csv(manifest_path, index=False)
+    clips = tmp_path / "downloaded"
+    clips.mkdir()
+    clip = clips / "nba_001_10.mp4"
+    write_clip(clip)
 
     class CustomHandler(AnnotationRequestHandler):
         pass
 
     CustomHandler.manifest_path = manifest_path
-    CustomHandler.video_dir = tmp_path
+    CustomHandler.video_dir = clips
     CustomHandler.weights = "yolo11n-pose.pt"
     CustomHandler.device = "cpu"
 
@@ -151,12 +203,22 @@ def test_annotation_http_server_endpoints(tmp_path):
             assert len(shots) == 1
             assert shots[0]["shot_id"] == "nba:001:10"
 
+        with urllib.request.urlopen(f"{base_url}/api/video-info?shot_index=0") as res:
+            metadata = json.load(res)
+            assert metadata == {"fps": 60.0, "frame_count": 120}
+        with urllib.request.urlopen(f"{base_url}/api/frame?shot_index=0&frame_index=42") as res:
+            assert json.load(res)["frame_index"] == 42
+        for suffix in ["video-info?shot_index=-1", "frame?shot_index=0&frame_index=120"]:
+            with pytest.raises(urllib.error.HTTPError) as error:
+                urllib.request.urlopen(f"{base_url}/api/{suffix}")
+            assert error.value.code == 400
+
         # 3. POST /api/save updates manifest
         save_payload = json.dumps(
             {
                 "shot_id": "nba:001:10",
                 "release_frame": 42,
-                "shooter_box": [50, 60, 150, 200],
+                "shooter_box": [0, 0, 32, 64],
                 "defender_box": None,
                 "shooting_side": "left",
             }
@@ -175,6 +237,62 @@ def test_annotation_http_server_endpoints(tmp_path):
         reloaded = pd.read_csv(manifest_path)
         assert int(reloaded.iloc[0]["release_frame"]) == 42
         assert reloaded.iloc[0]["shooting_side"] == "left"
+        assert reloaded.iloc[0]["clip_path"] == "downloaded/nba_001_10.mp4"
+        with urllib.request.urlopen(f"{base_url}/api/shots") as res:
+            reopened = json.load(res)[0]
+            assert reopened["release_frame"] == 42
+            assert reopened["clip_path"] == "downloaded/nba_001_10.mp4"
+        for invalid_frame in [-1, 120, 42.5, True]:
+            invalid_payload = json.loads(save_payload)
+            invalid_payload["release_frame"] = invalid_frame
+            invalid_request = urllib.request.Request(
+                f"{base_url}/api/save",
+                data=json.dumps(invalid_payload).encode(),
+                headers={"Content-Type": "application/json"},
+            )
+            with pytest.raises(urllib.error.HTTPError) as error:
+                urllib.request.urlopen(invalid_request)
+            assert error.value.code == 400
+        assert int(load_manifest(manifest_path).iloc[0].release_frame) == 42
+
+        # Real decoding and manifest handoff, with only pose inference substituted.
+        # No model weights or external downloads are needed for this regression.
+        class Array:
+            def __init__(self, value):
+                self.value = np.asarray(value)
+
+            def cpu(self):
+                return self
+
+            def numpy(self):
+                return self.value
+
+        class Model:
+            ckpt_path = str(clip)
+
+            def predict(self, image, **kwargs):
+                assert float(image.mean()) == pytest.approx(42, abs=5)
+                pose = np.ones((1, 17, 3))
+                pose[0, 5, :2], pose[0, 6, :2] = [10, 10], [20, 10]
+                pose[0, 11, :2], pose[0, 12, :2] = [10, 30], [20, 30]
+                return [
+                    SimpleNamespace(
+                        boxes=SimpleNamespace(xyxy=Array([[0, 0, 32, 64]])),
+                        keypoints=SimpleNamespace(data=Array(pose)),
+                        plot=lambda: image,
+                    )
+                ]
+
+        monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=lambda _: Model()))
+        elsewhere = tmp_path / "other-working-directory"
+        elsewhere.mkdir()
+        monkeypatch.chdir(elsewhere)
+        output = tmp_path / "extraction"
+        extract_cv(manifest_path, output, weights="fake-test-weights")
+        features = pd.read_parquet(output / "cv_features.parquet").iloc[0]
+        assert features["cv_status"] == "partial"  # No defender annotated.
+        assert features["latest_frame_used"] == 42
+        assert pd.isna(features["cv_error"])
 
     finally:
         server.shutdown()
