@@ -891,3 +891,156 @@ A phase is complete only when its acceptance checks have saved evidence. Mark
 blocked and unresolved experiments honestly. The project can report a successful
 baseline and controlled agent study even if video sourcing prevents the CV study;
 that outcome must be stated as a limitation, not presented as proof against CV.
+
+## Appendix. Function, parameter, and artifact reference
+
+This reference retains the remote document's implementation detail alongside the
+execution plan above. Function names are used instead of line numbers because
+annotation fixes change source offsets. Source code and saved run configurations
+remain authoritative; phase status and research acceptance gates are defined above.
+
+### A. Pipeline entry points
+
+| File | Functions / classes | Contract |
+|---|---|---|
+| `src/nba_shots/cli.py` | `main`, `execute` | Parses stage arguments and dispatches; `baseline` downloads, prepares, then trains |
+| `src/nba_shots/common.py` | `load_config`, `sha256`, `environment`, `write_json` | Merges config defaults; rejects unknown keys/unapproved tabular features; records provenance |
+| `src/nba_shots/data.py` | `download_kaggle`, `normalize_kaggle`, `prepare_csv` | Validates download/header, creates normalized records, audits, splits, and config snapshot |
+| `src/nba_shots/data.py` | `assign_splits`, `add_player_history`, `validate_shots` | Whole-date partitions, earlier-date historical features, unique shot identity/metadata checks |
+| `src/nba_shots/models.py` | `feature_columns`, `make_pipeline`, `validate_splits` | Feature allowlist, train-only preprocessing, strict chronological partition checks |
+| `src/nba_shots/models.py` | `train_baselines`, `evaluate_run` | Persists fitted pipelines and validation predictions; scores saved models without refitting |
+| `src/nba_shots/vision.py` | `collect_recent`, `normalize_recent`, `make_manifest`, `prepare_cohort` | Caches source records, registers outcome-blind selections, and freezes the matched cohort |
+| `src/nba_shots/vision.py` | `_video_url`, `fetch_videos` | Searches `lurl`, `murl`, `surl`; logs per-shot retrieval outcomes |
+| `src/nba_shots/vision.py` | `read_release_frame`, `match_box`, `pose_features`, `extract_cv` | Reads the indexed frame, matches annotated identities, computes pose proxies, retains errors |
+| `src/nba_shots/annotate.py` | `resolve_clip_path`, `video_metadata`, `frame_preview`, `update_manifest_row` | Resolves media, exposes actual timing/exact preview, validates and persists annotations |
+| `src/nba_shots/annotate.py` | `AnnotationRequestHandler`, `start_annotation_server` | Serves the local annotation UI and HTTP endpoints |
+| `src/nba_shots/agents.py` | `prompt_features`, `parse_assessment`, `OllamaClient` | Filters payloads, validates response schema, and calls the frozen local model |
+| `src/nba_shots/agents.py` | `crewai_assessment`, `predict_condition`, `select_evaluation_rows`, `run_agents` | Runs controlled CrewAI steps, selects shots by hash rank, checks budgets, caches and traces |
+| `src/nba_shots/evaluation.py` | `validate_predictions`, `score_predictions`, `write_scores`, `paired_comparison` | Checks prediction identities, computes metrics/reliability plots, bootstraps whole games |
+| `src/nba_shots/report.py` | `create_report` | Enforces matching model selections and creates cohort-separated reports |
+
+### B. Configuration and normalization details
+
+The default feature list is eight numeric fields (`shot_distance`,
+`defender_distance`, `game_clock_seconds`, `shot_clock`, `period`, `dribbles`,
+`touch_time`, `shot_value`) plus categorical `location`. `configs/default.json`
+uses seed 42, train fraction 0.7, validation fraction 0.15, and history disabled.
+`configs/video.json` overrides only `include_player_history` to true.
+
+| XGBoost setting | Default |
+|---|---:|
+| `n_estimators` | 300 |
+| `max_depth` | 4 |
+| `learning_rate` | 0.05 |
+| `min_child_weight` | 10 |
+| `subsample` | 0.8 |
+| `colsample_bytree` | 0.8 |
+| `reg_lambda` | 5 |
+| `n_jobs` | 4 |
+
+The estimator uses `objective="binary:logistic"`, `eval_metric="logloss"`, and the
+configured random seed. Constant predictions use `DummyClassifier(strategy="prior")`;
+logistic regression uses `max_iter=2000`. Numeric imputation uses median,
+`add_indicator=True`, and `keep_empty_features=True`. Categoricals use mode
+imputation and dense one-hot encoding with unknown categories ignored. Only the
+logistic pipeline applies `StandardScaler` after numeric imputation.
+
+| Kaggle input | Prepared field | Validation / transformation |
+|---|---|---|
+| `SHOT_RESULT` | `y_true` | Lowercased/trimmed `made` -> 1, `missed` -> 0; other labels are rejected |
+| `MATCHUP` | `game_date` | Parses the leading date; invalid/missing dates are rejected |
+| `GAME_ID` | `game_id` | Numeric ID normalized to ten digits |
+| `player_id`, `SHOT_NUMBER` | `shot_id` | Required identity fields; `kaggle:<game_id>:<player_id>:<shot_number>` must be unique |
+| `GAME_CLOCK` | `game_clock_seconds` | Parses minutes/seconds; values above 720 seconds in regulation or 300 in overtime become missing |
+| `LOCATION` | `location` | Uppercased H/A; other values become missing |
+| `SHOT_DIST` | `shot_distance` | Nonfinite/negative values become missing |
+| `CLOSE_DEF_DIST` | `defender_distance` | Nonfinite/negative values become missing |
+| `SHOT_CLOCK` | `shot_clock` | Nonfinite, negative, or above 24 becomes missing |
+| `PERIOD` | `period` | Nonfinite, below 1, or noninteger becomes missing |
+| `DRIBBLES` | `dribbles` | Nonfinite/negative values become missing |
+| `TOUCH_TIME` | `touch_time` | Nonfinite/negative values become missing |
+| `PTS_TYPE` | `shot_value` | Only 2 and 3 are retained |
+
+Invalid measurements are marked missing, not clipped to valid boundaries. The
+prepared model inputs are constructed explicitly, excluding outcome columns.
+The historical make-rate formula is `(prior_makes + 1) / (prior_attempts + 2)`;
+no earlier observations gives zero attempts and make rate 0.5.
+
+### C. Annotation API and pose matching
+
+| Endpoint | Request | Response / effect |
+|---|---|---|
+| `GET /` | None | Annotation HTML |
+| `GET /api/shots` | None | Manifest rows; missing values represented as empty strings |
+| `GET /api/video` | `shot_index` query | MP4 bytes with Range support |
+| `GET /api/video-info` | `shot_index` query | Actual `fps` and `frame_count` |
+| `GET /api/frame` | `shot_index`, `frame_index` queries | Exact decoded JPEG preview, dimensions, and frame index |
+| `POST /api/detect-frame` | JSON `shot_index`, `frame_index` | Detected boxes/confidences, preview, dimensions, frame index |
+| `POST /api/save` | JSON `shot_id`, integer `release_frame`, `shooter_box`, optional `defender_box`, `shooting_side` | Validates the frame against the clip, saves annotations and resolved relative `clip_path` |
+
+Boxes are `[x1,y1,x2,y2]` with finite coordinates and positive area. Shooting hand
+must be `left` or `right`. `match_box` selects the highest-IoU detected box and
+rejects overlap below 0.2; shooter and defender must map to different detections.
+
+YOLO-Pose uses 17 COCO keypoints. Shooting-side shoulder/elbow/wrist indices are
+5/7/9 on the left and 6/8/10 on the right. Shoulder midpoint uses 5/6, hip midpoint
+uses 11/12, and defender wrists use 9/10. With torso length `T`, features are:
+
+- Elbow angle: degrees of `acos(clip(dot(s-e,w-e)/(norm(s-e)*norm(w-e)), -1, 1))`.
+- Wrist height: `(shoulder_midpoint_y - shooting_wrist_y) / T`.
+- Defender distance: `norm(defender_hip_midpoint - shooter_hip_midpoint) / T`.
+- Defender wrist height: `(shooter_shoulder_midpoint_y - min(visible_defender_wrist_y)) / T`.
+
+Torso length below `1e-6`, missing reference points, low-confidence points, or
+zero-length angle vectors produce unavailable measurements as appropriate. A
+higher visible wrist is an image-height measurement, not proof of better defense.
+OpenCV frame-index validation checks the decoder's reported position; model input
+is the selected release image, not a trajectory sequence.
+
+### D. Local LLM execution contract
+
+`prompt_features` restricts payloads to tabular/history/CV allowlists and converts
+missing measurements to JSON null. It excludes shot/game/player identities,
+dates, cohort, split, labels, paths, frame indices, boxes, and status fields.
+The game-context specialist receives allowed fields outside mechanics/history,
+including `shot_clock` when present. The mechanics/defense specialist receives
+CV fields plus shot distance, defender distance, dribbles, and touch time.
+
+`OllamaClient` checks `/api/tags` with a 10-second timeout and records the exact
+model digest. `/api/chat` uses a JSON output schema, `stream=false`, `think=false`,
+`temperature=0`, seed 42 by default, `num_ctx=8192`, and `num_predict=192` by default.
+The generation limit must be between 32 and 1024; chat timeout is `(10,240)` seconds.
+Local hostnames are enforced and proxy environment settings are ignored via
+`session.trust_env=False`. The default port is 11434, not a hard-coded restriction
+on every accepted local URL.
+
+`parse_assessment` accepts a finite numeric probability in [0,1] (not a boolean)
+and a string rationale; it handles CrewAI's `Final Answer:` prefix and JSON code
+fences. `OneCallLocalLLM` rejects a second call per adapter. CrewAI agents disable
+tools, delegation, retries, optional reasoning, and verbose output; each Crew
+disables memory, framework caching, and planning. Experiment caching is implemented
+separately by `run_agents`. Platform tracing/authentication are disabled for this
+local-only experiment; saved experiment traces remain available for audit.
+
+### E. Artifact schemas and validation references
+
+| Artifact | Important fields |
+|---|---|
+| Prediction CSV | `shot_id`, `game_id`, `cohort`, `split`, `model`, `y_true`, `p_make`, `status` |
+| Agent prediction additions | `error`, `cached`, `calls`, `prompt_tokens`, `completion_tokens`, `runtime_seconds` |
+| Metrics JSON / CSV | `cohort`, `split`, `model`, `n_total`, `n_scored`, `n_failed`, `coverage`, `brier_score`, `log_loss`, `roc_auc`, `accuracy` |
+| Saved `.joblib` model | `pipeline`, `features`, `name` |
+| Model `run.json` | Config/environment/timestamps, source/CV hashes and paths, evaluation split, per-model features/counts/runtime |
+| Agent `experiment.json` | Spec including source/CV hashes, model digest, prompt version, selected shot IDs, seed, generation budget, conditions, implementation hash; environment and start time |
+| CV feature table | `shot_id`, four pose fields, `cv_status`, `cv_error`, `latest_frame_used`; successfully decoded rows also carry release index and clip hash |
+| CV `extraction.json` | Manifest/weights hashes, weights name, device, status counts, environment, definitions |
+| Paired comparison JSON | Baseline/candidate, shot/game counts, candidate-minus-baseline Brier delta, 95% interval, method, repetitions, seed |
+
+Reliability plots use ten uniform bins and are saved at 160 DPI. Game-bootstrap
+intervals summarize shot-weighted mean differences while resampling whole games.
+A negative difference favors the candidate; it does not establish a causal effect.
+
+Regression coverage is organized in `tests/test_data.py`, `test_models.py`,
+`test_evaluation.py`, `test_vision.py`, `test_agents.py`, `test_report.py`, and
+`test_annotate.py`; fixtures are in `tests/conftest.py`. Retain the corresponding
+checks when changing the function contracts above.
