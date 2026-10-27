@@ -37,6 +37,14 @@ uv sync --frozen --all-extras
 .venv/bin/nba-shots --help
 ```
 
+### Video Annotation Tool
+
+Use the interactive browser tool to scrub video clips, set release frames (`R`), run YOLO person detection, and click to tag shooter and contest defender:
+
+```bash
+uv run nba-shots annotate --manifest data/recent/manifest.csv --videos data/recent/videos
+```
+
 See [experiment instructions](docs/experiments.md) for video collection, release
 annotations, pose extraction, local LLMs, and comparisons on matching shots.
 
