@@ -2,7 +2,7 @@
 
 **Course:** CMSC473
 
-**Team:** Praharsh Nanduri, Kiran Manoj, Anuraag Tripathy, Prannav Chettipalayam, Varun Kota
+**Team:** Praharsh Nanduri, Kiran Manoj, Prannav Chettipalayam, Varun Kota
 
 **Status reviewed:** October 27, 2026
 
@@ -473,7 +473,7 @@ understood. Resolve poor coverage or revise a separate protocol before E2 traini
 
 **Status:** implemented and integration-tested; real inference pending.
 
-**Suggested leads:** Kiran and Anuraag.
+**Suggested lead:** Kiran.
 
 ### 4.1 Install and verify the selected model
 

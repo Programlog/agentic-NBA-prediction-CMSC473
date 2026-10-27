@@ -2,7 +2,7 @@
 
 ## Project: Agentic NBA Shot Success Prediction
 **Course**: CMSC473 – Capstone / Advanced Project  
-**Team Members**: Praharsh Nanduri, Kiran Manoj, Anuraag Tripathy, Prannav Chettipalayam, Varun Kota  
+**Team Members**: Praharsh Nanduri, Kiran Manoj, Prannav Chettipalayam, Varun Kota\
 **Repository**: [agentic-NBA-prediction-CMSC473](https://github.com/Programlog/agentic-NBA-prediction-CMSC473)  
 **Status**: Active Development  
 **Version**: 1.0.0  
