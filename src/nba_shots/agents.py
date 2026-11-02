@@ -26,7 +26,7 @@ from .common import (
 from .evaluation import write_scores
 from .models import validate_splits
 
-PROMPT_VERSION = "release-v1"
+PROMPT_VERSION = "release-v2"
 OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -40,10 +40,14 @@ CONDITIONS = {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
 INSTRUCTIONS = (
     "Estimate the probability an NBA field goal is made at the instant of release. "
     "Only use the supplied pre-release measurements; null means unknown. "
+    "The supplied measurements are enough to estimate: judge how each one makes this shot "
+    "easier or harder, and let p_make reflect that difficulty. "
     "Do not infer player identities, retrieve facts, or assume an outcome. "
-    "CV measurements are 2D image proxies, not physical release/entry angles or heights. "
+    "Any CV measurements are 2D image proxies, not physical release/entry angles or heights. "
     "Return JSON with p_make (a number between 0 and 1) and a short rationale."
 )
+# A sample probability here is copied into answers, so this stays free of numbers.
+EXPECTED_OUTPUT = "JSON with your numeric p_make estimate and a brief evidence rationale"
 
 
 def prompt_features(row: dict) -> dict:
@@ -206,7 +210,7 @@ def crewai_assessment(client: OllamaClient, role: str, features: dict, previous:
             },
             allow_nan=False,
         ),
-        expected_output='JSON: {"p_make": 0.5, "rationale": "brief evidence"}',
+        expected_output=EXPECTED_OUTPUT,
         agent=agent,
     )
     result = Crew(

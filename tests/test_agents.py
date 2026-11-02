@@ -1,9 +1,11 @@
 import importlib.util
+import re
 
 import numpy as np
 import pytest
 
 from nba_shots.agents import (
+    EXPECTED_OUTPUT,
     OllamaClient,
     crewai_assessment,
     parse_assessment,
@@ -160,3 +162,7 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(raw_shots, mon
     assert resumed["actual_calls_this_run"] == 0 and len(requests_seen) == 9
     with pytest.raises(ValueError, match="Experiment changed"):
         agents.run_agents(shots, tmp_path / "run", limit=2)
+
+
+def test_prompt_text_contains_no_sample_probability():
+    assert not re.search(r"\d", EXPECTED_OUTPUT)
