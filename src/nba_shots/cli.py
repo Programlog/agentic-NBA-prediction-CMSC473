@@ -89,7 +89,7 @@ def main(argv=None):
     agents.add_argument("--final", action="store_true")
     agents.add_argument("--limit", type=int, default=100)
     agents.add_argument("--seed", type=int, default=42)
-    agents.add_argument("--num-predict", type=int, default=192)
+    agents.add_argument("--num-predict", type=int, default=512)
     agents.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     report = sub.add_parser("report", help="Combine scores and predictions without retraining")
     report.add_argument("--predictions", type=Path, nargs="+", required=True)
