@@ -141,7 +141,7 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(raw_shots, mon
             payload = kwargs["json"]
             encoded = json.dumps(payload)
             assert "y_true" not in encoded and "game_id" not in encoded
-            assert payload["options"]["num_predict"] == 192
+            assert payload["options"]["num_predict"] == 512
             requests_seen.append(payload)
             return Response(
                 {

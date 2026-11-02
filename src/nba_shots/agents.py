@@ -85,7 +85,7 @@ def parse_assessment(text: str) -> dict:
 
 
 class OllamaClient:
-    def __init__(self, model, base_url="http://127.0.0.1:11434", seed=42, num_predict=192):
+    def __init__(self, model, base_url="http://127.0.0.1:11434", seed=42, num_predict=512):
         parsed = urlparse(base_url)
         if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
             raise ValueError("Only a local Ollama HTTP endpoint is allowed; no paid fallback")
@@ -270,7 +270,7 @@ def run_agents(
     final=False,
     limit=100,
     seed=42,
-    num_predict=192,
+    num_predict=512,
     base_url="http://127.0.0.1:11434",
 ) -> dict:
     if split == "test" and not final:

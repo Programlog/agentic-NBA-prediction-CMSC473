@@ -499,7 +499,7 @@ separate experiment from the eventual recent-video comparison.
 uv run --frozen --all-extras nba-shots predict-llm \
   --shots artifacts/baseline/prepared/shots.parquet \
   --output artifacts/kaggle_agents_pilot1 \
-  --model qwen3:4b-instruct --limit 5 --seed 42 --num-predict 192
+  --model qwen3:4b-instruct --limit 5 --seed 42 --num-predict 512
 ```
 
 | Condition | Calls per uncached shot | Information |
@@ -545,7 +545,7 @@ PY
 - [ ] Check the actual history payload. The default Kaggle baseline has no history
   columns; this pilot does not validate a populated player-history specialist.
 - [ ] Review token counts, latency, model digest, and all failure reasons. The
-  default per-call generation cap is 192 tokens; truncated JSON is a failure to
+  default per-call generation cap is 512 tokens; truncated JSON is a failure to
   resolve on validation data before freezing the inference specification.
 - [ ] Re-run the exact same command to check cache reuse. If all pilot conditions
   succeeded and inputs/spec are unchanged, the repeated run should make zero new
@@ -577,7 +577,7 @@ The CLI accepts limits 1-500; larger studies require a reviewed code/protocol ch
 uv run --frozen --all-extras nba-shots predict-llm \
   --shots artifacts/baseline/prepared/shots.parquet \
   --output artifacts/kaggle_agents_validation_run1 \
-  --model qwen3:4b-instruct --limit 100 --seed 42 --num-predict 192
+  --model qwen3:4b-instruct --limit 100 --seed 42 --num-predict 512
 
 uv run --frozen --all-extras nba-shots report \
   --predictions \
@@ -625,7 +625,7 @@ uv run --frozen --all-extras nba-shots predict-llm \
   --shots data/processed/video_cohort/shots.parquet \
   --cv data/video/cv_run1/cv_features.parquet \
   --output artifacts/video_agents_validation_run1 \
-  --model qwen3:4b-instruct --limit 100 --seed 42 --num-predict 192
+  --model qwen3:4b-instruct --limit 100 --seed 42 --num-predict 512
 ```
 
 - [ ] Preserve `experiment.json`, `selection.csv`, `predictions.csv`,
@@ -803,7 +803,7 @@ uv run --frozen --all-extras nba-shots predict-llm \
   --cv data/video/cv_run1/cv_features.parquet \
   --output artifacts/video_agents_test_run1 \
   --model qwen3:4b-instruct --split test --final \
-  --limit 100 --seed 42 --num-predict 192
+  --limit 100 --seed 42 --num-predict 512
 
 uv run --frozen --all-extras nba-shots report \
   --predictions \
@@ -1008,7 +1008,7 @@ CV fields plus shot distance, defender distance, dribbles, and touch time.
 
 `OllamaClient` checks `/api/tags` with a 10-second timeout and records the exact
 model digest. `/api/chat` uses a JSON output schema, `stream=false`, `think=false`,
-`temperature=0`, seed 42 by default, `num_ctx=8192`, and `num_predict=192` by default.
+`temperature=0`, seed 42 by default, `num_ctx=8192`, and `num_predict=512` by default.
 The generation limit must be between 32 and 1024; chat timeout is `(10,240)` seconds.
 Local hostnames are enforced and proxy environment settings are ignored via
 `session.trust_env=False`. The default port is 11434, not a hard-coded restriction

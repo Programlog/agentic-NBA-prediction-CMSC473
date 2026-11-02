@@ -147,7 +147,7 @@ Implemented in [`src/nba_shots/annotate.py`](file:///Users/prannavc/Desktop/473/
 ### 4.1 Local Inference Engine & Budget Controls
 - **Runtime**: Local Ollama server (`http://127.0.0.1:11434`), model `qwen3:4b-instruct`.
 - **Zero Cost / Zero Network Leakage**: Remote API endpoints are strictly rejected before network dispatch.
-- **Deterministic Hyperparameters**: `temperature = 0`, fixed seed (`42`), `num_predict = 192`.
+- **Deterministic Hyperparameters**: `temperature = 0`, fixed seed (`42`), `num_predict = 512`.
 - **Output JSON Schema**:
   ```json
   {
