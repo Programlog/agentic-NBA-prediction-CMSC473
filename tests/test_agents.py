@@ -7,6 +7,7 @@ import pytest
 from nba_shots.agents import (
     EXPECTED_OUTPUT,
     OllamaClient,
+    call_budget,
     crewai_assessment,
     parse_assessment,
     predict_condition,
@@ -58,6 +59,30 @@ def test_architecture_and_equal_call_control():
     assert calls[3][1] == features and len(calls[3][2]) == 3
     with pytest.raises(ValueError, match="allowlisted"):
         predict_condition({"y_true": 1}, "llm_single", assessor)
+
+
+def test_specialist_without_inputs_is_skipped_and_budget_matches():
+    calls = []
+
+    def assessor(role, features, previous):
+        calls.append((role, features.copy(), list(previous)))
+        return {"p_make": 0.5, "rationale": "Test evidence"}
+
+    for features in [
+        {"shot_distance": 20, "period": 1},
+        {"shot_distance": 20, "period": 1, "player_prior_make_rate": None},
+    ]:
+        calls.clear()
+        predict_condition(features, "llm_multi", assessor)
+        assert [c[0] for c in calls] == [
+            "Game context analyst",
+            "Shot mechanics and defense analyst",
+            "Shot probability aggregator",
+        ]
+        assert all(c[1] for c in calls) and len(calls[2][2]) == 2
+        calls.clear()
+        predict_condition(features, "llm_single_budget", assessor)
+        assert len(calls) == call_budget(features, "llm_multi") == 3
 
 
 @pytest.mark.parametrize(
@@ -156,10 +181,14 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(raw_shots, mon
     raw_shots.to_csv(source, index=False)
     shots = prepare_csv(source, tmp_path / "prepared", load_config())
     result = agents.run_agents(shots, tmp_path / "run", limit=1)
-    assert result["actual_calls_this_run"] == 9 and len(requests_seen) == 9
+    # Default config has no player history, so the history specialist is skipped: 1 + 3 + 3.
+    assert result["actual_calls_this_run"] == 7 and len(requests_seen) == 7
     assert all(m["coverage"] == 1 for m in result["metrics"])
+    sent = [m["content"] for r in requests_seen for m in r["messages"]]
+    assert any('"features": {"' in text for text in sent)
+    assert not any('"features": {}' in text for text in sent)
     resumed = agents.run_agents(shots, tmp_path / "run", limit=1)
-    assert resumed["actual_calls_this_run"] == 0 and len(requests_seen) == 9
+    assert resumed["actual_calls_this_run"] == 0 and len(requests_seen) == 7
     with pytest.raises(ValueError, match="Experiment changed"):
         agents.run_agents(shots, tmp_path / "run", limit=2)
 

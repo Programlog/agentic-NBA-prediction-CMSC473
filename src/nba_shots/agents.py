@@ -36,6 +36,7 @@ OUTPUT_SCHEMA = {
     "required": ["p_make", "rationale"],
     "additionalProperties": False,
 }
+# Maximum calls per shot; call_budget drops a specialist (and a budget call) without inputs.
 CONDITIONS = {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
 INSTRUCTIONS = (
     "Estimate the probability an NBA field goal is made at the instant of release. "
@@ -225,6 +226,28 @@ def crewai_assessment(client: OllamaClient, role: str, features: dict, previous:
     return parse_assessment(result.raw)
 
 
+def specialist_inputs(features: dict) -> list[tuple[str, dict]]:
+    """Specialists with no known inputs are skipped; an empty prompt invites a guessed prior."""
+    mechanics = CV_FEATURES | {"shot_distance", "defender_distance", "dribbles", "touch_time"}
+    specialists = []
+    for role, keys in [
+        ("Game context analyst", ALLOWED_FEATURES - mechanics - HISTORY_FEATURES),
+        ("Player history analyst", HISTORY_FEATURES),
+        ("Shot mechanics and defense analyst", mechanics),
+    ]:
+        subset = {k: v for k, v in features.items() if k in keys}
+        if any(v is not None for v in subset.values()):
+            specialists.append((role, subset))
+    return specialists
+
+
+def call_budget(features: dict, condition: str) -> int:
+    """llm_single_budget matches the calls llm_multi actually makes for the same shot."""
+    if condition not in CONDITIONS:
+        raise ValueError(f"Unknown agent condition: {condition}")
+    return 1 if condition == "llm_single" else len(specialist_inputs(features)) + 1
+
+
 def predict_condition(features: dict, condition: str, assessor) -> dict:
     if set(features) - ALLOWED_FEATURES:
         raise ValueError("Agent inputs must contain only allowlisted pre-release features")
@@ -232,20 +255,15 @@ def predict_condition(features: dict, condition: str, assessor) -> dict:
         return assessor("Shot probability analyst", features, [])
     if condition == "llm_single_budget":
         previous = []
-        for _ in range(4):
+        for _ in range(call_budget(features, condition)):
             result = assessor("Shot probability analyst", features, previous)
             previous.append(result)
         return result
     if condition == "llm_multi":
-        mechanics = CV_FEATURES | {"shot_distance", "defender_distance", "dribbles", "touch_time"}
-        opinions = []
-        for role, keys in [
-            ("Game context analyst", ALLOWED_FEATURES - mechanics - HISTORY_FEATURES),
-            ("Player history analyst", HISTORY_FEATURES),
-            ("Shot mechanics and defense analyst", mechanics),
-        ]:
-            subset = {k: v for k, v in features.items() if k in keys}
-            opinions.append({"role": role, **assessor(role, subset, [])})
+        opinions = [
+            {"role": role, **assessor(role, subset, [])}
+            for role, subset in specialist_inputs(features)
+        ]
         return assessor("Shot probability aggregator", features, opinions)
     raise ValueError(f"Unknown agent condition: {condition}")
 
@@ -320,7 +338,8 @@ def run_agents(
     predictions = []
     for row in selected.to_dict("records"):
         features = prompt_features(row)
-        for condition, expected_calls in CONDITIONS.items():
+        for condition in CONDITIONS:
+            expected_calls = call_budget(features, condition)
             tick = time.perf_counter()
             cache_input = {"spec": spec, "features": features, "condition": condition}
             key = hashlib.sha256(json.dumps(cache_input, sort_keys=True).encode()).hexdigest()
