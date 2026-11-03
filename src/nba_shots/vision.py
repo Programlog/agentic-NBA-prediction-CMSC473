@@ -186,6 +186,10 @@ def prepare_cohort(shots_path, manifest_path, output, config) -> dict:
     return {"shots": str(output / "shots.parquet"), "registered_shots": len(cohort)}
 
 
+# NBA serves this "VIDEO NOT AVAILABLE" clip, identical at every resolution, for blocked plays.
+PLACEHOLDER_SHA256 = {"afcfdc3190903e3fc13c56c054fa40c39d1775af4a53d40ce040d6a25ea3ad3e"}
+
+
 def _video_url(value):
     if isinstance(value, dict):
         for name in ["lurl", "murl", "surl"]:
@@ -237,11 +241,15 @@ def fetch_videos(manifest_path, output, limit=20) -> dict:
                                 raise ValueError("Clip exceeded 100 MiB limit")
                             stream.write(block)
                 partial.rename(clip)
+            digest = sha256(clip)
+            if digest in PLACEHOLDER_SHA256:
+                clip.unlink()
+                raise ValueError("NBA returned its VIDEO NOT AVAILABLE placeholder clip")
             record.update(
                 {
                     "status": "downloaded_needs_manual_review",
                     "clip_path": str(clip),
-                    "sha256": sha256(clip),
+                    "sha256": digest,
                 }
             )
             counts["downloaded_or_cached"] += 1

@@ -294,6 +294,20 @@ valid play metadata but empty media URLs. This is an unresolved source-availabil
 problem, not proof that dependencies failed. An alternate UUID probe produced a
 placeholder video. Repeating the same failed request is not a collection strategy.
 
+A November 3, 2026 probe confirmed that the official route yields no usable footage:
+
+| Probe | Result |
+|---|---|
+| `VideoEventsAsset`, 9 shots over 3 Lakers games per season | 2025-26: 0/9 URLs; 2024-25: 2/9; 2023-24: 1/9 |
+| URLs that were returned | All 869,898 bytes, the 15-second `VIDEO NOT AVAILABLE` placeholder |
+| `VideoDetailsAsset` (player/game playlist) | Playlist metadata returned; 0 of 36 media URLs nonempty |
+
+The placeholder is byte-identical at 320x180, 960x540 and 1280x720 (SHA-256
+`afcfdc31…ea3ad3e`). `fetch-videos` now deletes a matching download and logs it as an
+error instead of `downloaded_needs_manual_review`. E2 needs a different clip source
+(for example manually collected broadcast clips recorded through `clip_path`); the
+NBA stats endpoints are not one.
+
 A small diagnostic retry is appropriate only when checking changed availability
 or a changed retrieval method:
 
