@@ -522,8 +522,12 @@ uv run --frozen --all-extras nba-shots predict-llm \
 | `llm_single_budget` | 4 | Same analyst, prior assessments included at each step |
 | `llm_multi` | 4 | Context specialist, history specialist, mechanics/defense specialist, then aggregator |
 
-A fully successful uncached five-shot run makes **45 calls** and writes **15
-prediction rows**. Four calls match the call budget, not necessarily tokens,
+A specialist whose inputs are all missing is skipped rather than prompted with `{}`
+(an empty prompt produced a guessed 0.8 in pilot 3), and `llm_single_budget` drops
+the same number of calls. Without player history, both conditions make **3** calls.
+
+A fully successful uncached five-shot run with history makes **45 calls** (35
+without) and writes **15 prediction rows**. Four calls match the call budget, not necessarily tokens,
 latency, or energy. Report those observed costs instead of claiming equal compute.
 The current adapter uses one-agent CrewAI executions for each specialist step and
 passes structured outputs to the next step; framework behavior must be checked in
@@ -543,7 +547,7 @@ assert not pred.duplicated(['model', 'shot_id']).any()
 print(pred.groupby('model').agg(total=('shot_id', 'size'), successful=('status', lambda s: s.eq('ok').sum())))
 good = pred.loc[pred.status.eq('ok')]
 assert good.p_make.between(0, 1).all()
-expected = {'llm_single': 1, 'llm_single_budget': 4, 'llm_multi': 4}
+expected = {'llm_single': 1, 'llm_single_budget': 4, 'llm_multi': 4}  # 3, 3 without history
 for name, calls in expected.items():
     fresh = good.loc[good.model.eq(name) & ~good.cached.astype(bool)]
     assert fresh.calls.eq(calls).all(), name
