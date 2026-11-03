@@ -1,12 +1,16 @@
+import hashlib
+import json
 from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from nba_shots import vision
 from nba_shots.common import load_config
 from nba_shots.data import assign_splits, normalize_kaggle
 from nba_shots.vision import (
+    fetch_videos,
     make_manifest,
     match_box,
     normalize_recent,
@@ -119,6 +123,56 @@ def test_recent_source_does_not_invent_unavailable_tracking_fields():
     assert shots.iloc[0].location == "H" and shots.iloc[0].shot_value == 3
     assert shots.defender_distance.isna().all() and shots.shot_clock.isna().all()
     assert "SHOT_MADE_FLAG" not in shots
+
+
+def test_fetch_videos_rejects_nba_placeholder_clips(tmp_path, monkeypatch):
+    from nba_api.stats.endpoints import videoeventsasset
+
+    clips = {"1": b"placeholder", "2": b"real footage"}
+
+    class Asset:
+        def __init__(self, game_id, game_event_id, timeout):
+            self.event = game_event_id
+
+        def get_dict(self):
+            url = f"https://videos.nba.com/{self.event}.mp4"
+            return {"resultSets": {"Meta": {"videoUrls": [{"murl": url}]}}}
+
+    class Download:
+        def __init__(self, url, **_):
+            self.body = clips[url.rsplit("/", 1)[1].removesuffix(".mp4")]
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, _):
+            yield self.body
+
+    monkeypatch.setattr(videoeventsasset, "VideoEventsAsset", Asset)
+    monkeypatch.setattr(vision.requests, "get", Download)
+    monkeypatch.setattr(vision.time, "sleep", lambda _: None)
+    placeholder = hashlib.sha256(clips["1"]).hexdigest()
+    monkeypatch.setattr(vision, "PLACEHOLDER_SHA256", {placeholder})
+    manifest = tmp_path / "manifest.csv"
+    pd.DataFrame(
+        {
+            "shot_id": ["nba:0022400015:1", "nba:0022400015:2"],
+            "game_id": "0022400015",
+            "game_event_id": ["1", "2"],
+        }
+    ).to_csv(manifest, index=False)
+    result = fetch_videos(manifest, tmp_path / "clips")
+    assert result["downloaded_or_cached"] == 1 and result["failed"] == 1
+    assert not (tmp_path / "clips" / "nba_0022400015_1.mp4").exists()
+    assert (tmp_path / "clips" / "nba_0022400015_2.mp4").exists()
+    log = [json.loads(line) for line in (tmp_path / "clips" / "retrieval.jsonl").open()]
+    assert "placeholder" in log[0]["error"] and log[1]["status"].startswith("downloaded")
 
 
 def test_cv_comparison_preserves_every_registered_shot(raw_shots, tmp_path):
