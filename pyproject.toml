@@ -19,7 +19,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-vision = ["ultralytics>=8.3,<9", "opencv-python>=4.10,<5", "nba_api>=1.10,<2"]
+vision = [
+    "ultralytics>=8.3,<9",
+    "opencv-python>=4.10,<5",
+    "nba_api>=1.10,<2",
+    "huggingface_hub>=1.0,<3",
+]
 agents = ["crewai[litellm]>=1.0,<2", "pydantic>=2.8,<3"]
 
 [dependency-groups]

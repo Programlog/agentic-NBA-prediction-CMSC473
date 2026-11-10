@@ -47,7 +47,21 @@ CV_FEATURES = frozenset(
         "defender_wrist_height_torso",
     }
 )
-ALLOWED_FEATURES = TABULAR_FEATURES | HISTORY_FEATURES | CV_FEATURES
+# BasketEvent player/ball boxes at release, in units of the shooter's box height (bh) so
+# that camera zoom cancels out. Available for every labeled clip, with or without video.
+BOX_FEATURES = frozenset(
+    {
+        "release_height_bh",
+        "jump_bh",
+        "ball_rise_bhps",
+        "shooter_speed_bhps",
+        "defender_distance_bh",
+        "defenders_within_1bh",
+        "defender_closing_bhps",
+    }
+)
+EXTRA_FEATURES = {"cv": CV_FEATURES, "boxes": BOX_FEATURES}
+ALLOWED_FEATURES = TABULAR_FEATURES | HISTORY_FEATURES | CV_FEATURES | BOX_FEATURES
 PREDICTION_COLUMNS = ["shot_id", "game_id", "cohort", "split", "model", "y_true", "p_make"]
 
 

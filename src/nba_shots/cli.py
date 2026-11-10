@@ -80,6 +80,17 @@ def main(argv=None):
     annotate.add_argument(
         "--no-browser", action="store_true", help="Do not automatically launch browser"
     )
+    be_collect = sub.add_parser(
+        "collect-basketevent", help="Match BasketEvent shot clips to NBA records, game by game"
+    )
+    be_collect.add_argument("--output", type=Path, required=True)
+    be_collect.add_argument("--limit", type=int)
+    be_prepare = sub.add_parser(
+        "prepare-basketevent", help="Split collected BasketEvent shots and save box features"
+    )
+    be_prepare.add_argument("--collection", type=Path, required=True)
+    be_prepare.add_argument("--output", type=Path, required=True)
+    be_prepare.add_argument("--config", type=Path)
     agents = sub.add_parser("predict-llm", help="Run a free local Ollama/CrewAI comparison")
     agents.add_argument("--shots", type=Path, required=True)
     agents.add_argument("--cv", type=Path)
@@ -185,6 +196,14 @@ def execute(args):
             open_browser=not args.no_browser,
         )
         return {"status": "completed"}
+    if args.command in {"collect-basketevent", "prepare-basketevent"}:
+        from . import basketevent
+
+        if args.command == "collect-basketevent":
+            return basketevent.collect_basketevent(args.output, args.limit)
+        return basketevent.prepare_basketevent(
+            args.collection, args.output, load_config(args.config)
+        )
     if args.command == "predict-llm":
         from .agents import run_agents
 

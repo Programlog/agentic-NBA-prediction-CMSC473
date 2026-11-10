@@ -13,8 +13,10 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import brier_score_loss
 
-from .common import CV_FEATURES, sha256, write_json
+from .common import EXTRA_FEATURES, sha256, write_json
 from .models import validate_splits
+
+MODELS = ["xgboost", *(f"xgboost_{kind}" for kind in EXTRA_FEATURES)]
 
 
 def permutation_brier_importance(
@@ -63,8 +65,8 @@ def analyze_saved_model(
     model: str = "xgboost", repeats: int = 10, seed: int = 42,
 ) -> pd.DataFrame:
     """Read saved baseline run artifacts and analyze *validation* shots only."""
-    if model not in {"xgboost", "xgboost_cv"}:
-        raise ValueError("Only xgboost and xgboost_cv are supported")
+    if model not in MODELS:
+        raise ValueError(f"Only {', '.join(MODELS)} are supported")
     run_dir, shots_path, output_dir = map(Path, (run_dir, shots_path, output_dir))
     if output_dir.exists() and any(output_dir.iterdir()):
         raise ValueError("Output directory is not empty; choose a new location")
@@ -77,7 +79,8 @@ def analyze_saved_model(
     shots = pd.read_parquet(shots_path)
     validate_splits(shots)
 
-    if model == "xgboost_cv":
+    if model != "xgboost":
+        extra = sorted(EXTRA_FEATURES[model.removeprefix("xgboost_")])
         if not metadata.get("cv_path"):
             raise ValueError("No CV feature table")
         cv_path = Path(metadata["cv_path"])
@@ -87,10 +90,10 @@ def analyze_saved_model(
         if ("shot_id" not in cv or cv.shot_id.duplicated().any()
                 or set(cv.shot_id) != set(shots.shot_id)):
             raise ValueError("CV rows have to match the entire registered shot cohort")
-        if missing := CV_FEATURES - set(cv.columns):
+        if missing := set(extra) - set(cv.columns):
             raise ValueError(f"Missing CV features: {sorted(missing)}")
         shots = shots.merge(
-            cv[["shot_id", *sorted(CV_FEATURES)]], on="shot_id",
+            cv[["shot_id", *extra]], on="shot_id",
             how="left", validate="one_to_one",
         )
 
@@ -139,7 +142,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--run", type=Path, required=True, help="Saved baseline models directory")
     parser.add_argument("--shots", type=Path, required=True, help="Prepared shots.parquet")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--model", choices=["xgboost", "xgboost_cv"], default="xgboost")
+    parser.add_argument("--model", choices=MODELS, default="xgboost")
     parser.add_argument("--repeats", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args(argv)

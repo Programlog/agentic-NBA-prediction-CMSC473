@@ -18,7 +18,7 @@ from xgboost import XGBClassifier
 
 from .common import (
     ALLOWED_FEATURES,
-    CV_FEATURES,
+    EXTRA_FEATURES,
     HISTORY_FEATURES,
     environment,
     sha256,
@@ -29,21 +29,21 @@ from .data import validate_shots
 from .evaluation import write_scores
 
 
-def feature_columns(config: dict, include_cv=False) -> tuple[list[str], list[str]]:
+def feature_columns(config: dict, extra: str | None = None) -> tuple[list[str], list[str]]:
     numeric = list(config["numeric_features"])
     categorical = list(config["categorical_features"])
     if config["include_player_history"]:
         numeric += sorted(HISTORY_FEATURES)
-    if include_cv:
-        numeric += sorted(CV_FEATURES)
+    if extra:
+        numeric += sorted(EXTRA_FEATURES[extra])
     features = numeric + categorical
     if not features or len(set(features)) != len(features) or set(features) - ALLOWED_FEATURES:
         raise ValueError("Features must be unique members of the pre-release allowlist")
     return numeric, categorical
 
 
-def make_pipeline(model: str, config: dict, include_cv=False) -> Pipeline:
-    numeric, categorical = feature_columns(config, include_cv)
+def make_pipeline(model: str, config: dict, extra: str | None = None) -> Pipeline:
+    numeric, categorical = feature_columns(config, extra)
     numeric_steps = [
         ("impute", SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True))
     ]
@@ -72,7 +72,7 @@ def make_pipeline(model: str, config: dict, include_cv=False) -> Pipeline:
         estimator = DummyClassifier(strategy="prior", random_state=config["seed"])
     elif model == "logistic_regression":
         estimator = LogisticRegression(max_iter=2000, random_state=config["seed"])
-    elif model in {"xgboost", "xgboost_cv"}:
+    elif model == "xgboost" or model.removeprefix("xgboost_") in EXTRA_FEATURES:
         estimator = XGBClassifier(
             **config["xgboost"],
             objective="binary:logistic",
@@ -103,6 +103,15 @@ def validate_splits(shots: pd.DataFrame) -> None:
         raise ValueError("Splits must be strictly chronological")
 
 
+def extra_kind(table: pd.DataFrame) -> str:
+    """Which extra feature set (pose or detection boxes) a feature table provides."""
+    kinds = [kind for kind, names in EXTRA_FEATURES.items() if names <= set(table)]
+    if len(kinds) != 1:
+        expected = {kind: sorted(names) for kind, names in EXTRA_FEATURES.items()}
+        raise ValueError(f"Feature table must contain exactly one feature set: {expected}")
+    return kinds[0]
+
+
 def prediction_frame(rows: pd.DataFrame, model: str, probabilities) -> pd.DataFrame:
     result = rows[["shot_id", "game_id", "cohort", "split", "y_true"]].copy()
     result["model"] = model
@@ -127,12 +136,14 @@ def train_baselines(
             raise ValueError("CV table requires unique shot IDs")
         if set(shots["shot_id"]) != set(cv["shot_id"]):
             raise ValueError("CV table must cover the entire registered cohort, including failures")
-        if missing := CV_FEATURES - set(cv):
-            raise ValueError(f"Missing CV features: {sorted(missing)}")
+        kind = extra_kind(cv)
         shots = shots.merge(
-            cv[["shot_id", *sorted(CV_FEATURES)]], on="shot_id", how="left", validate="one_to_one"
+            cv[["shot_id", *sorted(EXTRA_FEATURES[kind])]],
+            on="shot_id",
+            how="left",
+            validate="one_to_one",
         )
-        models.append("xgboost_cv")
+        models.append(f"xgboost_{kind}")
     train = shots.loc[shots["split"].eq("train")]
     validation = shots.loc[shots["split"].eq("validation")]
     if train["y_true"].nunique() != 2:
@@ -152,12 +163,12 @@ def train_baselines(
     predictions = []
     for name in models:
         tick = time.perf_counter()
-        use_cv = name == "xgboost_cv"
-        numeric, categorical = feature_columns(config, include_cv=use_cv)
+        extra = name.removeprefix("xgboost_") if name.startswith("xgboost_") else None
+        numeric, categorical = feature_columns(config, extra)
         features = numeric + categorical
         if missing := set(features) - set(shots):
             raise ValueError(f"Missing prepared features: {sorted(missing)}")
-        pipeline = make_pipeline(name, config, include_cv=use_cv)
+        pipeline = make_pipeline(name, config, extra)
         pipeline.fit(train[features], train["y_true"])
         p = pipeline.predict_proba(validation[features])[:, 1]
         joblib.dump(
@@ -199,8 +210,9 @@ def evaluate_run(
         if sha256(cv_path) != metadata["cv_sha256"]:
             raise ValueError("CV features changed since training")
         cv = pd.read_parquet(cv_path)
+        names = sorted(EXTRA_FEATURES[extra_kind(cv)])
         shots = shots.merge(
-            cv[["shot_id", *sorted(CV_FEATURES)]], on="shot_id", how="left", validate="one_to_one"
+            cv[["shot_id", *names]], on="shot_id", how="left", validate="one_to_one"
         )
     rows = shots.loc[shots["split"].eq(split)]
     outputs = []

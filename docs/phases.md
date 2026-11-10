@@ -341,7 +341,52 @@ Choose and record one route:
 - [ ] If no usable source is available, label E2 blocked and complete the tabular
   and agent tracks. Do not replace missing CV results with synthetic results.
 
-### 2.6 Acquisition/review log
+### 2.6 BasketEvent: the single data source (chosen)
+
+All experiments (E1-E4) use one cohort: 2025-26 NBA shots that have a clip in
+[BasketEvent](https://zhangyu2003.github.io/BasketEvent/) (`zaywas/BasketEvent` on Hugging
+Face, revision pinned in `source.json`). Each clip's JSON has per-frame `[x, y, w, h]`
+boxes for players (with jersey colour) and the ball, produced by the authors' video
+models, and the play-by-play event attached to the shooter. Labels are automatic; only
+the authors' test split was hand-checked, and names are unreliable (one clip has three
+players labeled "L. Ball").
+
+```bash
+uv run --frozen --all-extras nba-shots collect-basketevent --output data/basketevent_labels
+uv run --frozen --all-extras nba-shots prepare-basketevent \
+  --collection data/basketevent_labels --output data/processed/basketevent_cohort
+uv run --frozen --all-extras nba-shots train \
+  --shots data/processed/basketevent_cohort/shots.parquet \
+  --cv data/processed/basketevent_cohort/box_features.parquet \
+  --output artifacts/basketevent_run1
+```
+
+- **Collection** downloads one game's label JSON at a time, keeps the shot rows and
+  deletes the JSON (5.5 GB in total). Reruns skip finished games.
+- **Matching:** BasketEvent events use play-by-play V3 fields, so each is matched to
+  exactly one field goal by period, clock and description (`PlayByPlayV3` actionNumber
+  equals `ShotChartDetail` GAME_EVENT_ID). Ambiguous keys stay unmatched. A shot in
+  several clips keeps one row, preferring a clip where release was found.
+- **Release** is the last frame with the ball centre inside the shooter's box (widened
+  by a quarter box) that is followed by the ball climbing 0.3 box heights within 7
+  frames. Checked visually on a three-pointer, a layup and a floater.
+- **Box features** (`xgboost_boxes`) are measured at release in shooter box heights (bh),
+  which cancels camera zoom: ball height above the feet, jump (feet rise vs 0.4-0.8 s
+  earlier), ball rise speed over the first 4 flight frames, nearest-opponent distance,
+  opponents within 1 bh, defender closing speed and shooter speed over the 5 frames
+  before release. Shooter speed subtracts the median motion of the other players so
+  camera pans do not count. Opponents are players with the other jersey colour.
+- **No outcome filtering:** clips with no ball, no release, several shot events or an
+  ambiguous shooter stay in the cohort with missing features. `audit.json` reports the
+  match rate by made/missed and the release-found rate by outcome; check both.
+- **Pose** (`extract-cv`) needs pixels. Videos exist only for the authors' valid/test
+  games so far; `box_features.parquet` keeps `has_video`, `release_frame`, `shooter_box`
+  and `defender_box` so pose can be extracted for those clips without annotation.
+- Splits are the project's chronological game splits, not the authors' train/valid/test
+  (recorded per shot as `basketevent_split`).
+- Trial (3 games): 295/295 shot events matched, release found for 90-97%.
+
+### 2.7 Acquisition/review log
 
 Create `data/video/clip_review.csv` (or the equivalent new-cohort path) as a manual
 review artifact. This is a planned artifact, not an existing CLI-generated file.

@@ -61,6 +61,7 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
         lines.append("")
         for base, candidate in [
             ("xgboost", "xgboost_cv"),
+            ("xgboost", "xgboost_boxes"),
             ("llm_single", "llm_multi"),
             ("llm_single_budget", "llm_multi"),
         ]:
