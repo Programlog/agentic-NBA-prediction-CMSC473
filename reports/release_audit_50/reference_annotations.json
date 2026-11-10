@@ -1,0 +1,1227 @@
+[
+  {
+    "shot_id": "nba:0022500021:128",
+    "status": "clear",
+    "release_frame": 119,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      540,
+      190,
+      638,
+      386
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      605,
+      195,
+      718,
+      411
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500021_128/frame_00119.png"
+    ],
+    "notes": "White driver releases floater; red 0 nearest by feet, not red 11.",
+    "identity_frame": 119
+  },
+  {
+    "shot_id": "nba:0022500004:140",
+    "status": "clear",
+    "release_frame": 41,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      350,
+      170,
+      430,
+      388
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      355,
+      180,
+      445,
+      320
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500004_140/frame_00041.png"
+    ],
+    "notes": "Black 24 pull-up. Nearest opponent is the trailing white player, not the front contest.",
+    "identity_frame": 41
+  },
+  {
+    "shot_id": "nba:0022500003:228",
+    "status": "uncertain",
+    "release_frame": null,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      765,
+      220,
+      845,
+      405
+    ],
+    "defender_status": "uncertain",
+    "defender_box": null,
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_228/frame_00025.png"
+    ],
+    "notes": "White 25 layup through two red defenders; hands and ball overlap, preventing a reliable first-free frame.",
+    "identity_frame": 25
+  },
+  {
+    "shot_id": "nba:0022500022:301",
+    "status": "clear",
+    "release_frame": 162,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      615,
+      105,
+      705,
+      345
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      585,
+      130,
+      660,
+      385
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500022_301/frame_00162.png"
+    ],
+    "notes": "White 44 jumper; black 22 nearest opponent.",
+    "identity_frame": 162
+  },
+  {
+    "shot_id": "nba:0022500006:69",
+    "status": "clear",
+    "release_frame": 178,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      375,
+      175,
+      445,
+      360
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      460,
+      195,
+      525,
+      355
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_69/frame_00178.png"
+    ],
+    "notes": "Black shooter pull-up on left side of lane; white 0 nearest opponent.",
+    "identity_frame": 178
+  },
+  {
+    "shot_id": "nba:0022500006:453",
+    "status": "clear",
+    "release_frame": 111,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      1000,
+      330,
+      1090,
+      550
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      775,
+      285,
+      900,
+      515
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_453/frame_00111.png"
+    ],
+    "notes": "Uncontested black 27 perimeter jumper; nearest white closing guard.",
+    "identity_frame": 111
+  },
+  {
+    "shot_id": "nba:0022500006:280",
+    "status": "clear",
+    "release_frame": 137,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      215,
+      245,
+      300,
+      485
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      325,
+      260,
+      435,
+      495
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_280/frame_00137.png"
+    ],
+    "notes": "Black 15 set three; white 23 nearest opponent.",
+    "identity_frame": 137
+  },
+  {
+    "shot_id": "nba:0022500004:319",
+    "status": "clear",
+    "release_frame": 241,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      625,
+      145,
+      730,
+      390
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      540,
+      170,
+      650,
+      400
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500004_319/frame_00241.png"
+    ],
+    "notes": "Black 40 baseline jumper after drive-and-kick; white 5 nearest. Earlier drive was a pass, not the target attempt.",
+    "identity_frame": 241
+  },
+  {
+    "shot_id": "nba:0022500022:24",
+    "status": "clear",
+    "release_frame": 151,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      175,
+      190,
+      255,
+      440
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      255,
+      225,
+      350,
+      455
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500022_24/frame_00151.png"
+    ],
+    "notes": "Black 4 left-wing jumper; white 3 nearest opponent.",
+    "identity_frame": 151
+  },
+  {
+    "shot_id": "nba:0022500003:82",
+    "status": "clear",
+    "release_frame": 32,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      370,
+      140,
+      450,
+      335
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      540,
+      240,
+      630,
+      400
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_82/frame_00032.png"
+    ],
+    "notes": "White 11 first perimeter attempt; red 20 nearest. Later offensive-rebound attempt is not the target.",
+    "identity_frame": 32
+  },
+  {
+    "shot_id": "nba:0022500021:430",
+    "status": "clear",
+    "release_frame": 142,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      500,
+      200,
+      595,
+      410
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      465,
+      225,
+      550,
+      415
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500021_430/frame_00142.png"
+    ],
+    "notes": "Red 0 floater; nearest opponent is trailing white guard.",
+    "identity_frame": 142
+  },
+  {
+    "shot_id": "nba:0022500022:30",
+    "status": "clear",
+    "release_frame": 136,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      300,
+      260,
+      385,
+      530
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      235,
+      270,
+      320,
+      480
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500022_30/frame_00136.png"
+    ],
+    "notes": "Black 2 catch-and-shoot jumper; white 3 nearest.",
+    "identity_frame": 136
+  },
+  {
+    "shot_id": "nba:0022500019:529",
+    "status": "clear",
+    "release_frame": 151,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      640,
+      175,
+      715,
+      380
+    ],
+    "defender_status": "uncertain",
+    "defender_box": null,
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500019_529/frame_00151.png"
+    ],
+    "notes": "White 8 close layup; separation visible near rim, but nearest feet ambiguous between yellow 23 and yellow 77.",
+    "identity_frame": 151
+  },
+  {
+    "shot_id": "nba:0022500003:618",
+    "status": "clear",
+    "release_frame": 141,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      650,
+      200,
+      760,
+      450
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      645,
+      235,
+      725,
+      435
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_618/frame_00141.png"
+    ],
+    "notes": "Red 45 runner; trailing white 2 nearest by feet rather than white 25 contesting from front.",
+    "identity_frame": 141
+  },
+  {
+    "shot_id": "nba:0022500020:362",
+    "status": "uncertain",
+    "release_frame": null,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      515,
+      300,
+      595,
+      510
+    ],
+    "defender_status": "uncertain",
+    "defender_box": null,
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500020_362/frame_00174.png"
+    ],
+    "notes": "Yellow 43 drive among white 3 and white 1; hand-ball separation and closest feet obscured by overlapping bodies.",
+    "identity_frame": 174
+  },
+  {
+    "shot_id": "nba:0022500008:593",
+    "status": "clear",
+    "release_frame": 149,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      530,
+      165,
+      620,
+      365
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      530,
+      260,
+      620,
+      440
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500008_593/frame_00149.png"
+    ],
+    "notes": "White 8 corner jumper; black 10 nearest opponent.",
+    "identity_frame": 149
+  },
+  {
+    "shot_id": "nba:0022500003:265",
+    "status": "uncertain",
+    "release_frame": null,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      470,
+      225,
+      535,
+      450
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      515,
+      220,
+      590,
+      445
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_265/frame_00100.png"
+    ],
+    "notes": "Red 22 putback/tip under rim. White 25 overlaps both ball and shooting hand, so separation cannot be pinpointed.",
+    "identity_frame": 100
+  },
+  {
+    "shot_id": "nba:0022500003:26",
+    "status": "clear",
+    "release_frame": 87,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      665,
+      210,
+      755,
+      440
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      610,
+      230,
+      695,
+      445
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_26/frame_00087.png"
+    ],
+    "notes": "Red 4 short jumper; white 32 nearest by feet.",
+    "identity_frame": 87
+  },
+  {
+    "shot_id": "nba:0022500003:665",
+    "status": "clear",
+    "release_frame": 122,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      325,
+      150,
+      410,
+      335
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      370,
+      165,
+      455,
+      350
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_665/frame_00122.png"
+    ],
+    "notes": "Red 5 perimeter jumper; white 2 closeout nearest.",
+    "identity_frame": 122
+  },
+  {
+    "shot_id": "nba:0022500006:252",
+    "status": "clear",
+    "release_frame": 129,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      985,
+      310,
+      1080,
+      555
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      600,
+      260,
+      700,
+      470
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_252/frame_00129.png"
+    ],
+    "notes": "White 0 open perimeter jumper; nearest opponent is black guard near free-throw area, not white teammate behind shooter.",
+    "identity_frame": 129
+  },
+  {
+    "shot_id": "nba:0022500006:357",
+    "status": "clear",
+    "release_frame": 53,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      535,
+      125,
+      620,
+      405
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      540,
+      190,
+      650,
+      445
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_357/frame_00053.png"
+    ],
+    "notes": "White 23 interior jumper over black 15; black 15 nearest feet.",
+    "identity_frame": 53
+  },
+  {
+    "shot_id": "nba:0022500019:194",
+    "status": "clear",
+    "release_frame": 115,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      440,
+      225,
+      530,
+      500
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      525,
+      240,
+      630,
+      520
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500019_194/frame_00115.png"
+    ],
+    "notes": "Yellow 28 turn-around jumper; white 11 nearest.",
+    "identity_frame": 115
+  },
+  {
+    "shot_id": "nba:0022500020:433",
+    "status": "clear",
+    "release_frame": 162,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      1080,
+      395,
+      1175,
+      680
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      1005,
+      405,
+      1120,
+      680
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500020_433/frame_00162.png"
+    ],
+    "notes": "Yellow 26 right-corner jumper; white closing guard nearest.",
+    "identity_frame": 162
+  },
+  {
+    "shot_id": "nba:0022500003:234",
+    "status": "clear",
+    "release_frame": 126,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      285,
+      310,
+      375,
+      570
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      330,
+      290,
+      415,
+      535
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_234/frame_00126.png"
+    ],
+    "notes": "Red 22 corner jumper; white 32 closeout nearest.",
+    "identity_frame": 126
+  },
+  {
+    "shot_id": "nba:0022500019:80",
+    "status": "clear",
+    "release_frame": 174,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      730,
+      160,
+      820,
+      390
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      670,
+      200,
+      750,
+      430
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500019_80/frame_00174.png"
+    ],
+    "notes": "White 30 pull-up; yellow 28 nearest opponent.",
+    "identity_frame": 174
+  },
+  {
+    "shot_id": "nba:0022500006:110",
+    "status": "clear",
+    "release_frame": 76,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      250,
+      240,
+      325,
+      480
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      360,
+      280,
+      470,
+      500
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_110/frame_00076.png"
+    ],
+    "notes": "Black 32 left-wing jumper; white 0 closest opponent.",
+    "identity_frame": 76
+  },
+  {
+    "shot_id": "nba:0022500021:80",
+    "status": "clear",
+    "release_frame": 115,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      660,
+      140,
+      750,
+      400
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      620,
+      195,
+      705,
+      415
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500021_80/frame_00115.png"
+    ],
+    "notes": "White 7 running floater; trailing red 77 closest by feet.",
+    "identity_frame": 115
+  },
+  {
+    "shot_id": "nba:0022500021:217",
+    "status": "clear",
+    "release_frame": 141,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      230,
+      320,
+      300,
+      595
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      450,
+      350,
+      555,
+      515
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500021_217/frame_00141.png"
+    ],
+    "notes": "Red 5 corner jumper; white 8 nearest by image feet distance.",
+    "identity_frame": 141
+  },
+  {
+    "shot_id": "nba:0022500021:638",
+    "status": "uncertain",
+    "release_frame": null,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      480,
+      150,
+      570,
+      425
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      515,
+      240,
+      580,
+      435
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500021_638/frame_00161.png"
+    ],
+    "notes": "White 26 inside attempt contested by red 9; ball/hand contact and possible block obscure first separation. Red 9 nearest.",
+    "identity_frame": 161
+  },
+  {
+    "shot_id": "nba:0022500008:566",
+    "status": "clear",
+    "release_frame": 154,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      490,
+      225,
+      590,
+      440
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      550,
+      220,
+      625,
+      445
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500008_566/frame_00154.png"
+    ],
+    "notes": "Black 27 layup; white 15 immediately behind nearest by feet.",
+    "identity_frame": 154
+  },
+  {
+    "shot_id": "nba:0022500006:267",
+    "status": "clear",
+    "release_frame": 114,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      615,
+      300,
+      715,
+      510
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      590,
+      290,
+      675,
+      510
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_267/frame_00114.png"
+    ],
+    "notes": "Black 0 drive/floater; white 1 nearest opponent.",
+    "identity_frame": 114
+  },
+  {
+    "shot_id": "nba:0022500018:238",
+    "status": "not_visible",
+    "release_frame": null,
+    "alignment_verified": true,
+    "shooter_status": "uncertain",
+    "shooter_box": null,
+    "defender_status": "uncertain",
+    "defender_box": null,
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500018_238/frame_00000.png"
+    ],
+    "notes": "Clip starts with ball already at rim and white 44 finishing; target Kolek release is not visible. No defensible target shooter/defender reference.",
+    "identity_frame": 0
+  },
+  {
+    "shot_id": "nba:0022500020:360",
+    "status": "clear",
+    "release_frame": 67,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      460,
+      190,
+      555,
+      425
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      420,
+      215,
+      490,
+      430
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500020_360/frame_00067.png"
+    ],
+    "notes": "Yellow 13 close shot; white headband 7 nearest by feet.",
+    "identity_frame": 67
+  },
+  {
+    "shot_id": "nba:0022500006:696",
+    "status": "clear",
+    "release_frame": 172,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      710,
+      210,
+      820,
+      455
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      680,
+      210,
+      770,
+      430
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_696/frame_00172.png"
+    ],
+    "notes": "White 1 reverse dunk; black 27 nearest opponent.",
+    "identity_frame": 172
+  },
+  {
+    "shot_id": "nba:0022500023:537",
+    "status": "clear",
+    "release_frame": 87,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      375,
+      65,
+      465,
+      290
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      435,
+      220,
+      530,
+      355
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500023_537/frame_00087.png"
+    ],
+    "notes": "White 25 baseline jumper before rebound sequence; black 30 nearest.",
+    "identity_frame": 87
+  },
+  {
+    "shot_id": "nba:0022500003:123",
+    "status": "clear",
+    "release_frame": 150,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      560,
+      240,
+      655,
+      430
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      575,
+      260,
+      660,
+      440
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_123/frame_00150.png"
+    ],
+    "notes": "Red 31 close push shot; white 50 nearest by feet immediately behind, rather than white 25 in front.",
+    "identity_frame": 150
+  },
+  {
+    "shot_id": "nba:0022500022:555",
+    "status": "clear",
+    "release_frame": 71,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      330,
+      245,
+      435,
+      535
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      430,
+      240,
+      535,
+      520
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500022_555/frame_00071.png"
+    ],
+    "notes": "White 4 perimeter jumper; black 4 closing nearest.",
+    "identity_frame": 71
+  },
+  {
+    "shot_id": "nba:0022500023:456",
+    "status": "clear",
+    "release_frame": 143,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      640,
+      80,
+      710,
+      275
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      580,
+      90,
+      680,
+      280
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500023_456/frame_00143.png"
+    ],
+    "notes": "White 11 corner jumper after earlier drive/pass; black 3 nearest.",
+    "identity_frame": 143
+  },
+  {
+    "shot_id": "nba:0022500004:475",
+    "status": "clear",
+    "release_frame": 124,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      685,
+      95,
+      770,
+      340
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      650,
+      130,
+      750,
+      365
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500004_475/frame_00124.png"
+    ],
+    "notes": "Black 24 midrange jumper; white 5 nearest.",
+    "identity_frame": 124
+  },
+  {
+    "shot_id": "nba:0022500021:623",
+    "status": "clear",
+    "release_frame": 111,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      610,
+      110,
+      690,
+      320
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      610,
+      190,
+      695,
+      365
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500021_623/frame_00111.png"
+    ],
+    "notes": "White 9 pull-up; red 77 nearest by image-space feet distance, not red 21.",
+    "identity_frame": 111
+  },
+  {
+    "shot_id": "nba:0022500007:498",
+    "status": "clear",
+    "release_frame": 123,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      920,
+      95,
+      990,
+      330
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      845,
+      125,
+      930,
+      355
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500007_498/frame_00123.png"
+    ],
+    "notes": "White 55 perimeter jumper; red 4 nearest.",
+    "identity_frame": 123
+  },
+  {
+    "shot_id": "nba:0022500004:437",
+    "status": "clear",
+    "release_frame": 135,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      575,
+      170,
+      660,
+      465
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      485,
+      215,
+      595,
+      500
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500004_437/frame_00135.png"
+    ],
+    "notes": "Black 30 transition layup; white 25 nearest. Release visible above contest.",
+    "identity_frame": 135
+  },
+  {
+    "shot_id": "nba:0022500006:243",
+    "status": "clear",
+    "release_frame": 85,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      625,
+      300,
+      710,
+      605
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      640,
+      310,
+      725,
+      585
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500006_243/frame_00085.png"
+    ],
+    "notes": "Black 32 perimeter jumper; closing white headband 7 nearest at release.",
+    "identity_frame": 85
+  },
+  {
+    "shot_id": "nba:0022500022:640",
+    "status": "uncertain",
+    "release_frame": null,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      500,
+      260,
+      565,
+      495
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      530,
+      300,
+      580,
+      500
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500022_640/frame_00125.png"
+    ],
+    "notes": "Black 24 close putback; overlapping hands obscure first separation. White 23 immediately behind nearest by feet.",
+    "identity_frame": 125
+  },
+  {
+    "shot_id": "nba:0022500007:472",
+    "status": "clear",
+    "release_frame": 101,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      550,
+      300,
+      620,
+      535
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      600,
+      300,
+      675,
+      520
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500007_472/frame_00101.png"
+    ],
+    "notes": "Red 45 perimeter jumper; white 9 nearest.",
+    "identity_frame": 101
+  },
+  {
+    "shot_id": "nba:0022500003:663",
+    "status": "clear",
+    "release_frame": 81,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      710,
+      340,
+      800,
+      555
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      790,
+      350,
+      895,
+      530
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_663/frame_00081.png"
+    ],
+    "notes": "White 11 perimeter jumper; red 22 closest by feet.",
+    "identity_frame": 81
+  },
+  {
+    "shot_id": "nba:0022500008:190",
+    "status": "clear",
+    "release_frame": 145,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      500,
+      250,
+      570,
+      440
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      535,
+      200,
+      610,
+      445
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500008_190/frame_00145.png"
+    ],
+    "notes": "Black 0 close jumper; white 17 nearest.",
+    "identity_frame": 145
+  },
+  {
+    "shot_id": "nba:0022500003:74",
+    "status": "clear",
+    "release_frame": 73,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      675,
+      245,
+      745,
+      435
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      685,
+      250,
+      755,
+      420
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500003_74/frame_00073.png"
+    ],
+    "notes": "White 8 drive/floater; red 20 overlapping his body nearest by image feet distance.",
+    "identity_frame": 73
+  },
+  {
+    "shot_id": "nba:0022500007:718",
+    "status": "clear",
+    "release_frame": 49,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      345,
+      235,
+      420,
+      455
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      445,
+      250,
+      545,
+      475
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500007_718/frame_00049.png"
+    ],
+    "notes": "Red 13 perimeter jumper; white 35 nearest.",
+    "identity_frame": 49
+  },
+  {
+    "shot_id": "nba:0022500007:579",
+    "status": "uncertain",
+    "release_frame": null,
+    "alignment_verified": true,
+    "shooter_status": "clear",
+    "shooter_box": [
+      550,
+      200,
+      620,
+      450
+    ],
+    "defender_status": "clear",
+    "defender_box": [
+      600,
+      270,
+      690,
+      495
+    ],
+    "evidence": [
+      "data/release_audit_50/blind/frames/nba_0022500007_579/frame_00153.png"
+    ],
+    "notes": "White 31 dunk attempt; ball and rim-hand overlap prevent precise first separation. Red 31 nearest by feet.",
+    "identity_frame": 153
+  }
+]

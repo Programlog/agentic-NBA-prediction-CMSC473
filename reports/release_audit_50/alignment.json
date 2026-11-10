@@ -1,0 +1,552 @@
+[
+  {
+    "shot_id": "nba:0022500021:128",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 245,
+    "tracking_frame_counts": [
+      245
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500004:140",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 181,
+    "tracking_frame_counts": [
+      181
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:228",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 189,
+    "tracking_frame_counts": [
+      189
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500022:301",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 263,
+    "tracking_frame_counts": [
+      263
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:69",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 282,
+    "tracking_frame_counts": [
+      282
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:453",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 252,
+    "tracking_frame_counts": [
+      252
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:280",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 239,
+    "tracking_frame_counts": [
+      239
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500004:319",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 330,
+    "tracking_frame_counts": [
+      330
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500022:24",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 268,
+    "tracking_frame_counts": [
+      268
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:82",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 251,
+    "tracking_frame_counts": [
+      251
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500021:430",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 246,
+    "tracking_frame_counts": [
+      246
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500022:30",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 245,
+    "tracking_frame_counts": [
+      245
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500019:529",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 258,
+    "tracking_frame_counts": [
+      258
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:618",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 254,
+    "tracking_frame_counts": [
+      254
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500020:362",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 232,
+    "tracking_frame_counts": [
+      232
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500008:593",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 240,
+    "tracking_frame_counts": [
+      240
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:265",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 204,
+    "tracking_frame_counts": [
+      204
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:26",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 210,
+    "tracking_frame_counts": [
+      210
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:665",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 219,
+    "tracking_frame_counts": [
+      219
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:252",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 253,
+    "tracking_frame_counts": [
+      253
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:357",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 286,
+    "tracking_frame_counts": [
+      286
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500019:194",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 282,
+    "tracking_frame_counts": [
+      282
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500020:433",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 275,
+    "tracking_frame_counts": [
+      275
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:234",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 215,
+    "tracking_frame_counts": [
+      215
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500019:80",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 237,
+    "tracking_frame_counts": [
+      237
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:110",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 200,
+    "tracking_frame_counts": [
+      200
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500021:80",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 240,
+    "tracking_frame_counts": [
+      240
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500021:217",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 285,
+    "tracking_frame_counts": [
+      285
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500021:638",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 250,
+    "tracking_frame_counts": [
+      250
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500008:566",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 227,
+    "tracking_frame_counts": [
+      227
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:267",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 227,
+    "tracking_frame_counts": [
+      227
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500018:238",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 229,
+    "tracking_frame_counts": [
+      229
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500020:360",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 234,
+    "tracking_frame_counts": [
+      234
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:696",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 252,
+    "tracking_frame_counts": [
+      252
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500023:537",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 308,
+    "tracking_frame_counts": [
+      308
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:123",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 270,
+    "tracking_frame_counts": [
+      270
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500022:555",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 170,
+    "tracking_frame_counts": [
+      170
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500023:456",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 311,
+    "tracking_frame_counts": [
+      311
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500004:475",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 205,
+    "tracking_frame_counts": [
+      205
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500021:623",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 226,
+    "tracking_frame_counts": [
+      226
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500007:498",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 204,
+    "tracking_frame_counts": [
+      204
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500004:437",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 249,
+    "tracking_frame_counts": [
+      249
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500006:243",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 195,
+    "tracking_frame_counts": [
+      195
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500022:640",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 207,
+    "tracking_frame_counts": [
+      207
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500007:472",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 270,
+    "tracking_frame_counts": [
+      270
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:663",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 211,
+    "tracking_frame_counts": [
+      211
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500008:190",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 228,
+    "tracking_frame_counts": [
+      228
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500003:74",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 178,
+    "tracking_frame_counts": [
+      178
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500007:718",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 177,
+    "tracking_frame_counts": [
+      177
+    ],
+    "count_alignment": true
+  },
+  {
+    "shot_id": "nba:0022500007:579",
+    "width": 1280,
+    "height": 720,
+    "fps": 25.0,
+    "frame_count": 220,
+    "tracking_frame_counts": [
+      220
+    ],
+    "count_alignment": true
+  }
+]

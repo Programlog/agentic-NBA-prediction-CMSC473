@@ -91,6 +91,28 @@ def main(argv=None):
     be_prepare.add_argument("--collection", type=Path, required=True)
     be_prepare.add_argument("--output", type=Path, required=True)
     be_prepare.add_argument("--config", type=Path)
+    audit_sample = sub.add_parser(
+        "sample-release-audit", help="Freeze a blinded release audit sample"
+    )
+    audit_sample.add_argument("--pool", type=Path, required=True)
+    audit_sample.add_argument("--output", type=Path, required=True)
+    audit_sample.add_argument("--n", type=int, default=50)
+    audit_sample.add_argument("--seed", type=int, default=42)
+    audit_sample.add_argument("--expected-population", type=int, default=851)
+    audit_sample.add_argument("--download", action="store_true")
+    audit_frames = sub.add_parser(
+        "release-review-frames", help="Render source frames without predictions"
+    )
+    audit_frames.add_argument("--audit", type=Path, required=True)
+    audit_frames.add_argument("--shot-id", required=True)
+    audit_frames.add_argument("--start", type=int, default=0)
+    audit_frames.add_argument("--stop", type=int)
+    audit_frames.add_argument("--step", type=int, default=25)
+    for name in ["freeze-release-references", "unblind-release-audit", "score-release-audit"]:
+        command = sub.add_parser(name)
+        command.add_argument("--audit", type=Path, required=True)
+        if name == "score-release-audit":
+            command.add_argument("--output", type=Path, required=True)
     agents = sub.add_parser("predict-llm", help="Run a free local Ollama/CrewAI comparison")
     agents.add_argument("--shots", type=Path, required=True)
     agents.add_argument("--cv", type=Path)
@@ -122,6 +144,28 @@ def main(argv=None):
 
 
 def execute(args):
+    if args.command in {
+        "sample-release-audit",
+        "release-review-frames",
+        "freeze-release-references",
+        "unblind-release-audit",
+        "score-release-audit",
+    }:
+        from . import release_audit
+
+        if args.command == "sample-release-audit":
+            return release_audit.sample_audit(
+                args.pool, args.output, args.n, args.seed, args.expected_population, args.download
+            )
+        if args.command == "release-review-frames":
+            return release_audit.render_frames(
+                args.audit, args.shot_id, args.start, args.stop, args.step
+            )
+        if args.command == "freeze-release-references":
+            return release_audit.freeze_references(args.audit)
+        if args.command == "unblind-release-audit":
+            return release_audit.unblind_audit(args.audit)
+        return release_audit.score_audit(args.audit, args.output)
     from .data import download_kaggle, prepare_csv
 
     if args.command == "download":

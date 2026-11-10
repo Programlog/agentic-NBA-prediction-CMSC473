@@ -1,0 +1,38 @@
+{
+  "sample_size": 50,
+  "reference_scorable": 43,
+  "within_3": 27,
+  "accuracy": 0.627906976744186,
+  "wilson_95": [
+    0.47859809159688477,
+    0.7562366099034943
+  ],
+  "reference_coverage": 0.86,
+  "confirmed_matches_out_of_sample": 0.54,
+  "median_absolute_frame_error": 1.5,
+  "timing_counts": {
+    "within_3": 27,
+    "early": 8,
+    "late": 5,
+    "missing": 3,
+    "unscorable": 7
+  },
+  "shooter": {
+    "correct": 43,
+    "scorable": 49,
+    "accuracy": 0.8775510204081632,
+    "wilson_95": [
+      0.7575560270624347,
+      0.9426517420975983
+    ]
+  },
+  "defender": {
+    "correct": 30,
+    "scorable": 46,
+    "accuracy": 0.6521739130434783,
+    "wilson_95": [
+      0.5077005884206276,
+      0.7731900662924567
+    ]
+  }
+}

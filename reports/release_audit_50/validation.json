@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-11-10T20:40:33.361113+00:00",
+  "pytest": {
+    "passed": 55,
+    "skipped": 7,
+    "command": "PYTHONPATH=src python -m pytest -q"
+  },
+  "ruff_changed_python_files": "passed",
+  "git_diff_check": "passed",
+  "artifact_evidence_images": 55,
+  "reference_hash_unchanged_after_unblinding": true,
+  "independent_metric_recomputation": "matched",
+  "detector_source_sha256": "d2b1cd1e047894f73095b6037a21b014856cafd3c24d35a49231d19a261354b0"
+}

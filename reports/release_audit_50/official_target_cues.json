@@ -1,0 +1,352 @@
+[
+  {
+    "index": 0,
+    "shot_id": "nba:0022500021:128",
+    "period": 1,
+    "game_clock": "1:31",
+    "official_target_player": "Anfernee Simons"
+  },
+  {
+    "index": 1,
+    "shot_id": "nba:0022500004:140",
+    "period": 1,
+    "game_clock": "2:51",
+    "official_target_player": "Devin Vassell"
+  },
+  {
+    "index": 2,
+    "shot_id": "nba:0022500003:228",
+    "period": 2,
+    "game_clock": "6:40",
+    "official_target_player": "Mikal Bridges"
+  },
+  {
+    "index": 3,
+    "shot_id": "nba:0022500022:301",
+    "period": 2,
+    "game_clock": "1:42",
+    "official_target_player": "Scottie Barnes"
+  },
+  {
+    "index": 4,
+    "shot_id": "nba:0022500006:69",
+    "period": 1,
+    "game_clock": "5:53",
+    "official_target_player": "Jamal Murray"
+  },
+  {
+    "index": 5,
+    "shot_id": "nba:0022500006:453",
+    "period": 3,
+    "game_clock": "3:08",
+    "official_target_player": "Jamal Murray"
+  },
+  {
+    "index": 6,
+    "shot_id": "nba:0022500006:280",
+    "period": 2,
+    "game_clock": "2:55",
+    "official_target_player": "Nikola Joki\u0107"
+  },
+  {
+    "index": 7,
+    "shot_id": "nba:0022500004:319",
+    "period": 2,
+    "game_clock": "4:13",
+    "official_target_player": "Harrison Barnes"
+  },
+  {
+    "index": 8,
+    "shot_id": "nba:0022500022:24",
+    "period": 1,
+    "game_clock": "10:20",
+    "official_target_player": "Evan Mobley"
+  },
+  {
+    "index": 9,
+    "shot_id": "nba:0022500003:82",
+    "period": 1,
+    "game_clock": "5:10",
+    "official_target_player": "Jalen Brunson"
+  },
+  {
+    "index": 10,
+    "shot_id": "nba:0022500021:430",
+    "period": 3,
+    "game_clock": "6:40",
+    "official_target_player": "Tyrese Maxey"
+  },
+  {
+    "index": 11,
+    "shot_id": "nba:0022500022:30",
+    "period": 1,
+    "game_clock": "9:45",
+    "official_target_player": "Lonzo Ball"
+  },
+  {
+    "index": 12,
+    "shot_id": "nba:0022500019:529",
+    "period": 4,
+    "game_clock": "9:55",
+    "official_target_player": "Bones Hyland"
+  },
+  {
+    "index": 13,
+    "shot_id": "nba:0022500003:618",
+    "period": 4,
+    "game_clock": "5:01",
+    "official_target_player": "Donovan Mitchell"
+  },
+  {
+    "index": 14,
+    "shot_id": "nba:0022500020:362",
+    "period": 2,
+    "game_clock": "0:30",
+    "official_target_player": "Pascal Siakam"
+  },
+  {
+    "index": 15,
+    "shot_id": "nba:0022500008:593",
+    "period": 4,
+    "game_clock": "7:33",
+    "official_target_player": "Peyton Watson"
+  },
+  {
+    "index": 16,
+    "shot_id": "nba:0022500003:265",
+    "period": 2,
+    "game_clock": "3:41",
+    "official_target_player": "Larry Nance Jr."
+  },
+  {
+    "index": 17,
+    "shot_id": "nba:0022500003:26",
+    "period": 1,
+    "game_clock": "9:48",
+    "official_target_player": "Evan Mobley"
+  },
+  {
+    "index": 18,
+    "shot_id": "nba:0022500003:665",
+    "period": 4,
+    "game_clock": "2:03",
+    "official_target_player": "Sam Merrill"
+  },
+  {
+    "index": 19,
+    "shot_id": "nba:0022500006:252",
+    "period": 2,
+    "game_clock": "4:35",
+    "official_target_player": "Gary Payton II"
+  },
+  {
+    "index": 20,
+    "shot_id": "nba:0022500006:357",
+    "period": 3,
+    "game_clock": "9:58",
+    "official_target_player": "Draymond Green"
+  },
+  {
+    "index": 21,
+    "shot_id": "nba:0022500019:194",
+    "period": 2,
+    "game_clock": "9:56",
+    "official_target_player": "Rui Hachimura"
+  },
+  {
+    "index": 22,
+    "shot_id": "nba:0022500020:433",
+    "period": 3,
+    "game_clock": "7:04",
+    "official_target_player": "Ben Sheppard"
+  },
+  {
+    "index": 23,
+    "shot_id": "nba:0022500003:234",
+    "period": 2,
+    "game_clock": "5:59",
+    "official_target_player": "Larry Nance Jr."
+  },
+  {
+    "index": 24,
+    "shot_id": "nba:0022500019:80",
+    "period": 1,
+    "game_clock": "6:00",
+    "official_target_player": "Julius Randle"
+  },
+  {
+    "index": 25,
+    "shot_id": "nba:0022500006:110",
+    "period": 1,
+    "game_clock": "3:00",
+    "official_target_player": "Aaron Gordon"
+  },
+  {
+    "index": 26,
+    "shot_id": "nba:0022500021:80",
+    "period": 1,
+    "game_clock": "4:58",
+    "official_target_player": "Anfernee Simons"
+  },
+  {
+    "index": 27,
+    "shot_id": "nba:0022500021:217",
+    "period": 2,
+    "game_clock": "8:36",
+    "official_target_player": "Quentin Grimes"
+  },
+  {
+    "index": 28,
+    "shot_id": "nba:0022500021:638",
+    "period": 4,
+    "game_clock": "3:56",
+    "official_target_player": "Xavier Tillman"
+  },
+  {
+    "index": 29,
+    "shot_id": "nba:0022500008:566",
+    "period": 4,
+    "game_clock": "10:06",
+    "official_target_player": "Rudy Gobert"
+  },
+  {
+    "index": 30,
+    "shot_id": "nba:0022500006:267",
+    "period": 2,
+    "game_clock": "3:43",
+    "official_target_player": "Christian Braun"
+  },
+  {
+    "index": 31,
+    "shot_id": "nba:0022500018:238",
+    "period": 2,
+    "game_clock": "6:47",
+    "official_target_player": "Tyler Kolek"
+  },
+  {
+    "index": 32,
+    "shot_id": "nba:0022500020:360",
+    "period": 2,
+    "game_clock": "0:34",
+    "official_target_player": "RayJ Dennis"
+  },
+  {
+    "index": 33,
+    "shot_id": "nba:0022500006:696",
+    "period": 5,
+    "game_clock": "2:39",
+    "official_target_player": "Jonathan Kuminga"
+  },
+  {
+    "index": 34,
+    "shot_id": "nba:0022500023:537",
+    "period": 4,
+    "game_clock": "11:40",
+    "official_target_player": "Mikal Bridges"
+  },
+  {
+    "index": 35,
+    "shot_id": "nba:0022500003:123",
+    "period": 1,
+    "game_clock": "2:20",
+    "official_target_player": "Jarrett Allen"
+  },
+  {
+    "index": 36,
+    "shot_id": "nba:0022500022:555",
+    "period": 4,
+    "game_clock": "9:32",
+    "official_target_player": "Scottie Barnes"
+  },
+  {
+    "index": 37,
+    "shot_id": "nba:0022500023:456",
+    "period": 3,
+    "game_clock": "4:35",
+    "official_target_player": "Jalen Brunson"
+  },
+  {
+    "index": 38,
+    "shot_id": "nba:0022500004:475",
+    "period": 3,
+    "game_clock": "6:13",
+    "official_target_player": "Devin Vassell"
+  },
+  {
+    "index": 39,
+    "shot_id": "nba:0022500021:623",
+    "period": 4,
+    "game_clock": "5:46",
+    "official_target_player": "Derrick White"
+  },
+  {
+    "index": 40,
+    "shot_id": "nba:0022500007:498",
+    "period": 3,
+    "game_clock": "6:44",
+    "official_target_player": "Duncan Robinson"
+  },
+  {
+    "index": 41,
+    "shot_id": "nba:0022500004:437",
+    "period": 3,
+    "game_clock": "8:28",
+    "official_target_player": "Julian Champagnie"
+  },
+  {
+    "index": 42,
+    "shot_id": "nba:0022500006:243",
+    "period": 2,
+    "game_clock": "5:40",
+    "official_target_player": "Aaron Gordon"
+  },
+  {
+    "index": 43,
+    "shot_id": "nba:0022500022:640",
+    "period": 4,
+    "game_clock": "4:26",
+    "official_target_player": "Tyrese Proctor"
+  },
+  {
+    "index": 44,
+    "shot_id": "nba:0022500007:472",
+    "period": 3,
+    "game_clock": "8:33",
+    "official_target_player": "Donovan Mitchell"
+  },
+  {
+    "index": 45,
+    "shot_id": "nba:0022500003:663",
+    "period": 4,
+    "game_clock": "2:15",
+    "official_target_player": "Jalen Brunson"
+  },
+  {
+    "index": 46,
+    "shot_id": "nba:0022500008:190",
+    "period": 2,
+    "game_clock": "10:27",
+    "official_target_player": "Donte DiVincenzo"
+  },
+  {
+    "index": 47,
+    "shot_id": "nba:0022500003:74",
+    "period": 1,
+    "game_clock": "5:50",
+    "official_target_player": "OG Anunoby"
+  },
+  {
+    "index": 48,
+    "shot_id": "nba:0022500007:718",
+    "period": 4,
+    "game_clock": "5:00",
+    "official_target_player": "Thomas Bryant"
+  },
+  {
+    "index": 49,
+    "shot_id": "nba:0022500007:579",
+    "period": 3,
+    "game_clock": "2:25",
+    "official_target_player": "Javonte Green"
+  }
+]

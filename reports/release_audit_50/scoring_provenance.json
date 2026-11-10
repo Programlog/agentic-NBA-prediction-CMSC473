@@ -1,0 +1,16 @@
+{
+  "created_at": "2026-11-10T20:40:05.553680+00:00",
+  "reviewer": "assistant visual review",
+  "audit_freeze_sha256": "a57c1bd8e6ba87be9cd8aa0084ba7e86d49d1fe24ebb92071b3a630710a3604a",
+  "reference_freeze_sha256": "1ad7a40015721234f97ec9045b0ac7aca99dab6fbc76e72e890a31a542db9f14",
+  "references_sha256": "5aa89ad3c4490c9a4b5e6879783e1698bc7082ac45ff8b95ec6f7dd09c7b934d",
+  "identity_reviews_sha256": "3055d62a04a3629f17f491612257ee7a9108816282756719e0f5f804ca3e64ae",
+  "scorer_sha256": "c8c29421677e699788dce2503bb970009eac390aedda92a4cfe6d92ff460764f",
+  "reference_status_counts": {
+    "clear": 43,
+    "not_visible": 1,
+    "unaligned": 0,
+    "uncertain": 6,
+    "unreadable": 0
+  }
+}

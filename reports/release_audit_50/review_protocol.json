@@ -1,0 +1,6 @@
+{
+  "target_cues": "Official cached shot-chart player, period, and clock identify the intended event in clips with multiple attempts. These are not detector-selected tracking labels. They never determine the reference release frame.",
+  "indexing": "Zero-based decoded original MP4 frames, 25 FPS; all 50 tracking-array lengths equal decoded frame counts.",
+  "prior_annotations": "No existing blind manual annotations for this cohort were found locally or in the branch. Five-clip artifacts belong to other cohorts.",
+  "acquisition_retry": "First acquisition attempt stopped after a Python certificate-store failure. Same 50 IDs retried with verified certifi trust roots; no shots replaced."
+}

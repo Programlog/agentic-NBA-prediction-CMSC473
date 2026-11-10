@@ -1,0 +1,452 @@
+[
+  {
+    "shot_id": "nba:0022500021:128",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500021_128_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500004:140",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500004_140_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:228",
+    "shooter_match": true,
+    "defender_match": null,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_228_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500022:301",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500022_301_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:69",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_69_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:453",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_453_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:280",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_280_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500004:319",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500004_319_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500022:24",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500022_24_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:82",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_82_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500021:430",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500021_430_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500022:30",
+    "shooter_match": false,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Automatic actor selections unavailable.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500022_30_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500019:529",
+    "shooter_match": true,
+    "defender_match": null,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500019_529_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:618",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_618_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500020:362",
+    "shooter_match": false,
+    "defender_match": null,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected shooter is a different visible actor.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500020_362_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500008:593",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500008_593_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:265",
+    "shooter_match": false,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Automatic actor selections unavailable.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_265_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:26",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_26_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:665",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_665_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:252",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_252_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:357",
+    "shooter_match": false,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Automatic actor selections unavailable.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_357_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500019:194",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500019_194_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500020:433",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500020_433_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:234",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_234_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500019:80",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500019_80_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:110",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_110_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500021:80",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500021_80_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500021:217",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500021_217_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500021:638",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500021_638_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500008:566",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500008_566_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:267",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_267_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500018:238",
+    "shooter_match": null,
+    "defender_match": null,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500018_238_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500020:360",
+    "shooter_match": false,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected shooter is a different visible actor. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500020_360_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:696",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_696_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500023:537",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500023_537_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:123",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_123_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500022:555",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500022_555_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500023:456",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500023_456_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500004:475",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500004_475_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500021:623",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500021_623_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500007:498",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500007_498_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500004:437",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500004_437_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500006:243",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500006_243_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500022:640",
+    "shooter_match": false,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Automatic actor selections unavailable.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500022_640_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500007:472",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500007_472_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:663",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_663_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500008:190",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500008_190_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500003:74",
+    "shooter_match": true,
+    "defender_match": true,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500003_74_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500007:718",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500007_718_identity.png"
+    ]
+  },
+  {
+    "shot_id": "nba:0022500007:579",
+    "shooter_match": true,
+    "defender_match": false,
+    "notes": "Visual actor agreement checked on selected tracks at frozen reference/identity frame. Frame counts agree; visible track boxes align spatially with the decoded actors. Cyan reference boxes are approximate supporting evidence. Selected defender differs from frozen nearest-opponent reference.",
+    "evidence": [
+      "data/release_audit_50/unblinded/nba_0022500007_579_identity.png"
+    ]
+  }
+]

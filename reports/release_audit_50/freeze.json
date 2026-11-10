@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-11-10T19:50:15.462308+00:00",
+  "detector_commit": "8a45ea090e5b1bfaae50ceca1460076a5e81305c",
+  "seed": 42,
+  "population": 851,
+  "sample_size": 50,
+  "pool_sha256": "96beb1a5c0aac2ae4ae2443ae88e18606f9d410d4c725712b1335338499e8664",
+  "selection_sha256": "93f663f0fb424bd69e8dc23ca5cf7fcd583cd8860212def090392da15568166a",
+  "automatic_sha256": "7ccaf84f3357560a61cb24915068c42e2a9df2ac59c087a4ba7b7f2746a8f65a",
+  "blind_manifest_sha256": "6de2addeddc53209d456ff2f58d228c2a8a747e42b9fab7a826bdda196b3cee9",
+  "detector_source_sha256": "d2b1cd1e047894f73095b6037a21b014856cafd3c24d35a49231d19a261354b0",
+  "reviewer": "assistant visual review",
+  "definition": "first frame with ball free of hand",
+  "defender_definition": "nearest opposing player by image-space feet distance at release"
+}

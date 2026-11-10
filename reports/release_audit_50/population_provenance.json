@@ -1,0 +1,17 @@
+{
+  "revision": "de20e7ec434d6cb0e79e75bdb4de47da84e57c0f",
+  "video_files": 1941,
+  "video_shot_events": 851,
+  "official_matched_shots": 850,
+  "source_identified_ambiguous_shots": 1,
+  "unique_shot_ids": 851,
+  "unresolved": [
+    {
+      "clip": "data/release_audit_source/labels/test/0022500020/5e32f308-e8f8-f761-69b9-2141d5fe138d_1280x720.json",
+      "candidate_count": 2
+    }
+  ],
+  "official_source_sha256": "49ceb967ff53f0e6140d9824b8c3d619f30bb363a1e12efe056d11e9a727955c",
+  "matching": "game/period/integer-second clock; surname then event outcome break ties",
+  "deviation": "Live PBP unavailable (403/timeout); cached official ShotChartDetail used."
+}

@@ -1,0 +1,902 @@
+[
+  {
+    "shot_id": "nba:0022500021:128",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500021/049d3962-76ea-bd2c-6a41-1c479c506a54_1280x720.json",
+    "label_sha256": "e4937921d90a4fd87a5226e25ece36571b4d9d4f7b25e0c99d4d75d8f43a3222",
+    "shooter_key": "player_2",
+    "defender_key": "player_5",
+    "release_frame": 119,
+    "track_frame_count": 245,
+    "automatic_status": "ok",
+    "clip_sha256": "0ddd924d46b3e262b4baaa1f0b7d99f2f8a7afe78b67c2fe838d43891bc0a8bd",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 245
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500004:140",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500004/53cb2a2b-6250-35fc-25d5-4c7f3375ff35_1280x720.json",
+    "label_sha256": "c32040e95e4cc156d562a38b717d9c07107a4a4bc054d5f5abae62f0445e5b44",
+    "shooter_key": "player_7",
+    "defender_key": "player_8",
+    "release_frame": 43,
+    "track_frame_count": 181,
+    "automatic_status": "ok",
+    "clip_sha256": "dd49c24df85f85703179b944ed6353b352c7763b5797117d646be3e639007f9a",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 181
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:228",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/ce979297-2c6d-a6df-2455-eac10a268ed4_1280x720.json",
+    "label_sha256": "b61c75cd8dcf3bbaf48a771da758a3f98b97df50be0ce723d7c6afc022e73a2d",
+    "shooter_key": "player_2",
+    "defender_key": "player_4",
+    "release_frame": 32,
+    "track_frame_count": 189,
+    "automatic_status": "ok",
+    "clip_sha256": "bd818f21719319a74b82ecb675a2d56aacb7a80e77b5059e544762d9e24f8003",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 189
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500022:301",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500022/4ae1d54c-6bec-40b3-a077-e5500059966e_1280x720.json",
+    "label_sha256": "585eb7ee95042bee73c8beef8cf4ec676684ff18bca15c4be5fccdcbe819c968",
+    "shooter_key": "player_7",
+    "defender_key": "player_8",
+    "release_frame": 154,
+    "track_frame_count": 263,
+    "automatic_status": "ok",
+    "clip_sha256": "4a17e92ce5ba4eba064d0db4b813fd18c3d20e362ee15f5d57a84ba382993210",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 263
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:69",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/1c75ce98-7503-38b3-2474-4653ed2281e7_1280x720.json",
+    "label_sha256": "92effc04ba3b6a1a16c5305d88d020b49ff8b5f7677fab2675099ec66c98f37c",
+    "shooter_key": "player_2",
+    "defender_key": "player_3",
+    "release_frame": 182,
+    "track_frame_count": 282,
+    "automatic_status": "ok",
+    "clip_sha256": "8c9c3dc96a0993084f9b852fb5f9080ce3bb326e2e468ddbf01242e361848e62",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 282
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:453",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/a2fe1d12-4ab8-ba7e-9e4d-2c4d11bd559b_1280x720.json",
+    "label_sha256": "d14e524409d40af19e512736986e23cef5ae463210f225440d04f8d39e8a9adb",
+    "shooter_key": "player_2",
+    "defender_key": "player_6",
+    "release_frame": 113,
+    "track_frame_count": 252,
+    "automatic_status": "ok",
+    "clip_sha256": "94cb12d5152600d19251ec6d56299d0b35a2ac01544085cde5d3c6e147692625",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 252
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:280",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/d586fc3f-803e-ab11-425f-76e050b65fa5_1280x720.json",
+    "label_sha256": "06bb71af61d3cc4acb2b47b04d4835f1f3dfd32d6b8b99ffca95b4bf9d4d6ed0",
+    "shooter_key": "player_4",
+    "defender_key": "player_1",
+    "release_frame": 136,
+    "track_frame_count": 239,
+    "automatic_status": "ok",
+    "clip_sha256": "aab57155d7df0b3bf6b872ac5892c5b8e2d3adcca743439944f4b3b22df32460",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 239
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500004:319",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500004/385f2129-4e76-03d8-7fd0-228b439d92a9_1280x720.json",
+    "label_sha256": "7947c843118a492984ddc8c0060d9833bfb49b0ddc2851f69b11842727b3861c",
+    "shooter_key": "player_5",
+    "defender_key": "player_3",
+    "release_frame": 323,
+    "track_frame_count": 330,
+    "automatic_status": "ok",
+    "clip_sha256": "bca7c87090e730bff36baaf2480e97b59f9b496c7978070a50f901863c770837",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 330
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500022:24",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500022/d87a8224-10e8-1e4f-29ea-21db09862084_1280x720.json",
+    "label_sha256": "5207cf3047b266b22b649e3d5d892e0cb562a749d8c68d3923bc1af4ea5b0428",
+    "shooter_key": "player_8",
+    "defender_key": "player_7",
+    "release_frame": 151,
+    "track_frame_count": 268,
+    "automatic_status": "ok",
+    "clip_sha256": "131ebb1c3fa8c417ae02fa1e93684352d81fd11d1115edc0ea07d4b979897bf6",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 268
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:82",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/7c385a59-5ea4-5cad-d628-e6f33b4a9194_1280x720.json",
+    "label_sha256": "48993e2ed1703fdf12dc4a7761055cfccbcd0c51ca9a0e8abf68dee381f44606",
+    "shooter_key": "player_6",
+    "defender_key": "player_5",
+    "release_frame": 31,
+    "track_frame_count": 251,
+    "automatic_status": "ok",
+    "clip_sha256": "d6b65cf11c0e5cdc9da3f6d65cec09e5ad7a58069e7dc13a9bdb5c8551c92b8e",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 251
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500021:430",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500021/dfe96694-0e83-a4b9-7359-a8f743531e83_1280x720.json",
+    "label_sha256": "0b3d94e99ba7b137c50ef1f6190bf4fce677bcb171dd928cdbaf1d6185915c3e",
+    "shooter_key": "player_1",
+    "defender_key": "player_5",
+    "release_frame": 140,
+    "track_frame_count": 246,
+    "automatic_status": "ok",
+    "clip_sha256": "39e22a2121ceb3b27f85114ea15240c5666725a63609bb51380e2e4877583277",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 246
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500022:30",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500022/28b1c0ac-53d5-2e87-1709-36e442ad1ec7_1280x720.json",
+    "label_sha256": "d43ecc75b1c9e594cc1e0ef3abe1fb0070dae62b3d681a3c1c7d869b237ef5d1",
+    "shooter_key": null,
+    "defender_key": null,
+    "release_frame": null,
+    "track_frame_count": null,
+    "automatic_status": "ambiguous_shooter_or_event",
+    "clip_sha256": "6117eda79dba0e559a1199bbde531807b9ae0f2a24c54a328e6ffd5f5ee6e6a2",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 245
+    },
+    "alignment_status": "frame_count_mismatch"
+  },
+  {
+    "shot_id": "nba:0022500019:529",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500019/1033c98a-0ece-3484-1a22-5f6c5bb9aa43_1280x720.json",
+    "label_sha256": "a29a44b81e93c12c82becc15dbd59ac570946449d5a4410cfa890bbe727d235f",
+    "shooter_key": "player_5",
+    "defender_key": "player_9",
+    "release_frame": 147,
+    "track_frame_count": 258,
+    "automatic_status": "ok",
+    "clip_sha256": "3eb92d613fd512b1e43eac0b9126012ec10f3f309f8108a31a00d62619976355",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 258
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:618",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/8d4e1b40-e2f3-5a1b-6239-0344db1a240e_1280x720.json",
+    "label_sha256": "d1edb6b7c65287393e643de8d31c4807555894697a45d8ae3f1050ff82bcbd8d",
+    "shooter_key": "player_4",
+    "defender_key": "player_5",
+    "release_frame": 114,
+    "track_frame_count": 254,
+    "automatic_status": "ok",
+    "clip_sha256": "b40d0848b0a2ee5f52f5c2f3af7a034a64a43334be7df011afff83bcdeb16f99",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 254
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500020:362",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500020/5af5d9ec-50fb-9160-0b06-5819c2cca517_1280x720.json",
+    "label_sha256": "4f6ecc88f711b0386edad13bcfccda368d6e292a9eaa8437cdfbd2e37ecfc317",
+    "shooter_key": "player_1",
+    "defender_key": "player_0",
+    "release_frame": 130,
+    "track_frame_count": 232,
+    "automatic_status": "ok",
+    "clip_sha256": "c88dbbfdf714782ad281d0eb7f89155105c0f6421162d3bc3bafe52f6ba03ed0",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 232
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500008:593",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500008/45dc5fa0-9259-5db4-c5c4-78c4ba0c8d01_1280x720.json",
+    "label_sha256": "a26d6ec9c0f1ba51cb7df8617ec87440db22266320c2ec0a7cbf2f57b6baca7f",
+    "shooter_key": "player_7",
+    "defender_key": "player_6",
+    "release_frame": 148,
+    "track_frame_count": 240,
+    "automatic_status": "ok",
+    "clip_sha256": "46665b369377dd3d550d6a36fe92d441fc675e513abdd0026725a2f8738ad7c1",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 240
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:265",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/71a96f85-baff-5cc3-48c2-eeb640697bbe_1280x720.json",
+    "label_sha256": "367308e6dea1dbf96b581f6c68433ddcdd08a680ddeef974e862c12ebc571436",
+    "shooter_key": null,
+    "defender_key": null,
+    "release_frame": null,
+    "track_frame_count": null,
+    "automatic_status": "ambiguous_shooter_or_event",
+    "clip_sha256": "c55c2b59cc259eb9dbd66fee5dece6322025d8962b4689b2b56e35a61dbc9e02",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 204
+    },
+    "alignment_status": "frame_count_mismatch"
+  },
+  {
+    "shot_id": "nba:0022500003:26",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/7e5e7382-2d4a-8fe9-b177-c601f1e3e2c2_1280x720.json",
+    "label_sha256": "ceb912055830f4e3a5765daa2a5fdf3e1fc4fbb78aab0558c9f7ac335c32ec32",
+    "shooter_key": "player_6",
+    "defender_key": "player_4",
+    "release_frame": 85,
+    "track_frame_count": 210,
+    "automatic_status": "ok",
+    "clip_sha256": "afbbe71d0162b346e855ef77a63ec515cc6927ece22b683d0cfc44bd0073cc1b",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 210
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:665",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/5053fef3-704c-44aa-9497-64add3122cdb_1280x720.json",
+    "label_sha256": "aa62c042263268c98a6790380b0b466064898174d4381a96353cd76befa1a06b",
+    "shooter_key": "player_5",
+    "defender_key": "player_1",
+    "release_frame": 121,
+    "track_frame_count": 219,
+    "automatic_status": "ok",
+    "clip_sha256": "b7c3713323cdc2079c76b04190d2afd2bacc0d9dcebb81cf1189f2c022f6064d",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 219
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:252",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/566df913-49aa-a465-6284-f92e6674aa95_1280x720.json",
+    "label_sha256": "348b9d9eaaa8e45fddf735aa7015f08adc0d8381a44201e414ff91c69cbf3ef7",
+    "shooter_key": "player_4",
+    "defender_key": "player_0",
+    "release_frame": 128,
+    "track_frame_count": 253,
+    "automatic_status": "ok",
+    "clip_sha256": "ef72fd01a066c63c46de5883fa47c4493ddaa58e00763b29d7c462361b46515e",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 253
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:357",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/1003e207-f3d9-faed-723f-3f06e47f34c7_1280x720.json",
+    "label_sha256": "369651ebac18d63b053e61199a5b81f41eac49c5dc3e251d2110083a7a72e8fe",
+    "shooter_key": null,
+    "defender_key": null,
+    "release_frame": null,
+    "track_frame_count": null,
+    "automatic_status": "ambiguous_shooter_or_event",
+    "clip_sha256": "70da1f9a2a591742a62b5aa2641eb139c3347a1c526323c18074950d9f75114c",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 286
+    },
+    "alignment_status": "frame_count_mismatch"
+  },
+  {
+    "shot_id": "nba:0022500019:194",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500019/2d641303-efaa-e680-131c-ed85d99bd95d_1280x720.json",
+    "label_sha256": "13d65381bcbf815ab229ccc5a75d089fda6e72ef0500af19e2e923bded0accf5",
+    "shooter_key": "player_1",
+    "defender_key": "player_7",
+    "release_frame": 115,
+    "track_frame_count": 282,
+    "automatic_status": "ok",
+    "clip_sha256": "8a9381bfa8319123b775fa9d1429e8ce13d1daae7e2c37c486c4b286fb227ef1",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 282
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500020:433",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500020/5589787c-7615-8963-3fe2-657c77f47461_1280x720.json",
+    "label_sha256": "7dc42025f2384d5e71f3b5fd0689bae1d555526b01f14459b38d4ef52a78f367",
+    "shooter_key": "player_6",
+    "defender_key": null,
+    "release_frame": null,
+    "track_frame_count": 275,
+    "automatic_status": "release_not_found",
+    "clip_sha256": "2b5e3b694b8ce24bdaec01a0310fef9f0c3c7c8529d55773a6865c960c9271e7",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 275
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:234",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/edb517c0-9bdd-acbd-c172-eb81c0564005_1280x720.json",
+    "label_sha256": "c3ba807d6511750428e08d3364680edbe77954c4741321e73b43e634e38a5234",
+    "shooter_key": "player_2",
+    "defender_key": "player_3",
+    "release_frame": 126,
+    "track_frame_count": 215,
+    "automatic_status": "ok",
+    "clip_sha256": "9119f30a4bab877bd5930e3afc48e6e811766265b496ebd6a91522b05cb7eb0e",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 215
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500019:80",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500019/6ce34465-63be-d52b-8be1-85c1d462ba00_1280x720.json",
+    "label_sha256": "e4ff3e65d2ef0a479aa601aa76f4183418b6369c4f0d16002b9d92e1c02351d6",
+    "shooter_key": "player_3",
+    "defender_key": "player_10",
+    "release_frame": 173,
+    "track_frame_count": 237,
+    "automatic_status": "ok",
+    "clip_sha256": "0dc72af91a0e317d477f4cdb7d7c16bd5d6edfcabfa4f4840528035b7c99204a",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 237
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:110",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/0dc31e4f-a267-07e0-86c4-e377f195cddd_1280x720.json",
+    "label_sha256": "b6cb13f82769db768ac72c73c28e80041643071f95edda0c9f4ca7fade491cb3",
+    "shooter_key": "player_5",
+    "defender_key": "player_4",
+    "release_frame": 76,
+    "track_frame_count": 200,
+    "automatic_status": "ok",
+    "clip_sha256": "0856674d011861e0b00a2da0c6055ecba96fce5397e7c9e47aec02295eb9c5ce",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 200
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500021:80",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500021/0b513474-1f48-ce98-4c3f-075733917b9c_1280x720.json",
+    "label_sha256": "bca404f27a0244a72a2566c314aa8c561fde2e66a78ad9d5a02af6108a113a88",
+    "shooter_key": "player_4",
+    "defender_key": "player_3",
+    "release_frame": 116,
+    "track_frame_count": 240,
+    "automatic_status": "ok",
+    "clip_sha256": "d8344cc54fbb06f4bde47119399f7517db03e24102bfea95182814696bc5e2a9",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 240
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500021:217",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500021/29dbf003-2c43-119d-e130-c67a75571fa8_1280x720.json",
+    "label_sha256": "4910b4f7afc24a62a318ed05b3b644ffc7fc0d1a1899a6ba81621708acd9e662",
+    "shooter_key": "player_8",
+    "defender_key": "player_7",
+    "release_frame": 142,
+    "track_frame_count": 285,
+    "automatic_status": "ok",
+    "clip_sha256": "c625264889a5da21b3f0ca31ce97f73631efc333478aa911a784d2a59424bc98",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 285
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500021:638",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500021/5acfdd61-bbfe-3a3c-3989-a3ccbdc803bd_1280x720.json",
+    "label_sha256": "555401533aea91c33674180e3d20c13035a9b4c82da0855ca65de21ac56a00e4",
+    "shooter_key": "player_5",
+    "defender_key": "player_0",
+    "release_frame": 160,
+    "track_frame_count": 250,
+    "automatic_status": "ok",
+    "clip_sha256": "d12972d957881c4522492022d2515ab9b9d0701a9a896fcdbac30192d8aa6742",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 250
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500008:566",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500008/4f07b7d1-7dc3-d245-26f6-a6a7d9e2175c_1280x720.json",
+    "label_sha256": "446c0c7989e469a42668c3ffef2f17dbca2a4cbef3e96d9c01be42463da2f896",
+    "shooter_key": "player_3",
+    "defender_key": "player_4",
+    "release_frame": 177,
+    "track_frame_count": 227,
+    "automatic_status": "ok",
+    "clip_sha256": "70d9810a8565a38914f73c183ea5ba3653bd9f72dd496ec56c857cd44c9b0711",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 227
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:267",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/5f6d542e-0c34-4d26-ef8b-94320c66aa31_1280x720.json",
+    "label_sha256": "01344d409575655979c54407135e8646eb7a1479d0a702f92e1f451c423fc6fb",
+    "shooter_key": "player_0",
+    "defender_key": "player_3",
+    "release_frame": 110,
+    "track_frame_count": 227,
+    "automatic_status": "ok",
+    "clip_sha256": "2eb483f62c7c012cd750fee65728dec8a03211b68350ccbe4f63f7a4025c7243",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 227
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500018:238",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500018/5b87fa29-cd10-99b2-a9da-facbf9ae3197_1280x720.json",
+    "label_sha256": "f0a521c872dba68ea993d670703d306b5d5ba5bda80d0528dcf150e45cc5a842",
+    "shooter_key": "player_1",
+    "defender_key": "player_2",
+    "release_frame": 223,
+    "track_frame_count": 229,
+    "automatic_status": "ok",
+    "clip_sha256": "e3821334bf06fa533553038dd8adb4810f6546ed2e5530e2d8ea518c1786e404",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 229
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500020:360",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500020/b244fceb-f4fc-8883-6252-4e22bdf84324_1280x720.json",
+    "label_sha256": "206960ce888be06e8e207c6d12c68de817ccac9cdb63add59f751f0b2d68e5e6",
+    "shooter_key": "player_8",
+    "defender_key": "player_3",
+    "release_frame": 228,
+    "track_frame_count": 234,
+    "automatic_status": "ok",
+    "clip_sha256": "70ae6707238e9628caa99e98e1dbd0f690bc45ec53294ec4b443ba92cf219020",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 234
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:696",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/bb800fa0-90ee-3808-0912-bcfe05b4aa39_1280x720.json",
+    "label_sha256": "20ec7e84d1cd4e3bbe5c5ea0ddcc8599ad95a0adde702593d68b94f713ee6d90",
+    "shooter_key": "player_7",
+    "defender_key": "player_0",
+    "release_frame": 167,
+    "track_frame_count": 252,
+    "automatic_status": "ok",
+    "clip_sha256": "df559e1a0452ad7a3ec9abda6e555185acc62c89a8bd5dcc06849f8746572cc5",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 252
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500023:537",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500023/c9528c1a-5e02-9ea3-68c4-50299fc80043_1280x720.json",
+    "label_sha256": "55373d2377eabe539cdf36850e7aa0e17ac41223d1183f08577dc66196cc4ae5",
+    "shooter_key": "player_4",
+    "defender_key": "player_7",
+    "release_frame": 86,
+    "track_frame_count": 308,
+    "automatic_status": "ok",
+    "clip_sha256": "ce230f53ec769cff72927698abb50acf7df94c3d154c4ed0156f7bc8c082f647",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 308
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:123",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/79dd163a-2a73-2d5c-3dc6-40cb0e910608_1280x720.json",
+    "label_sha256": "fe9299ccce199aa8204f4296b0130a1497999b14fa20e61a3d1abf1e5b387fb5",
+    "shooter_key": "player_1",
+    "defender_key": "player_2",
+    "release_frame": 144,
+    "track_frame_count": 270,
+    "automatic_status": "ok",
+    "clip_sha256": "5f1779894b6157b6b65b6d1b1ee1d962c53bd0d95696591892da48e5996ffa82",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 270
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500022:555",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500022/c3be1472-f6ec-e270-4f0e-497faea3786c_1280x720.json",
+    "label_sha256": "a2c4291ae374b7f1a88d7b7c170ad5f7937cd24ba138980e72ba2b276180fb2f",
+    "shooter_key": "player_4",
+    "defender_key": "player_0",
+    "release_frame": 69,
+    "track_frame_count": 170,
+    "automatic_status": "ok",
+    "clip_sha256": "d2148068ee6d87f9be99240c32b72dec9eb6caf745a67e773cece05cebbf935f",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 170
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500023:456",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500023/5dcb31f4-2e63-a5f1-2878-14060e634f85_1280x720.json",
+    "label_sha256": "a5a518ba7be36b7504cbf1a2a00a3465304ba18d9d54f0d012b551a11ddf9c9b",
+    "shooter_key": "player_1",
+    "defender_key": "player_8",
+    "release_frame": 142,
+    "track_frame_count": 311,
+    "automatic_status": "ok",
+    "clip_sha256": "aa7b5501ac1a39d20b705092b5c36cf9037b1b0683e81193d8dee0f8596ca25e",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 311
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500004:475",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500004/70f95ff5-ab50-e113-afae-9bd3cd0b3194_1280x720.json",
+    "label_sha256": "c2ee5c8687f8463b894d31b1b95cd9bed219f6c11dbfb6c86f46cbb77ef95292",
+    "shooter_key": "player_6",
+    "defender_key": "player_4",
+    "release_frame": 123,
+    "track_frame_count": 205,
+    "automatic_status": "ok",
+    "clip_sha256": "dbbb56135c901f99c631359f3fd6735d7b9aaa674eabb37499bc7dca03657e1f",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 205
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500021:623",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500021/bf7edb4d-7b35-9429-14c8-53baa5e24792_1280x720.json",
+    "label_sha256": "bf7c713c323f6c37fd454d349c964f5dbf16ce3e02f3177eb07a92ed2b0ce9e1",
+    "shooter_key": "player_5",
+    "defender_key": "player_4",
+    "release_frame": 110,
+    "track_frame_count": 226,
+    "automatic_status": "ok",
+    "clip_sha256": "641f30b2a29906c816a88fb197ce72bce74af71f46e231ad57f4e03369dafa90",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 226
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500007:498",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500007/6172f827-6d52-5a64-cb8c-2341da301177_1280x720.json",
+    "label_sha256": "649b55ccb3e7f3c347f1ae67b35fb4e24d519c49c361531c798c2d85d6969034",
+    "shooter_key": "player_4",
+    "defender_key": "player_2",
+    "release_frame": 97,
+    "track_frame_count": 204,
+    "automatic_status": "ok",
+    "clip_sha256": "d1070fbf73fe4f4f8d04986a34cd973930ed4ff05a75e475bf218e202880de8b",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 204
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500004:437",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500004/b6f08d35-1ca6-08b0-b753-06892161858b_1280x720.json",
+    "label_sha256": "6f368605afaaf0fbc1e5efad514f339bd99775a4379665e228aa9e24324ca7fe",
+    "shooter_key": "player_0",
+    "defender_key": "player_1",
+    "release_frame": 125,
+    "track_frame_count": 249,
+    "automatic_status": "ok",
+    "clip_sha256": "d17177e9eeac27bd95658e342bf914230955b04b1e15063f397aa29e4cbe8408",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 249
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500006:243",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500006/4d159d0e-978a-6f04-009e-c807181dd35f_1280x720.json",
+    "label_sha256": "03ed63d941ffd17e7028ae1406eb0eefedef0e5a5aeaa622eaa9cdacb9e2f89f",
+    "shooter_key": "player_1",
+    "defender_key": "player_6",
+    "release_frame": 83,
+    "track_frame_count": 195,
+    "automatic_status": "ok",
+    "clip_sha256": "13b7566d7d63bac13cc27ed625c3b878925f3ecac7aef87d0f5a4ee7105f57e3",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 195
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500022:640",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500022/9e63fdac-51d7-e218-ebe1-387349b0f51c_1280x720.json",
+    "label_sha256": "572fcdf7b9188c035231e475edf74703eb40f4342a856e76dd79dac320bde7c0",
+    "shooter_key": null,
+    "defender_key": null,
+    "release_frame": null,
+    "track_frame_count": null,
+    "automatic_status": "ambiguous_shooter_or_event",
+    "clip_sha256": "b77323940a41e65c6fa1245f96fad45fb3fd62cf5a1891199d7a9117fc770c49",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 207
+    },
+    "alignment_status": "frame_count_mismatch"
+  },
+  {
+    "shot_id": "nba:0022500007:472",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500007/e669313f-34a8-db18-f755-e2e5028c2946_1280x720.json",
+    "label_sha256": "70660e6120b8a3205d699e72d32be50fc228268400c0b0987ed28eb93b489630",
+    "shooter_key": "player_3",
+    "defender_key": "player_9",
+    "release_frame": 101,
+    "track_frame_count": 270,
+    "automatic_status": "ok",
+    "clip_sha256": "cebb1807c35fe914b600201f58cb8cb7c71e4e44bfd0dc5b74f1f612c144844c",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 270
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:663",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/2c4c648d-1914-2332-bc16-247ee6a03533_1280x720.json",
+    "label_sha256": "4429df35fdcbede7548a7375972f61e77dbff6d99636e2b8d397d3487d7519c0",
+    "shooter_key": "player_4",
+    "defender_key": "player_5",
+    "release_frame": 81,
+    "track_frame_count": 211,
+    "automatic_status": "ok",
+    "clip_sha256": "5e5a9ac36390b19280aba62c0900869fb5a306befab7879b90e2ed4a81f2cfed",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 211
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500008:190",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500008/b7044a66-816d-6181-c51f-24ccda97af9c_1280x720.json",
+    "label_sha256": "e287cee1a684a9b4c8bfc443134d653c2170bca3f4bf6277952d74275377d375",
+    "shooter_key": "player_6",
+    "defender_key": "player_5",
+    "release_frame": 143,
+    "track_frame_count": 228,
+    "automatic_status": "ok",
+    "clip_sha256": "61a1280cca15692a49c204152b5c61af717ea0a167b16de1d0393cdd5f7ae11b",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 228
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500003:74",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500003/69e759a7-b76b-35d7-8887-5f99661c67d6_1280x720.json",
+    "label_sha256": "cd7f6f1400d4e7f09716dc2c84231b2a8cd05801bb6b0dd669270876b92d7893",
+    "shooter_key": "player_5",
+    "defender_key": "player_1",
+    "release_frame": 74,
+    "track_frame_count": 178,
+    "automatic_status": "ok",
+    "clip_sha256": "5bfe2b5f99b5fc59f6fac97642ed5d576f80f0943326394e4c3711c60f3a5539",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 178
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500007:718",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500007/78744d6c-d33c-b063-0664-26fd236769f1_1280x720.json",
+    "label_sha256": "f398a31472139e452aa05fda062a9539b193c4fe0c203e947d425750d73c182b",
+    "shooter_key": "player_5",
+    "defender_key": "player_4",
+    "release_frame": 160,
+    "track_frame_count": 177,
+    "automatic_status": "ok",
+    "clip_sha256": "6c0b1935ca3758469d6fbc4a77536fabd30a3f45291383e662b7a27f4fef6863",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 177
+    },
+    "alignment_status": "count_equal_unverified"
+  },
+  {
+    "shot_id": "nba:0022500007:579",
+    "label_path": "/Users/varunkota/Documents/UMD_CS/CMSC473/agentic-NBA-prediction-CMSC473/data/release_audit_source/labels/test/0022500007/341f482d-61ee-8c7e-4d37-e5212a234063_1280x720.json",
+    "label_sha256": "98cabb62eb559bf1afb1ba3c31ae4af8fc9dc3d36ad49a4eedf16b758ef88d23",
+    "shooter_key": "player_2",
+    "defender_key": "player_4",
+    "release_frame": 209,
+    "track_frame_count": 220,
+    "automatic_status": "ok",
+    "clip_sha256": "9dbb245cf94841df4b5ed8cf618f76c378262b92ca2a57cff32545c09a47da88",
+    "video_metadata": {
+      "width": 1280,
+      "height": 720,
+      "fps": 25.0,
+      "frame_count": 220
+    },
+    "alignment_status": "count_equal_unverified"
+  }
+]
