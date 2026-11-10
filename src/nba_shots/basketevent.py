@@ -2,7 +2,7 @@
 
 Each clip's JSON has per-frame [x, y, w, h] boxes for players (with jersey colour) and the
 ball, and the shot event (play-by-play V3 fields) attached to the shooter. Release is found
-from the boxes alone, so features exist for every labeled clip, with or without video.
+from the boxes alone, so features exist for labeled clips with or without video.
 """
 
 from __future__ import annotations
@@ -266,7 +266,11 @@ def collect_basketevent(output: str | Path, limit: int | None = None) -> dict:
 
 
 def prepare_basketevent(collection: str | Path, output: str | Path, config: dict) -> dict:
-    """Cohort = NBA shot records with a BasketEvent clip; box features in a separate table."""
+    """Cohort = NBA shot records whose clip has a detected release; box features separately.
+
+    Shots without a release are dropped rather than kept with blank features: a clip holding
+    several shots is usually a miss and its putback, so blank features would leak the outcome.
+    """
     from nba_api.stats.static import teams
 
     collection, output = Path(collection), Path(output)
@@ -291,6 +295,8 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
     )
     if matched.shot_id.duplicated().any() or not set(matched.shot_id) <= set(shots.shot_id):
         raise ValueError("Clip events must match logged shot attempts one to one")
+    labeled = matched.merge(shots[["shot_id", "y_true"]], on="shot_id")
+    matched = matched.loc[matched.box_status.eq("ok")]
     shots = shots.loc[shots.shot_id.isin(matched.shot_id)].assign(cohort=COHORT)
     shots, splits = assign_splits(shots, config["train_fraction"], config["validation_fraction"])
     if config["include_player_history"]:
@@ -300,7 +306,6 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
     kept = ["shot_id", "box_status", "basketevent_split", "has_video", "clip", "release_frame"]
     kept += ["shooter_box", "defender_box", *FEATURE_COLUMNS]
     matched[kept].to_parquet(output / "box_features.parquet", index=False)
-    labeled = matched.merge(shots[["shot_id", "y_true"]], on="shot_id")
     write_json(output / "splits.json", splits)
     write_json(output / "config.json", config)
     write_json(
@@ -319,7 +324,9 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
             .game_event_id.apply(lambda s: float(s.notna().mean()))
             .to_dict(),
             "duplicate_clips_dropped": int(events.duplicate_clips.clip(lower=0).sum()),
-            "status_counts": matched.box_status.value_counts().to_dict(),
+            # Only "ok" shots enter the cohort; the others are reported, not modeled.
+            "status_counts": labeled.box_status.value_counts().to_dict(),
+            "make_rate_by_status": labeled.groupby("box_status").y_true.mean().to_dict(),
             "found_rate_by_outcome": labeled.groupby("y_true")
             .box_status.apply(lambda s: float(s.eq("ok").mean()))
             .rename(index=str)

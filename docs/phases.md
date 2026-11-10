@@ -376,9 +376,12 @@ uv run --frozen --all-extras nba-shots train \
   opponents within 1 bh, defender closing speed and shooter speed over the 5 frames
   before release. Shooter speed subtracts the median motion of the other players so
   camera pans do not count. Opponents are players with the other jersey colour.
-- **No outcome filtering:** clips with no ball, no release, several shot events or an
-  ambiguous shooter stay in the cohort with missing features. `audit.json` reports the
-  match rate by made/missed and the release-found rate by outcome; check both.
+- **Only shots with a detected release enter the cohort**, for every model. Keeping the
+  others with blank features leaked the outcome: a clip holding several shot events is
+  usually a miss and its putback (21% made vs 37%), so "all features blank" predicted a
+  miss and accounted for most of an early, spurious `xgboost_boxes` gain. Both models
+  still score the same shots. `audit.json` reports the match rate by made/missed, the
+  release-found rate by outcome and the make rate of each dropped status; check all three.
 - **Pose** (`extract-cv`) needs pixels. Videos exist only for the authors' valid/test
   games so far; `box_features.parquet` keeps `has_video`, `release_frame`, `shooter_box`
   and `defender_box` so pose can be extracted for those clips without annotation.
