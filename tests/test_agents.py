@@ -2,6 +2,7 @@ import importlib.util
 import re
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from nba_shots.agents import (
@@ -13,6 +14,7 @@ from nba_shots.agents import (
     predict_condition,
     prompt_features,
     select_evaluation_rows,
+    summarize_agent_usage,
 )
 from nba_shots.data import assign_splits, normalize_kaggle
 
@@ -181,17 +183,98 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(raw_shots, mon
     raw_shots.to_csv(source, index=False)
     shots = prepare_csv(source, tmp_path / "prepared", load_config())
     result = agents.run_agents(shots, tmp_path / "run", limit=1)
-    # Default config has no player history, so the history specialist is skipped: 1 + 3 + 3.
-    assert result["actual_calls_this_run"] == 7 and len(requests_seen) == 7
+    # Default config lacks player history: 1 + 3 iterative + 1 decomposed
+    # + 3 ensemble + 3 multi = 11 calls per shot.
+    assert result["actual_calls_this_run"] == 11 and len(requests_seen) == 11
     assert all(m["coverage"] == 1 for m in result["metrics"])
+    usage = pd.read_csv(result["usage_report"])
+    assert set(usage["condition"]) == {
+        "llm_single", "llm_single_budget", "llm_single_decomposed",
+        "llm_single_ensemble", "llm_multi",
+    }
+    assert usage["calls_this_run"].sum() == 11
     sent = [m["content"] for r in requests_seen for m in r["messages"]]
     assert any('"features": {"' in text for text in sent)
     assert not any('"features": {}' in text for text in sent)
     resumed = agents.run_agents(shots, tmp_path / "run", limit=1)
-    assert resumed["actual_calls_this_run"] == 0 and len(requests_seen) == 7
+    assert resumed["actual_calls_this_run"] == 0 and len(requests_seen) == 11
     with pytest.raises(ValueError, match="Experiment changed"):
         agents.run_agents(shots, tmp_path / "run", limit=2)
 
 
 def test_prompt_text_contains_no_sample_probability():
     assert not re.search(r"\d", EXPECTED_OUTPUT)
+
+
+def test_single_decomposed_has_full_input_one_call_and_no_prior_assessments():
+    seen = []
+
+    def assessor(role, features, previous):
+        seen.append((role, features.copy(), list(previous)))
+        return {"p_make": 0.35, "rationale": "Test"}
+
+    features = {"period": 3, "shot_distance": 22, "player_prior_make_rate": 0.42}
+    result = predict_condition(features, "llm_single_decomposed", assessor)
+    assert result["p_make"] == 0.35
+    assert call_budget(features, "llm_single_decomposed") == 1
+    assert len(seen) == 1
+    role, received, previous = seen[0]
+    assert "game context" in role and "player history" in role and "defense" in role
+    assert received == features and previous == []
+
+
+def test_ensemble_averages_all_independent_calls_without_feedback():
+    seen = []
+    values = iter([0.1, 0.2, 0.6])
+
+    def assessor(role, features, previous):
+        seen.append((role, features.copy(), list(previous)))
+        return {"p_make": next(values), "rationale": "Test"}
+
+    features = {"period": 4, "shot_distance": 18}
+    result = predict_condition(features, "llm_single_ensemble", assessor)
+    assert call_budget(features, "llm_single_ensemble") == 3
+    assert result["p_make"] == pytest.approx(0.3)
+    assert len(seen) == 3
+    assert all(f == features and prior == [] for _, f, prior in seen)
+
+
+def test_all_conditions_reject_hidden_outcomes():
+    features = {"shot_distance": 20, "y_true": 1}
+
+    def assessor(role, inputs, previous):
+        raise AssertionError("Unsafe data reached assessor")
+
+    for condition in [
+        "llm_single", "llm_single_budget", "llm_single_decomposed",
+        "llm_single_ensemble", "llm_multi",
+    ]:
+        with pytest.raises(ValueError, match="allowlisted"):
+            predict_condition(features, condition, assessor)
+
+
+def test_missing_history_reduces_multi_and_ensemble_call_budgets():
+    features = {"period": 1, "shot_distance": 8, "player_prior_make_rate": None}
+    assert call_budget(features, "llm_single_ensemble") == 3
+    assert call_budget(features, "llm_multi") == 3
+    assert call_budget(features, "llm_single_decomposed") == 1
+
+
+def test_usage_report_includes_failure_cost_and_cached_success():
+    rows = pd.DataFrame([
+        {"model": "arm_a", "status": "ok", "cached": False, "calls": 2,
+         "prompt_tokens": 120, "completion_tokens": 30, "runtime_seconds": 1.2},
+        {"model": "arm_a", "status": "error", "cached": False, "calls": 1,
+         "prompt_tokens": 0, "completion_tokens": 0, "runtime_seconds": 0.4},
+        {"model": "arm_b", "status": "ok", "cached": True, "calls": 0,
+         "prompt_tokens": 0, "completion_tokens": 0, "runtime_seconds": 0.01},
+    ])
+    report = summarize_agent_usage(rows).set_index("condition")
+    assert report.loc["arm_a", "shots_attempted"] == 2
+    assert report.loc["arm_a", "shots_failed"] == 1
+    assert report.loc["arm_a", "coverage"] == 0.5
+    assert report.loc["arm_a", "calls_this_run"] == 3
+    assert report.loc["arm_a", "prompt_tokens_this_run"] == 120
+    assert report.loc["arm_a", "runtime_seconds_this_run"] == pytest.approx(1.6)
+    assert report.loc["arm_b", "cache_hits"] == 1
+    assert report.loc["arm_b", "calls_this_run"] == 0
