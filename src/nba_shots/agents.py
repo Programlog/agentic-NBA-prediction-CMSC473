@@ -329,6 +329,27 @@ def summarize_agent_usage(predictions: pd.DataFrame) -> pd.DataFrame:
     }
     if missing := required - set(predictions):
         raise ValueError(f"Usage report missing columns: {sorted(missing)}")
+
+    # Reject incomplete or impossible measurements before aggregation.
+    # Pandas may otherwise skip missing values when computing totals.
+    numeric_columns = (
+        "calls",
+        "prompt_tokens",
+        "completion_tokens",
+        "runtime_seconds",
+    )
+
+    for column in numeric_columns:
+        values = predictions[column]
+
+        if (
+            not pd.api.types.is_numeric_dtype(values)
+            or not np.isfinite(values.to_numpy(dtype=float)).all()
+            or (values < 0).any()
+        ):
+            raise ValueError(
+                f"Invalid usage measurement in column: {column}"
+            )
     records = []
     for name, rows in predictions.groupby("model", sort=True):
         ok = rows["status"].eq("ok")
