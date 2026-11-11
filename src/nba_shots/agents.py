@@ -26,7 +26,7 @@ from .common import (
 from .evaluation import write_scores
 from .models import validate_splits
 
-PROMPT_VERSION = "release-v2"
+PROMPT_VERSION = "release-v3-controls"
 OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -37,7 +37,19 @@ OUTPUT_SCHEMA = {
     "additionalProperties": False,
 }
 # Maximum calls per shot; call_budget drops a specialist (and a budget call) without inputs.
-CONDITIONS = {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
+CONDITIONS = {
+    "llm_single": 1,
+    "llm_single_budget": 4,  # Existing iterative control retained for comparison.
+    "llm_single_decomposed": 1,
+    "llm_single_ensemble": 4,  # Actual call count adapts to present specialists.
+    "llm_multi": 4,
+}
+DECOMPOSITION_ROLE = (
+    "Single analyst: in ONE assessment, separately consider game context, "
+    "player history, and shot mechanics/defense; ignore missing groups, "
+    "then combine the available evidence into one probability. "
+    "Use only supplied features; do not invent outside information"
+)
 INSTRUCTIONS = (
     "Estimate the probability an NBA field goal is made at the instant of release. "
     "Only use the supplied pre-release measurements; null means unknown. "
@@ -96,6 +108,7 @@ class OllamaClient:
             raise ValueError("num_predict must be between 32 and 1024")
         self.model, self.base_url = model, base_url.rstrip("/")
         self.seed, self.num_predict = seed, num_predict
+        self.temperature = 0.0
         self.session = requests.Session()
         self.session.trust_env = False
         self.calls = []
@@ -108,7 +121,13 @@ class OllamaClient:
 
     def call(self, messages):
         started = time.perf_counter()
-        log = {"messages": messages, "status": "error", "p_make": None}
+        log = {
+            "messages": messages,
+            "status": "error",
+            "p_make": None,
+            "sampling_seed": self.seed,
+            "sampling_temperature": self.temperature,
+        }
         self.calls.append(log)
         try:
             response = self.session.post(
@@ -120,7 +139,7 @@ class OllamaClient:
                     "stream": False,
                     "think": False,
                     "options": {
-                        "temperature": 0,
+                        "temperature": self.temperature,
                         "seed": self.seed,
                         "num_ctx": 8192,
                         "num_predict": self.num_predict,
@@ -245,7 +264,11 @@ def call_budget(features: dict, condition: str) -> int:
     """llm_single_budget matches the calls llm_multi actually makes for the same shot."""
     if condition not in CONDITIONS:
         raise ValueError(f"Unknown agent condition: {condition}")
-    return 1 if condition == "llm_single" else len(specialist_inputs(features)) + 1
+    return (
+        1
+        if condition in {"llm_single", "llm_single_decomposed"}
+        else len(specialist_inputs(features)) + 1
+    )
 
 
 def predict_condition(features: dict, condition: str, assessor) -> dict:
@@ -253,6 +276,20 @@ def predict_condition(features: dict, condition: str, assessor) -> dict:
         raise ValueError("Agent inputs must contain only allowlisted pre-release features")
     if condition == "llm_single":
         return assessor("Shot probability analyst", features, [])
+    if condition == "llm_single_decomposed":
+        # Same complete feature payload as the multi-agent aggregator; no extra call.
+        return assessor(DECOMPOSITION_ROLE, features, [])
+    if condition == "llm_single_ensemble":
+        # Independent stochastic assessments: never expose earlier predictions.
+        # The run harness varies seeds/temperature for this arm only.
+        results = [
+            assessor("Independent shot probability analyst", features, [])
+            for _ in range(call_budget(features, condition))
+        ]
+        return {
+            "p_make": float(np.mean([r["p_make"] for r in results])),
+            "rationale": "Mean of independent probability estimates (no shared assessments)",
+        }
     if condition == "llm_single_budget":
         previous = []
         for _ in range(call_budget(features, condition)):
@@ -277,6 +314,58 @@ def select_evaluation_rows(shots: pd.DataFrame, split: str, limit: int, seed=42)
     # Selection depends on IDs/seed, never labels or extracted feature quality.
     ranking = rows.shot_id.map(lambda s: hashlib.sha256(f"{seed}:{s}".encode()).hexdigest())
     return rows.loc[ranking.sort_values().head(limit).index].sort_values("shot_id")
+
+
+
+def summarize_agent_usage(predictions: pd.DataFrame) -> pd.DataFrame:
+    """Per-arm execution coverage and *this-run* compute, including failed calls.
+
+    Cache hits count toward coverage but consume zero new calls/tokens; those
+    historical costs remain in their original run's trace, not this report.
+    """
+    required = {
+        "model", "status", "cached", "calls", "prompt_tokens",
+        "completion_tokens", "runtime_seconds",
+    }
+    if missing := required - set(predictions):
+        raise ValueError(f"Usage report missing columns: {sorted(missing)}")
+
+    # Reject incomplete or impossible measurements before aggregation.
+    # Pandas may otherwise skip missing values when computing totals.
+    numeric_columns = (
+        "calls",
+        "prompt_tokens",
+        "completion_tokens",
+        "runtime_seconds",
+    )
+
+    for column in numeric_columns:
+        values = predictions[column]
+
+        if (
+            not pd.api.types.is_numeric_dtype(values)
+            or not np.isfinite(values.to_numpy(dtype=float)).all()
+            or (values < 0).any()
+        ):
+            raise ValueError(
+                f"Invalid usage measurement in column: {column}"
+            )
+    records = []
+    for name, rows in predictions.groupby("model", sort=True):
+        ok = rows["status"].eq("ok")
+        records.append({
+            "condition": name,
+            "shots_attempted": len(rows),
+            "shots_succeeded": int(ok.sum()),
+            "shots_failed": int((~ok).sum()),
+            "coverage": float(ok.mean()),
+            "cache_hits": int(rows["cached"].sum()),
+            "calls_this_run": int(rows["calls"].sum()),
+            "prompt_tokens_this_run": int(rows["prompt_tokens"].sum()),
+            "completion_tokens_this_run": int(rows["completion_tokens"].sum()),
+            "runtime_seconds_this_run": float(rows["runtime_seconds"].sum()),
+        })
+    return pd.DataFrame.from_records(records)
 
 
 def run_agents(
@@ -317,6 +406,8 @@ def run_agents(
         "seed": seed,
         "num_predict_per_call": num_predict,
         "conditions": CONDITIONS,
+        "ensemble_temperature": 0.7,
+        "ensemble_seed_rule": "base seed plus zero-based call index within shot/arm",
         "implementation_sha256": sha256(__file__),
     }
     output = Path(output)
@@ -363,11 +454,21 @@ def run_agents(
                     assessment = parse_assessment(cache.read_text())
                     record["cached"] = True
                 else:
-                    assessment = predict_condition(
-                        features,
-                        condition,
-                        lambda role, f, prior: crewai_assessment(client, role, f, prior),
-                    )
+                    def assess(role, f, prior):
+                        # Do not alter the other deterministic arms. Within the
+                        # ensemble, change the seed for each independent draw.
+                        # Sampling temperature is a declared experimental difference,
+                        # NOT proof that token/call budgets have been matched.
+                        try:
+                            if condition == "llm_single_ensemble":
+                                client.seed = seed + len(client.calls) - start_calls
+                                client.temperature = 0.7
+                            return crewai_assessment(client, role, f, prior)
+                        finally:
+                            client.seed = seed
+                            client.temperature = 0.0
+
+                    assessment = predict_condition(features, condition, assess)
                     if len(client.calls) - start_calls != expected_calls:
                         raise ValueError(
                             "Actual calls did not match the registered inference budget"
@@ -404,9 +505,12 @@ def run_agents(
             pd.DataFrame(predictions).to_csv(output / "predictions.csv", index=False)
     frame = pd.DataFrame(predictions)
     metrics = write_scores(frame, output, prefix=split)
+    usage = summarize_agent_usage(frame)
+    usage.to_csv(output / "usage_by_condition.csv", index=False)
     result = {
         "predictions": str(output / "predictions.csv"),
         "metrics": metrics,
+        "usage_report": str(output / "usage_by_condition.csv"),
         "actual_calls_this_run": len(client.calls),
         "completed_at": utc_now(),
     }
