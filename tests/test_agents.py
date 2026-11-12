@@ -7,6 +7,10 @@ import pytest
 
 from nba_shots.agents import (
     EXPECTED_OUTPUT,
+    FEATURE_DEFINITIONS,
+    FEATURE_GUIDANCE,
+    INSTRUCTIONS,
+    PROMPT_VERSION,
     OllamaClient,
     call_budget,
     crewai_assessment,
@@ -16,6 +20,7 @@ from nba_shots.agents import (
     select_evaluation_rows,
     summarize_agent_usage,
 )
+from nba_shots.common import ALLOWED_FEATURES
 from nba_shots.data import assign_splits, normalize_kaggle
 
 
@@ -167,9 +172,7 @@ def test_actual_crewai_adapter_obeys_one_call_budget(monkeypatch, tmp_path):
     importlib.util.find_spec("crewai") is None,
     reason="optional agents extra",
 )
-def test_complete_agent_run_uses_local_payloads_and_resumes_cache(
-    raw_shots, monkeypatch, tmp_path
-):
+def test_complete_agent_run_uses_local_payloads_and_resumes_cache(raw_shots, monkeypatch, tmp_path):
     import json
 
     from nba_shots import agents
@@ -217,9 +220,7 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(
 
             return Response(
                 {
-                    "message": {
-                        "content": '{"p_make": 0.4, "rationale": "Test"}'
-                    },
+                    "message": {"content": '{"p_make": 0.4, "rationale": "Test"}'},
                     "prompt_eval_count": 100,
                     "eval_count": 20,
                 }
@@ -262,11 +263,7 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(
 
     assert usage["calls_this_run"].sum() == 11
 
-    sent = [
-        m["content"]
-        for request in requests_seen
-        for m in request["messages"]
-    ]
+    sent = [m["content"] for request in requests_seen for m in request["messages"]]
 
     assert any('"features": {"' in text for text in sent)
     assert not any('"features": {}' in text for text in sent)
@@ -346,10 +343,7 @@ def test_ensemble_averages_all_independent_calls_without_feedback():
     assert call_budget(features, "llm_single_ensemble") == 3
     assert result["p_make"] == pytest.approx(0.3)
     assert len(seen) == 3
-    assert all(
-        received == features and previous == []
-        for _, received, previous in seen
-    )
+    assert all(received == features and previous == [] for _, received, previous in seen)
 
 
 def test_all_conditions_reject_hidden_outcomes():
@@ -442,9 +436,7 @@ def test_usage_report_includes_failure_cost_and_cached_success():
         ("runtime_seconds", -0.5),
     ],
 )
-def test_usage_report_rejects_invalid_compute_measurements(
-    field, invalid_value
-):
+def test_usage_report_rejects_invalid_compute_measurements(field, invalid_value):
     row = {
         "model": "llm_single",
         "status": "ok",
@@ -459,3 +451,50 @@ def test_usage_report_rejects_invalid_compute_measurements(
 
     with pytest.raises(ValueError, match="Invalid usage"):
         summarize_agent_usage(pd.DataFrame([row]))
+
+
+def test_feature_definitions_cover_all_allowed_inputs():
+    assert set(FEATURE_DEFINITIONS) == ALLOWED_FEATURES
+
+    for name, description in FEATURE_DEFINITIONS.items():
+        assert description.strip()
+        assert f"{name}: {description}" in FEATURE_GUIDANCE
+
+
+def test_shared_prompt_explains_ambiguous_features():
+    assert FEATURE_GUIDANCE in INSTRUCTIONS
+
+    assert "H means home and A means away" in INSTRUCTIONS
+    assert "not the shooter's position on the court" in INSTRUCTIONS
+
+    assert "Seconds remaining on the possession shot clock" in INSTRUCTIONS
+    assert "a higher value means more time remains" in INSTRUCTIONS
+
+    assert "not the importance of the attempt" in INSTRUCTIONS
+    assert "not physical distance in feet" in INSTRUCTIONS
+    assert "Missing or null measurements are unknown, not zero" in INSTRUCTIONS
+
+
+def test_feature_guidance_does_not_expand_allowed_inputs():
+    assert "shot_number" not in FEATURE_DEFINITIONS
+    assert "game_id" not in FEATURE_DEFINITIONS
+    assert "player_id" not in FEATURE_DEFINITIONS
+    assert "y_true" not in FEATURE_DEFINITIONS
+
+    row = {
+        "shot_clock": 18.7,
+        "location": "A",
+        "shot_value": 2,
+        "y_true": 1,
+        "player_id": "hidden",
+    }
+
+    assert prompt_features(row) == {
+        "location": "A",
+        "shot_clock": 18.7,
+        "shot_value": 2,
+    }
+
+
+def test_feature_semantics_use_new_prompt_version():
+    assert PROMPT_VERSION == "release-v4-feature-semantics"
