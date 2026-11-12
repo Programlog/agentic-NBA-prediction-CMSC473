@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from .common import utc_now, write_json
-from .evaluation import paired_comparison
+from .evaluation import paired_common_success_comparison
 
 
 def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> dict:
@@ -66,8 +66,14 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
         ]:
             if {base, candidate} <= set(rows.model):
                 try:
-                    result = paired_comparison(rows, base, candidate)
+                    result = paired_common_success_comparison(rows, base, candidate)
                     comparisons.append({"cohort": cohort, "split": split, **result})
+                    lines.append(
+                        f"- Common-success cohort: {result['n_common_success']} / "
+                        f"{result['n_attempted']} attempted shots; "
+                        f"{base} coverage {result['baseline_coverage']:.1%}, "
+                        f"{candidate} coverage {result['candidate_coverage']:.1%}."
+                    )
                     lo, hi = result["brier_delta_95pct_interval"]
                     lines.append(
                         f"- {candidate} − {base}: Brier difference "
@@ -79,7 +85,9 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
         lines += [
             "",
             "Metrics with incomplete coverage describe successful predictions only. "
-            "Paired comparisons require complete, matching shot IDs.",
+            "Paired comparisons require matching attempted shot IDs and use only "
+            "shots where both models succeeded. Coverage is reported separately; "
+            "common-success results may be biased when failures are not random.",
             "",
         ]
     lines += [
