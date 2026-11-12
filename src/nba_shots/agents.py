@@ -268,15 +268,116 @@ def predict_condition(features: dict, condition: str, assessor) -> dict:
     raise ValueError(f"Unknown agent condition: {condition}")
 
 
-def select_evaluation_rows(shots: pd.DataFrame, split: str, limit: int, seed=42):
-    if limit < 1 or limit > 500:
-        raise ValueError("Use between 1 and 500 preregistered LLM evaluation shots")
-    rows = shots.loc[shots.split.eq(split)].sort_values("shot_id")
+def select_evaluation_rows(
+    shots: pd.DataFrame,
+    split: str,
+    limit: int,
+    seed: int = 42,
+    games: int | None = None,
+) -> pd.DataFrame:
+    """Select shots deterministically, optionally balanced across games.
+
+    With games=None, preserve the existing shot-ID hash selection.
+    Balanced mode selects eligible games first, then shots within games.
+    Neither method uses outcomes, predictions, or feature completeness.
+    """
+    if isinstance(limit, bool) or not isinstance(limit, int):
+        raise ValueError("Shot limit must be an integer")
+
+    if not 1 <= limit <= 500:
+        raise ValueError("Use between 1 and 500 LLM evaluation shots")
+
+    if split not in {"validation", "test"}:
+        raise ValueError("Only validation/test shots can be selected")
+
+    required = {"shot_id", "game_id", "cohort", "split"}
+
+    if missing := required - set(shots.columns):
+        raise ValueError(f"Missing sampling columns: {sorted(missing)}")
+
+    rows = shots.loc[shots["split"].eq(split)].copy()
+
     if rows.empty:
         raise ValueError("No shots in the requested split")
-    # Selection depends on IDs/seed, never labels or extracted feature quality.
-    ranking = rows.shot_id.map(lambda s: hashlib.sha256(f"{seed}:{s}".encode()).hexdigest())
-    return rows.loc[ranking.sort_values().head(limit).index].sort_values("shot_id")
+
+    if rows[list(required)].isna().any().any():
+        raise ValueError("Sampling metadata cannot be missing")
+
+    if rows["shot_id"].duplicated().any():
+        raise ValueError("Shot IDs must be unique")
+
+    if rows["cohort"].nunique() != 1:
+        raise ValueError("Cannot mix dataset cohorts")
+
+    if len(rows) < limit:
+        raise ValueError(f"Requested {limit} shots but only {len(rows)} are available")
+
+    # Preserve the original algorithm for older experiments.
+    if games is None:
+        rows = rows.sort_values("shot_id")
+
+        ranking = rows["shot_id"].map(
+            lambda shot: hashlib.sha256(f"{seed}:{shot}".encode()).hexdigest()
+        )
+
+        return rows.loc[ranking.sort_values().head(limit).index].sort_values("shot_id")
+
+    if isinstance(games, bool) or not isinstance(games, int):
+        raise ValueError("Number of games must be an integer")
+
+    if not 2 <= games <= limit:
+        raise ValueError("Number of games must be between 2 and the shot limit")
+
+    def rank(kind: str, value: str) -> str:
+        return hashlib.sha256(f"{seed}:{kind}:{value}".encode()).hexdigest()
+
+    base_count, remainder = divmod(limit, games)
+
+    # Each eligible game must support the largest allocation.
+    max_per_game = base_count + (remainder > 0)
+
+    game_sizes = rows.groupby("game_id").size()
+
+    eligible_games = [game for game, count in game_sizes.items() if count >= max_per_game]
+
+    if len(eligible_games) < games:
+        raise ValueError(
+            f"Need {games} games with at least "
+            f"{max_per_game} shots each; "
+            f"only {len(eligible_games)} qualify"
+        )
+
+    # Choose games using IDs and seed, never shot outcomes.
+    selected_games = sorted(
+        eligible_games,
+        key=lambda game: (
+            rank("game", str(game)),
+            str(game),
+        ),
+    )[:games]
+
+    selected_parts = []
+
+    for position, game in enumerate(selected_games):
+        allocation = base_count + (position < remainder)
+
+        game_rows = rows.loc[rows["game_id"].eq(game)].copy()
+
+        game_rows["_sampling_rank"] = game_rows["shot_id"].map(lambda shot: rank("shot", str(shot)))
+
+        selected_parts.append(game_rows.sort_values(["_sampling_rank", "shot_id"]).head(allocation))
+
+    selected = pd.concat(
+        selected_parts,
+        ignore_index=True,
+    )
+
+    counts = selected.groupby("game_id").size()
+
+    if len(selected) != limit or len(counts) != games or counts.max() - counts.min() > 1:
+        raise ValueError("Balanced sampling violated shot/game allocation")
+
+    return selected.drop(columns="_sampling_rank").sort_values("shot_id").reset_index(drop=True)
 
 
 def run_agents(
@@ -290,6 +391,7 @@ def run_agents(
     seed=42,
     num_predict=512,
     base_url="http://127.0.0.1:11434",
+    games=None,
 ) -> dict:
     if split == "test" and not final:
         raise ValueError("LLM test evaluation requires --final after prompt freeze")
@@ -304,7 +406,9 @@ def run_agents(
         shots = shots.merge(
             cv[["shot_id", *sorted(CV_FEATURES)]], on="shot_id", validate="one_to_one"
         )
-    selected = select_evaluation_rows(shots, split, limit, seed)
+    selected = select_evaluation_rows(
+        shots, split, limit, seed, games=games
+    )
     client = OllamaClient(model, base_url, seed, num_predict)
     spec = {
         "shots_sha256": sha256(shots_path),
@@ -315,6 +419,12 @@ def run_agents(
         "split": split,
         "shot_ids": selected.shot_id.tolist(),
         "seed": seed,
+        "sampling_method": (
+            "legacy_hash_v1"
+            if games is None
+            else "balanced_games_v1"
+        ),
+        "sampling_games": games,
         "num_predict_per_call": num_predict,
         "conditions": CONDITIONS,
         "implementation_sha256": sha256(__file__),
