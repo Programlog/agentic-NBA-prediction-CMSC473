@@ -1,7 +1,9 @@
 import importlib.util
+import json
 import re
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from nba_shots.agents import (
@@ -195,3 +197,174 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(raw_shots, mon
 
 def test_prompt_text_contains_no_sample_probability():
     assert not re.search(r"\d", EXPECTED_OUTPUT)
+
+
+def sampling_shots():
+    """Six games, five shots each, for deterministic sampling tests."""
+    return pd.DataFrame(
+        [
+            {
+                "shot_id": f"shot-{game}-{shot}",
+                "game_id": f"game-{game}",
+                "cohort": "kaggle_2014_15",
+                "split": "validation",
+                "y_true": shot % 2,
+                "shot_distance": float(shot * 5 + 3),
+                "period": 1,
+            }
+            for game in range(6)
+            for shot in range(5)
+        ]
+    )
+
+
+def test_balanced_agent_selection_is_reproducible():
+    rows = sampling_shots()
+
+    first = select_evaluation_rows(
+        rows,
+        "validation",
+        15,
+        seed=42,
+        games=5,
+    )
+
+    shuffled = rows.sample(
+        frac=1,
+        random_state=11,
+    )
+
+    second = select_evaluation_rows(
+        shuffled,
+        "validation",
+        15,
+        seed=42,
+        games=5,
+    )
+
+    assert first["shot_id"].tolist() == (second["shot_id"].tolist())
+
+    counts = first.groupby("game_id").size()
+
+    assert len(counts) == 5
+    assert (counts == 3).all()
+
+
+def test_existing_agent_selection_still_supported():
+    rows = sampling_shots()
+
+    original = select_evaluation_rows(
+        rows,
+        "validation",
+        10,
+        seed=42,
+    )
+
+    backward_compatible = select_evaluation_rows(
+        rows,
+        "validation",
+        10,
+        seed=42,
+        games=None,
+    )
+
+    assert original["shot_id"].tolist() == (backward_compatible["shot_id"].tolist())
+
+
+def test_agent_runner_uses_balanced_sampling(
+    monkeypatch,
+    tmp_path,
+):
+    """Verify the real runner saves the balanced shot IDs."""
+    from nba_shots import agents
+
+    rows = sampling_shots()
+    source = tmp_path / "shots.parquet"
+    rows.to_parquet(source, index=False)
+
+    # The fixture contains only validation shots; this test isolates
+    # the sampling-to-runner wiring from full chronological splitting.
+    monkeypatch.setattr(
+        agents,
+        "validate_splits",
+        lambda frame: None,
+    )
+
+    class FakeClient:
+        def __init__(
+            self,
+            model,
+            base_url,
+            seed,
+            num_predict,
+        ):
+            self.model = model
+            self.digest = "fake-model-digest"
+            self.calls = []
+
+    def fake_assessment(client, role, features, previous):
+        client.calls.append(
+            {
+                "status": "ok",
+                "prompt_tokens": 10,
+                "completion_tokens": 5,
+                "runtime_seconds": 0.01,
+            }
+        )
+
+        return {
+            "p_make": 0.5,
+            "rationale": "Synthetic prediction",
+        }
+
+    monkeypatch.setattr(
+        agents,
+        "OllamaClient",
+        FakeClient,
+    )
+
+    monkeypatch.setattr(
+        agents,
+        "crewai_assessment",
+        fake_assessment,
+    )
+
+    expected = select_evaluation_rows(
+        rows,
+        "validation",
+        15,
+        seed=42,
+        games=5,
+    )
+
+    output = tmp_path / "balanced_run"
+
+    result = agents.run_agents(
+        source,
+        output,
+        limit=15,
+        seed=42,
+        games=5,
+    )
+
+    actual = pd.read_csv(output / "selection.csv")
+
+    assert actual["shot_id"].tolist() == (expected["shot_id"].tolist())
+
+    assert actual["game_id"].nunique() == 5
+
+    assert (actual.groupby("game_id").size() == 3).all()
+
+    spec = json.loads((output / "experiment.json").read_text())["spec"]
+
+    assert spec["sampling_method"] == "balanced_games_v1"
+    assert spec["sampling_games"] == 5
+    assert spec["shot_ids"] == expected["shot_id"].tolist()
+
+    predictions = pd.read_csv(result["predictions"])
+
+    assert len(predictions) == 15 * len(agents.CONDITIONS)
+    assert predictions["status"].eq("ok").all()
+
+    for _, group in predictions.groupby("model"):
+        assert set(group["shot_id"]) == set(expected["shot_id"])

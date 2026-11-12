@@ -89,6 +89,12 @@ def main(argv=None):
     agents.add_argument("--final", action="store_true")
     agents.add_argument("--limit", type=int, default=100)
     agents.add_argument("--seed", type=int, default=42)
+    agents.add_argument(
+        "--games",
+        type=int,
+        default=None,
+        help="Balance sampled shots across this many games",
+    )
     agents.add_argument("--num-predict", type=int, default=512)
     agents.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     report = sub.add_parser("report", help="Combine scores and predictions without retraining")
@@ -199,6 +205,7 @@ def execute(args):
             args.seed,
             args.num_predict,
             args.ollama_url,
+            args.games,
         )
     raise ValueError(f"Unknown command: {args.command}")
 
