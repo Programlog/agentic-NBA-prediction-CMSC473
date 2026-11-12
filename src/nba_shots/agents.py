@@ -26,7 +26,7 @@ from .common import (
 from .evaluation import write_scores
 from .models import validate_splits
 
-PROMPT_VERSION = "release-v3-controls"
+PROMPT_VERSION = "release-v4-feature-semantics"
 OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -50,6 +50,55 @@ DECOMPOSITION_ROLE = (
     "then combine the available evidence into one probability. "
     "Use only supplied features; do not invent outside information"
 )
+
+# Definitions shared by every LLM condition. Keep this mapping aligned
+# with ALLOWED_FEATURES so each experimental arm receives the same
+# interpretation of every available measurement.
+FEATURE_DEFINITIONS = {
+    "shot_distance": "Shot distance in feet.",
+    "defender_distance": "Distance to the closest defender in feet.",
+    "game_clock_seconds": "Seconds remaining in the current game period.",
+    "shot_clock": (
+        "Seconds remaining on the possession shot clock; a higher value means more time remains."
+    ),
+    "period": "Game period number, not seconds remaining.",
+    "dribbles": "Number of dribbles before the shot attempt.",
+    "touch_time": "Seconds the player held the ball before the attempt.",
+    "shot_value": (
+        "Points awarded if the shot is made (2 or 3); not the importance of the attempt."
+    ),
+    "location": (
+        "The shooter's team venue: H means home and A means away; "
+        "not the shooter's position on the court."
+    ),
+    "player_prior_attempts": ("Number of recorded shot attempts by this player before this shot."),
+    "player_prior_make_rate": (
+        "Fraction of the player's earlier recorded shots that were made; "
+        "not the current shot's outcome."
+    ),
+    "elbow_angle_deg": ("Estimated elbow joint angle in degrees from 2D image landmarks."),
+    "wrist_height_torso": (
+        "2D wrist-height proxy normalized by torso size; not physical release height."
+    ),
+    "defender_distance_torso": (
+        "2D defender-distance proxy normalized by torso size; not physical distance in feet."
+    ),
+    "defender_wrist_height_torso": (
+        "2D defender wrist-height proxy normalized by torso size; not physical height."
+    ),
+}
+
+if set(FEATURE_DEFINITIONS) != ALLOWED_FEATURES:
+    raise ValueError("LLM feature definitions must match the allowed features")
+
+FEATURE_GUIDANCE = (
+    "Interpret supplied measurements using these definitions: "
+    + "; ".join(
+        f"{name}: {description}" for name, description in sorted(FEATURE_DEFINITIONS.items())
+    )
+    + " Missing or null measurements are unknown, not zero."
+)
+
 INSTRUCTIONS = (
     "Estimate the probability an NBA field goal is made at the instant of release. "
     "Only use the supplied pre-release measurements; null means unknown. "
@@ -57,7 +106,7 @@ INSTRUCTIONS = (
     "easier or harder, and let p_make reflect that difficulty. "
     "Do not infer player identities, retrieve facts, or assume an outcome. "
     "Any CV measurements are 2D image proxies, not physical release/entry angles or heights. "
-    "Return JSON with p_make (a number between 0 and 1) and a short rationale."
+    "Return JSON with p_make (a number between 0 and 1) and a short rationale. " + FEATURE_GUIDANCE
 )
 # A sample probability here is copied into answers, so this stays free of numbers.
 EXPECTED_OUTPUT = "JSON with your numeric p_make estimate and a brief evidence rationale"
@@ -316,7 +365,6 @@ def select_evaluation_rows(shots: pd.DataFrame, split: str, limit: int, seed=42)
     return rows.loc[ranking.sort_values().head(limit).index].sort_values("shot_id")
 
 
-
 def summarize_agent_usage(predictions: pd.DataFrame) -> pd.DataFrame:
     """Per-arm execution coverage and *this-run* compute, including failed calls.
 
@@ -324,8 +372,13 @@ def summarize_agent_usage(predictions: pd.DataFrame) -> pd.DataFrame:
     historical costs remain in their original run's trace, not this report.
     """
     required = {
-        "model", "status", "cached", "calls", "prompt_tokens",
-        "completion_tokens", "runtime_seconds",
+        "model",
+        "status",
+        "cached",
+        "calls",
+        "prompt_tokens",
+        "completion_tokens",
+        "runtime_seconds",
     }
     if missing := required - set(predictions):
         raise ValueError(f"Usage report missing columns: {sorted(missing)}")
@@ -347,24 +400,24 @@ def summarize_agent_usage(predictions: pd.DataFrame) -> pd.DataFrame:
             or not np.isfinite(values.to_numpy(dtype=float)).all()
             or (values < 0).any()
         ):
-            raise ValueError(
-                f"Invalid usage measurement in column: {column}"
-            )
+            raise ValueError(f"Invalid usage measurement in column: {column}")
     records = []
     for name, rows in predictions.groupby("model", sort=True):
         ok = rows["status"].eq("ok")
-        records.append({
-            "condition": name,
-            "shots_attempted": len(rows),
-            "shots_succeeded": int(ok.sum()),
-            "shots_failed": int((~ok).sum()),
-            "coverage": float(ok.mean()),
-            "cache_hits": int(rows["cached"].sum()),
-            "calls_this_run": int(rows["calls"].sum()),
-            "prompt_tokens_this_run": int(rows["prompt_tokens"].sum()),
-            "completion_tokens_this_run": int(rows["completion_tokens"].sum()),
-            "runtime_seconds_this_run": float(rows["runtime_seconds"].sum()),
-        })
+        records.append(
+            {
+                "condition": name,
+                "shots_attempted": len(rows),
+                "shots_succeeded": int(ok.sum()),
+                "shots_failed": int((~ok).sum()),
+                "coverage": float(ok.mean()),
+                "cache_hits": int(rows["cached"].sum()),
+                "calls_this_run": int(rows["calls"].sum()),
+                "prompt_tokens_this_run": int(rows["prompt_tokens"].sum()),
+                "completion_tokens_this_run": int(rows["completion_tokens"].sum()),
+                "runtime_seconds_this_run": float(rows["runtime_seconds"].sum()),
+            }
+        )
     return pd.DataFrame.from_records(records)
 
 
@@ -454,6 +507,7 @@ def run_agents(
                     assessment = parse_assessment(cache.read_text())
                     record["cached"] = True
                 else:
+
                     def assess(role, f, prior):
                         # Do not alter the other deterministic arms. Within the
                         # ensemble, change the seed for each independent draw.
