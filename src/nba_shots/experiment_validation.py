@@ -1,13 +1,4 @@
-"""Validate saved NBA LLM inference artifacts against their individual call traces.
-
-Usage:
-    python -m nba_shots.experiment_validation artifacts/llm_pilot_nov11_1shot
-
-This validates completed, single-run artifact directories. A resumed run appends
-traces, so it must be validated with a separately captured run trace or a
-future run-aware validator; duplicate trace keys are rejected explicitly.
-No files are modified, and no model or network connection is required.
-"""
+"""Validate saved NBA LLM experiment artifacts and inference cost provenance."""
 
 from __future__ import annotations
 
@@ -20,7 +11,7 @@ from pathlib import Path
 
 
 class ValidationError(ValueError):
-    """A saved experiment violates its declared accounting invariants."""
+    """An experiment violates its recorded accounting invariants."""
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -30,64 +21,95 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
 
 def _number(value: object, context: str, *, integer: bool = False) -> float:
     try:
-        number = float(value)  # type: ignore[arg-type]
+        number = float(value)
     except (ValueError, TypeError) as exc:
         raise ValidationError(f"{context}: not numeric ({value!r})") from exc
+
     if not math.isfinite(number) or number < 0 or (integer and not number.is_integer()):
         raise ValidationError(f"{context}: invalid nonnegative measurement ({value!r})")
+
     return number
 
 
-def _equal(actual: object, expected: object, label: str, *, tolerance: float = 1e-6) -> None:
-    if not math.isclose(float(actual), float(expected), rel_tol=1e-8, abs_tol=tolerance):
+def _equal(
+    actual: object,
+    expected: object,
+    label: str,
+    *,
+    tolerance: float = 1e-6,
+) -> None:
+    if not math.isclose(
+        float(actual),
+        float(expected),
+        rel_tol=1e-8,
+        abs_tol=tolerance,
+    ):
         raise ValidationError(f"{label}: recorded {actual}, traced {expected}")
 
 
 def validate_artifacts(folder: str | Path) -> dict[str, object]:
-    """Check shot/condition parity, traces, token totals, and usage summaries.
-
-    Intended for one complete run with exactly one trace record per shot/arm.
-    Raises ValidationError on an inconsistent or incomplete artifact set.
-    """
+    """Validate one complete execution, including original-cost provenance."""
     folder = Path(folder)
+
     spec = json.loads((folder / "experiment.json").read_text(encoding="utf-8"))["spec"]
+
     expected_shots = spec["shot_ids"]
     expected_arms = spec["conditions"]
+
     if not expected_shots or len(set(expected_shots)) != len(expected_shots):
         raise ValidationError("experiment.json: invalid or repeated shot IDs")
+
     if not expected_arms:
         raise ValidationError("experiment.json: no experimental conditions")
 
     predictions = _read_csv(folder / "predictions.csv")
+
     usage = _read_csv(folder / "usage_by_condition.csv")
+
     traces = []
+
     with (folder / "traces.jsonl").open(encoding="utf-8") as stream:
         for line_no, line in enumerate(stream, 1):
-            if line.strip():
-                try:
-                    traces.append(json.loads(line))
-                except json.JSONDecodeError as exc:
-                    raise ValidationError(f"traces.jsonl line {line_no}: malformed JSON") from exc
+            if not line.strip():
+                continue
+
+            try:
+                traces.append(json.loads(line))
+            except json.JSONDecodeError as exc:
+                raise ValidationError(f"traces.jsonl line {line_no}: malformed JSON") from exc
+
     expected_keys = {(shot, arm) for shot in expected_shots for arm in expected_arms}
+
     pred_by_key = {}
+
     for row in predictions:
         key = (row["shot_id"], row["model"])
+
         if key in pred_by_key:
             raise ValidationError(f"predictions.csv: duplicate shot/condition {key}")
+
         pred_by_key[key] = row
+
     if set(pred_by_key) != expected_keys:
         raise ValidationError(
             "predictions.csv: shot/condition coverage differs from experiment.json"
         )
 
     traces_by_key = {}
+
     for trace in traces:
-        key = (trace["shot_id"], trace["condition"])
+        key = (
+            trace["shot_id"],
+            trace["condition"],
+        )
+
         if key in traces_by_key:
             raise ValidationError(
                 f"traces.jsonl: duplicate shot/condition {key}; validate a single run"
             )
+
         traces_by_key[key] = trace
+
     if set(traces_by_key) != expected_keys:
         raise ValidationError("traces.jsonl: missing or unexpected shot/condition records")
 
@@ -103,39 +125,195 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
             "runtime": 0.0,
         }
     )
+
     for (shot, arm), row in pred_by_key.items():
         trace = traces_by_key[(shot, arm)]
         status = row["status"]
+
         if status not in {"ok", "error"}:
             raise ValidationError(f"{shot}/{arm}: unknown prediction status {status!r}")
+
         cached_text = row["cached"].strip().lower()
+
         if cached_text not in {"true", "false"}:
             raise ValidationError(f"{shot}/{arm}: invalid cached flag")
+
         cached = cached_text == "true"
         calls = trace["calls"]
+
         if not isinstance(calls, list):
             raise ValidationError(f"{shot}/{arm}: calls must be a list")
+
         if cached and calls:
             raise ValidationError(f"{shot}/{arm}: cached prediction contains new calls")
-        if trace["result"]["status"] != status:
-            raise ValidationError(f"{shot}/{arm}: trace and prediction statuses disagree")
+
         result = trace["result"]
+
+        if result["status"] != status:
+            raise ValidationError(f"{shot}/{arm}: trace and prediction statuses disagree")
+
         if result.get("shot_id") not in (None, shot):
             raise ValidationError(f"{shot}/{arm}: trace shot identity differs")
+
         if result.get("model") not in (None, arm):
             raise ValidationError(f"{shot}/{arm}: trace model identity differs")
+
         if "cached" in result:
             if not isinstance(result["cached"], bool):
                 raise ValidationError(f"{shot}/{arm}: invalid trace cached flag")
+
             if result["cached"] != cached:
                 raise ValidationError(f"{shot}/{arm}: trace cached flag disagrees")
+
         if cached and status != "ok":
             raise ValidationError(f"{shot}/{arm}: cached prediction is not successful")
+
+        # Additional accounting checks for the provenance-aware runner.
+        if "original_cost_provenance" in row:
+            provenance = row["original_cost_provenance"]
+
+            original_cols = (
+                "original_calls",
+                "original_prompt_tokens",
+                "original_completion_tokens",
+                "original_runtime_seconds",
+            )
+
+            if provenance not in {
+                "fresh_trace",
+                "cache_v2",
+                "unknown",
+            }:
+                raise ValidationError(f"{shot}/{arm}: unknown original cost provenance")
+
+            if provenance == "unknown":
+                if any(row[name] not in {"", None} for name in original_cols):
+                    raise ValidationError(f"{shot}/{arm}: unknown original costs must be blank")
+
+            else:
+                original = {
+                    name: _number(
+                        row[name],
+                        f"{shot}/{arm}: {name}",
+                        integer=name != "original_runtime_seconds",
+                    )
+                    for name in original_cols
+                }
+
+                if not cached and provenance != "fresh_trace":
+                    raise ValidationError(f"{shot}/{arm}: fresh result has cache provenance")
+
+                if cached and provenance != "cache_v2":
+                    raise ValidationError(f"{shot}/{arm}: cached result has fresh provenance")
+
+                if provenance == "fresh_trace":
+                    for name, current in (
+                        ("original_calls", "calls"),
+                        ("original_prompt_tokens", "prompt_tokens"),
+                        ("original_completion_tokens", "completion_tokens"),
+                        ("original_runtime_seconds", "runtime_seconds"),
+                    ):
+                        _equal(
+                            original[name],
+                            row[current],
+                            f"{shot}/{arm}: original cost {name}",
+                        )
+
+                if provenance == "cache_v2":
+                    key = row.get(
+                        "cache_key_sha256",
+                        "",
+                    )
+
+                    if (
+                        not isinstance(key, str)
+                        or len(key) != 64
+                        or any(char not in "0123456789abcdef" for char in key)
+                    ):
+                        raise ValidationError(f"{shot}/{arm}: invalid cache key")
+
+                    cache_file = folder / "cache" / f"{key}.json"
+
+                    if not cache_file.is_file():
+                        raise ValidationError(f"{shot}/{arm}: missing cache provenance file")
+
+                    cache_value = json.loads(cache_file.read_text(encoding="utf-8"))
+
+                    if (
+                        cache_value.get("schema_version") != 2
+                        or cache_value.get("cache_key_sha256") != key
+                    ):
+                        raise ValidationError(f"{shot}/{arm}: invalid cache provenance schema/key")
+
+                    identity = cache_value.get(
+                        "identity",
+                        {},
+                    )
+
+                    if (
+                        identity.get("shot_id") != shot
+                        or identity.get("condition") != arm
+                        or identity.get("model") != spec.get("model")
+                        or identity.get("model_digest") != spec.get("model_digest")
+                        or identity.get("prompt_version") != spec.get("prompt_version")
+                        or identity.get("implementation_sha256")
+                        != spec.get("implementation_sha256")
+                    ):
+                        raise ValidationError(f"{shot}/{arm}: cache identity mismatch")
+
+                    assessment = cache_value.get(
+                        "assessment",
+                        {},
+                    )
+
+                    if status == "ok":
+                        _equal(
+                            row["p_make"],
+                            assessment.get("p_make"),
+                            f"{shot}/{arm}: cache probability",
+                        )
+
+                    original_usage = cache_value.get(
+                        "original_usage",
+                        {},
+                    )
+
+                    for name, cache_field in (
+                        ("original_calls", "calls"),
+                        ("original_prompt_tokens", "prompt_tokens"),
+                        ("original_completion_tokens", "completion_tokens"),
+                        ("original_runtime_seconds", "runtime_seconds"),
+                    ):
+                        if cache_field not in original_usage:
+                            raise ValidationError(
+                                f"{shot}/{arm}: missing original cache measurement"
+                            )
+
+                        _equal(
+                            original[name],
+                            original_usage[cache_field],
+                            f"{shot}/{arm}: {name} cache mismatch",
+                        )
+
+                    # These are maximum budgets, not always exact calls.
+                    if not (1 <= original["original_calls"] <= expected_arms[arm]):
+                        raise ValidationError(f"{shot}/{arm}: original call budget exceeded")
+
         if status == "ok":
-            probability = _number(row["p_make"], f"{shot}/{arm}: p_make")
+            probability = _number(
+                row["p_make"],
+                f"{shot}/{arm}: p_make",
+            )
+
             if probability > 1:
                 raise ValidationError(f"{shot}/{arm}: probability above one")
-            _equal(probability, trace["result"]["p_make"], f"{shot}/{arm}: traced probability")
+
+            _equal(
+                probability,
+                result["p_make"],
+                f"{shot}/{arm}: traced probability",
+            )
+
         call_prompt = sum(
             int(
                 _number(
@@ -146,6 +324,7 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
             )
             for c in calls
         )
+
         call_completion = sum(
             int(
                 _number(
@@ -156,23 +335,43 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
             )
             for c in calls
         )
+
         for col, actual in (
             ("calls", len(calls)),
             ("prompt_tokens", call_prompt),
             ("completion_tokens", call_completion),
         ):
             _equal(
-                _number(row[col], f"{shot}/{arm}: {col}", integer=True),
+                _number(
+                    row[col],
+                    f"{shot}/{arm}: {col}",
+                    integer=True,
+                ),
                 actual,
                 f"{shot}/{arm}: {col}",
             )
+
             _equal(
-                _number(trace["result"][col], f"{shot}/{arm}: trace {col}", integer=True),
+                _number(
+                    result[col],
+                    f"{shot}/{arm}: trace {col}",
+                    integer=True,
+                ),
                 actual,
                 f"{shot}/{arm}: trace {col}",
             )
-        runtime = _number(row["runtime_seconds"], f"{shot}/{arm}: runtime")
-        _equal(runtime, trace["result"]["runtime_seconds"], f"{shot}/{arm}: trace runtime")
+
+        runtime = _number(
+            row["runtime_seconds"],
+            f"{shot}/{arm}: runtime",
+        )
+
+        _equal(
+            runtime,
+            result["runtime_seconds"],
+            f"{shot}/{arm}: trace runtime",
+        )
+
         call_runtime = sum(
             _number(
                 c.get("runtime_seconds", 0),
@@ -180,8 +379,10 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
             )
             for c in calls
         )
+
         if call_runtime > runtime + 0.05:
             raise ValidationError(f"{shot}/{arm}: call runtime exceeds overall prediction runtime")
+
         x = totals[arm]
         x["attempted"] += 1
         x["succeeded"] += status == "ok"
@@ -193,13 +394,18 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
         x["runtime"] += runtime
 
     usage_by_arm = {}
+
     for row in usage:
         arm = row["condition"]
+
         if arm in usage_by_arm:
             raise ValidationError(f"usage_by_condition.csv: duplicate condition {arm}")
+
         usage_by_arm[arm] = row
+
     if set(usage_by_arm) != set(expected_arms):
         raise ValidationError("usage_by_condition.csv: missing or unexpected conditions")
+
     fields = {
         "shots_attempted": "attempted",
         "shots_succeeded": "succeeded",
@@ -210,15 +416,29 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
         "completion_tokens_this_run": "completion",
         "runtime_seconds_this_run": "runtime",
     }
+
     for arm, x in totals.items():
         row = usage_by_arm[arm]
+
         for column, key in fields.items():
-            _equal(_number(row[column], f"{arm}: {column}"), x[key], f"{arm}: {column}")
+            _equal(
+                _number(
+                    row[column],
+                    f"{arm}: {column}",
+                ),
+                x[key],
+                f"{arm}: {column}",
+            )
+
         _equal(
-            _number(row["coverage"], f"{arm}: coverage"),
+            _number(
+                row["coverage"],
+                f"{arm}: coverage",
+            ),
             x["succeeded"] / x["attempted"],
             f"{arm}: coverage",
         )
+
     return {
         "valid": True,
         "shots": len(expected_shots),
@@ -231,14 +451,35 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
 
 
 def main() -> int:
-    """Run validation from a terminal, returning a nonzero exit code on failure."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("artifact_dir", type=Path)
+
+    parser.add_argument(
+        "artifact_dir",
+        type=Path,
+    )
+
     args = parser.parse_args()
+
     try:
-        print(json.dumps(validate_artifacts(args.artifact_dir), indent=2))
-    except (ValidationError, FileNotFoundError, KeyError, TypeError, json.JSONDecodeError) as exc:
-        parser.exit(1, f"Artifact validation failed: {exc}\n")
+        print(
+            json.dumps(
+                validate_artifacts(args.artifact_dir),
+                indent=2,
+            )
+        )
+
+    except (
+        ValidationError,
+        FileNotFoundError,
+        KeyError,
+        TypeError,
+        json.JSONDecodeError,
+    ) as exc:
+        parser.exit(
+            1,
+            f"Artifact validation failed: {exc}\n",
+        )
+
     return 0
 
 
