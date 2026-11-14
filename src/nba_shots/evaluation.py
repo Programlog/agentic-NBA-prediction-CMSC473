@@ -157,3 +157,81 @@ def paired_comparison(
         "repetitions": repetitions,
         "seed": seed,
     }
+
+
+def paired_common_success_comparison(
+    predictions: pd.DataFrame,
+    baseline: str,
+    candidate: str,
+    repetitions: int = 1000,
+    seed: int = 42,
+) -> dict:
+    """Compare common successes while reporting failures on the full shot cohort."""
+    validate_predictions(predictions)
+
+    if predictions["cohort"].nunique() != 1 or predictions["split"].nunique() != 1:
+        raise ValueError("Compare one cohort and one split at a time")
+
+    if baseline == candidate or repetitions < 1:
+        raise ValueError("Use different models and at least one bootstrap repetition")
+
+    a = predictions.loc[predictions["model"].eq(baseline)].set_index("shot_id")
+    b = predictions.loc[predictions["model"].eq(candidate)].set_index("shot_id")
+
+    # Both methods must have attempted exactly the same shots.
+    if a.empty or set(a.index) != set(b.index):
+        raise ValueError("Models must have exactly the same attempted shot IDs")
+
+    b = b.loc[a.index]
+
+    # Do not silently overlook missing or contradictory labels.
+    if not np.array_equal(a["y_true"].to_numpy(), b["y_true"].to_numpy()):
+        raise ValueError("Paired predictions have inconsistent labels")
+
+    a_ok = a["status"].eq("ok") if "status" in a else pd.Series(True, index=a.index)
+    b_ok = b["status"].eq("ok") if "status" in b else pd.Series(True, index=b.index)
+
+    common = a_ok & b_ok
+    common_ids = a.index[common]
+
+    if len(common_ids) == 0:
+        raise ValueError("No commonly successful shots to compare")
+
+    # Keep both models on exactly the same successful shots.
+    paired_rows = pd.concat(
+        [
+            a.loc[common_ids].reset_index(),
+            b.loc[common_ids].reset_index(),
+        ],
+        ignore_index=True,
+    )
+
+    # Reuse the existing strict comparison and game bootstrap.
+    result = paired_comparison(
+        paired_rows,
+        baseline=baseline,
+        candidate=candidate,
+        repetitions=repetitions,
+        seed=seed,
+    )
+
+    scores = {row["model"]: row for row in score_predictions(paired_rows)}
+
+    total = len(a)
+    result.update(
+        {
+            "comparison_population": "common_successful_shots",
+            "n_attempted": total,
+            "baseline_successes": int(a_ok.sum()),
+            "candidate_successes": int(b_ok.sum()),
+            "baseline_coverage": float(a_ok.mean()),
+            "candidate_coverage": float(b_ok.mean()),
+            "n_common_success": len(common_ids),
+            "n_excluded_from_pairing": total - len(common_ids),
+            "paired_baseline_brier": scores[baseline]["brier_score"],
+            "paired_candidate_brier": scores[candidate]["brier_score"],
+            "paired_baseline_log_loss": scores[baseline]["log_loss"],
+            "paired_candidate_log_loss": scores[candidate]["log_loss"],
+        }
+    )
+    return result
