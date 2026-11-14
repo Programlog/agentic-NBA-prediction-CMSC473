@@ -21,23 +21,51 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
 
 def make_run(tmp_path):
     """Create one complete one-shot experiment without any network dependencies."""
-    (tmp_path / "experiment.json").write_text(json.dumps({"spec": {
-        "shot_ids": ["s1"], "conditions": {"llm_single": 1}}}))
-    pred = {"shot_id": "s1", "model": "llm_single", "status": "ok",
-            "cached": "False", "p_make": "0.4", "calls": "1",
-            "prompt_tokens": "100", "completion_tokens": "20", "runtime_seconds": "4.0"}
+    (tmp_path / "experiment.json").write_text(
+        json.dumps({"spec": {"shot_ids": ["s1"], "conditions": {"llm_single": 1}}})
+    )
+    pred = {
+        "shot_id": "s1",
+        "model": "llm_single",
+        "status": "ok",
+        "cached": "False",
+        "p_make": "0.4",
+        "calls": "1",
+        "prompt_tokens": "100",
+        "completion_tokens": "20",
+        "runtime_seconds": "4.0",
+    }
     _write_csv(tmp_path / "predictions.csv", [pred])
-    _write_csv(tmp_path / "usage_by_condition.csv", [{
-        "condition": "llm_single", "shots_attempted": 1,
-        "shots_succeeded": 1, "shots_failed": 0, "coverage": 1,
-        "cache_hits": 0, "calls_this_run": 1, "prompt_tokens_this_run": 100,
-        "completion_tokens_this_run": 20, "runtime_seconds_this_run": 4.0}])
-    trace = {"shot_id": "s1", "condition": "llm_single",
-             "calls": [{"prompt_tokens": 100, "completion_tokens": 20,
-                        "runtime_seconds": 3.5}],
-             "result": {"status": "ok", "p_make": 0.4, "calls": 1,
-                        "prompt_tokens": 100, "completion_tokens": 20,
-                        "runtime_seconds": 4.0}}
+    _write_csv(
+        tmp_path / "usage_by_condition.csv",
+        [
+            {
+                "condition": "llm_single",
+                "shots_attempted": 1,
+                "shots_succeeded": 1,
+                "shots_failed": 0,
+                "coverage": 1,
+                "cache_hits": 0,
+                "calls_this_run": 1,
+                "prompt_tokens_this_run": 100,
+                "completion_tokens_this_run": 20,
+                "runtime_seconds_this_run": 4.0,
+            }
+        ],
+    )
+    trace = {
+        "shot_id": "s1",
+        "condition": "llm_single",
+        "calls": [{"prompt_tokens": 100, "completion_tokens": 20, "runtime_seconds": 3.5}],
+        "result": {
+            "status": "ok",
+            "p_make": 0.4,
+            "calls": 1,
+            "prompt_tokens": 100,
+            "completion_tokens": 20,
+            "runtime_seconds": 4.0,
+        },
+    }
     (tmp_path / "traces.jsonl").write_text(json.dumps(trace) + "\n")
     return pred, trace
 
@@ -107,4 +135,24 @@ def test_rejects_impossible_runtime(tmp_path):
     trace["calls"][0]["runtime_seconds"] = 5.0
     trace_file.write_text(json.dumps(trace) + "\n")
     with pytest.raises(ValidationError, match="runtime exceeds"):
+        validate_artifacts(tmp_path)
+
+
+def test_rejects_disagreement_about_cache_status(tmp_path):
+    make_run(tmp_path)
+    path = tmp_path / "traces.jsonl"
+    trace = json.loads(path.read_text(encoding="utf-8"))
+    trace["result"]["cached"] = True
+    path.write_text(json.dumps(trace) + "\n", encoding="utf-8")
+    with pytest.raises(ValidationError, match="cached flag disagrees"):
+        validate_artifacts(tmp_path)
+
+
+def test_rejects_trace_result_identity_mismatch(tmp_path):
+    make_run(tmp_path)
+    path = tmp_path / "traces.jsonl"
+    trace = json.loads(path.read_text(encoding="utf-8"))
+    trace["result"]["model"] = "another_arm"
+    path.write_text(json.dumps(trace) + "\n", encoding="utf-8")
+    with pytest.raises(ValidationError, match="trace model identity differs"):
         validate_artifacts(tmp_path)

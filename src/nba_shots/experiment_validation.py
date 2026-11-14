@@ -119,19 +119,39 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
             raise ValidationError(f"{shot}/{arm}: cached prediction contains new calls")
         if trace["result"]["status"] != status:
             raise ValidationError(f"{shot}/{arm}: trace and prediction statuses disagree")
+        result = trace["result"]
+        if result.get("shot_id") not in (None, shot):
+            raise ValidationError(f"{shot}/{arm}: trace shot identity differs")
+        if result.get("model") not in (None, arm):
+            raise ValidationError(f"{shot}/{arm}: trace model identity differs")
+        if "cached" in result:
+            if not isinstance(result["cached"], bool):
+                raise ValidationError(f"{shot}/{arm}: invalid trace cached flag")
+            if result["cached"] != cached:
+                raise ValidationError(f"{shot}/{arm}: trace cached flag disagrees")
+        if cached and status != "ok":
+            raise ValidationError(f"{shot}/{arm}: cached prediction is not successful")
         if status == "ok":
             probability = _number(row["p_make"], f"{shot}/{arm}: p_make")
             if probability > 1:
                 raise ValidationError(f"{shot}/{arm}: probability above one")
             _equal(probability, trace["result"]["p_make"], f"{shot}/{arm}: traced probability")
         call_prompt = sum(
-            int(_number(c.get("prompt_tokens", 0), f"{shot}/{arm}: call prompt", integer=True))
+            int(
+                _number(
+                    c.get("prompt_tokens", 0),
+                    f"{shot}/{arm}: call prompt",
+                    integer=True,
+                )
+            )
             for c in calls
         )
         call_completion = sum(
             int(
                 _number(
-                    c.get("completion_tokens", 0), f"{shot}/{arm}: call completion", integer=True
+                    c.get("completion_tokens", 0),
+                    f"{shot}/{arm}: call completion",
+                    integer=True,
                 )
             )
             for c in calls
@@ -154,7 +174,11 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
         runtime = _number(row["runtime_seconds"], f"{shot}/{arm}: runtime")
         _equal(runtime, trace["result"]["runtime_seconds"], f"{shot}/{arm}: trace runtime")
         call_runtime = sum(
-            _number(c.get("runtime_seconds", 0), f"{shot}/{arm}: call runtime") for c in calls
+            _number(
+                c.get("runtime_seconds", 0),
+                f"{shot}/{arm}: call runtime",
+            )
+            for c in calls
         )
         if call_runtime > runtime + 0.05:
             raise ValidationError(f"{shot}/{arm}: call runtime exceeds overall prediction runtime")
