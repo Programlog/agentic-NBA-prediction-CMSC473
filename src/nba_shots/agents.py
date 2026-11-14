@@ -1,4 +1,4 @@
-"""A local-only, cached one-call/four-call agent experiment with strict budgets."""
+"""A local-only, cached five-condition agent experiment with strict budgets."""
 
 from __future__ import annotations
 
@@ -28,7 +28,8 @@ from .common import (
 from .evaluation import write_scores
 from .models import validate_splits
 
-PROMPT_VERSION = "release-v2"
+PROMPT_VERSION = "release-v4-feature-semantics"
+
 OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -39,7 +40,66 @@ OUTPUT_SCHEMA = {
     "additionalProperties": False,
 }
 
-CONDITIONS = {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
+# Maximum calls per shot. Empty specialists are skipped.
+CONDITIONS = {
+    "llm_single": 1,
+    "llm_single_budget": 4,
+    "llm_single_decomposed": 1,
+    "llm_single_ensemble": 4,
+    "llm_multi": 4,
+}
+
+DECOMPOSITION_ROLE = (
+    "Single analyst: in ONE assessment, separately consider game context, "
+    "player history, and shot mechanics/defense; ignore missing groups, "
+    "then combine the available evidence into one probability. "
+    "Use only supplied features; do not invent outside information"
+)
+
+FEATURE_DEFINITIONS = {
+    "shot_distance": "Shot distance in feet.",
+    "defender_distance": "Distance to the closest defender in feet.",
+    "game_clock_seconds": "Seconds remaining in the current game period.",
+    "shot_clock": (
+        "Seconds remaining on the possession shot clock; a higher value means more time remains."
+    ),
+    "period": "Game period number, not seconds remaining.",
+    "dribbles": "Number of dribbles before the shot attempt.",
+    "touch_time": "Seconds the player held the ball before the attempt.",
+    "shot_value": (
+        "Points awarded if the shot is made (2 or 3); not the importance of the attempt."
+    ),
+    "location": (
+        "The shooter's team venue: H means home and A means away; "
+        "not the shooter's position on the court."
+    ),
+    "player_prior_attempts": ("Number of recorded shot attempts by this player before this shot."),
+    "player_prior_make_rate": (
+        "Fraction of the player's earlier recorded shots that were made; "
+        "not the current shot's outcome."
+    ),
+    "elbow_angle_deg": ("Estimated elbow joint angle in degrees from 2D image landmarks."),
+    "wrist_height_torso": (
+        "2D wrist-height proxy normalized by torso size; not physical release height."
+    ),
+    "defender_distance_torso": (
+        "2D defender-distance proxy normalized by torso size; not physical distance in feet."
+    ),
+    "defender_wrist_height_torso": (
+        "2D defender wrist-height proxy normalized by torso size; not physical height."
+    ),
+}
+
+if set(FEATURE_DEFINITIONS) != ALLOWED_FEATURES:
+    raise ValueError("LLM feature definitions must match the allowed features")
+
+FEATURE_GUIDANCE = (
+    "Interpret supplied measurements using these definitions: "
+    + "; ".join(
+        f"{name}: {description}" for name, description in sorted(FEATURE_DEFINITIONS.items())
+    )
+    + " Missing or null measurements are unknown, not zero."
+)
 
 INSTRUCTIONS = (
     "Estimate the probability an NBA field goal is made at the instant of release. "
@@ -48,14 +108,14 @@ INSTRUCTIONS = (
     "easier or harder, and let p_make reflect that difficulty. "
     "Do not infer player identities, retrieve facts, or assume an outcome. "
     "Any CV measurements are 2D image proxies, not physical release/entry angles or heights. "
-    "Return JSON with p_make (a number between 0 and 1) and a short rationale."
+    "Return JSON with p_make (a number between 0 and 1) and a short rationale. " + FEATURE_GUIDANCE
 )
 
 EXPECTED_OUTPUT = "JSON with your numeric p_make estimate and a brief evidence rationale"
 
 
 def prompt_features(row: dict) -> dict:
-    """Never send target, game/date/player identity, filename or shot ID to the LLM."""
+    """Exclude outcomes, identities, filenames, and post-shot information."""
     return {
         key: (
             None
@@ -70,8 +130,10 @@ def prompt_features(row: dict) -> dict:
 
 def parse_assessment(text: str) -> dict:
     text = text.strip()
+
     if text.startswith("Final Answer:"):
         text = text.removeprefix("Final Answer:").strip()
+
     if text.startswith("```json") and text.endswith("```"):
         text = text[7:-3].strip()
 
@@ -89,11 +151,20 @@ def parse_assessment(text: str) -> dict:
     if not isinstance(value.get("rationale"), str):
         raise ValueError("LLM returned no rationale")
 
-    return {"p_make": float(p), "rationale": value["rationale"]}
+    return {
+        "p_make": float(p),
+        "rationale": value["rationale"],
+    }
 
 
 class OllamaClient:
-    def __init__(self, model, base_url="http://127.0.0.1:11434", seed=42, num_predict=512):
+    def __init__(
+        self,
+        model,
+        base_url="http://127.0.0.1:11434",
+        seed=42,
+        num_predict=512,
+    ):
         parsed = urlparse(base_url)
 
         if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
@@ -105,13 +176,20 @@ class OllamaClient:
         if num_predict < 32 or num_predict > 1024:
             raise ValueError("num_predict must be between 32 and 1024")
 
-        self.model, self.base_url = model, base_url.rstrip("/")
-        self.seed, self.num_predict = seed, num_predict
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+        self.seed = seed
+        self.num_predict = num_predict
+        self.temperature = 0.0
+
         self.session = requests.Session()
         self.session.trust_env = False
         self.calls = []
 
-        response = self.session.get(self.base_url + "/api/tags", timeout=10)
+        response = self.session.get(
+            self.base_url + "/api/tags",
+            timeout=10,
+        )
         response.raise_for_status()
 
         matches = [m for m in response.json().get("models", []) if m["name"] == model]
@@ -123,7 +201,15 @@ class OllamaClient:
 
     def call(self, messages):
         started = time.perf_counter()
-        log = {"messages": messages, "status": "error", "p_make": None}
+
+        log = {
+            "messages": messages,
+            "status": "error",
+            "p_make": None,
+            "sampling_seed": self.seed,
+            "sampling_temperature": self.temperature,
+        }
+
         self.calls.append(log)
 
         try:
@@ -136,7 +222,7 @@ class OllamaClient:
                     "stream": False,
                     "think": False,
                     "options": {
-                        "temperature": 0,
+                        "temperature": self.temperature,
                         "seed": self.seed,
                         "num_ctx": 8192,
                         "num_predict": self.num_predict,
@@ -158,7 +244,14 @@ class OllamaClient:
             )
 
             assessment = parse_assessment(raw)
-            log.update({"status": "ok", **assessment})
+
+            log.update(
+                {
+                    "status": "ok",
+                    **assessment,
+                }
+            )
+
             return assessment
 
         except Exception as error:
@@ -169,27 +262,49 @@ class OllamaClient:
             log["runtime_seconds"] = time.perf_counter() - started
 
 
-def crewai_assessment(client: OllamaClient, role: str, features: dict, previous: list) -> dict:
-    # No remote tracing, memory embeddings, tools, provider defaults or hidden retries.
+def crewai_assessment(
+    client: OllamaClient,
+    role: str,
+    features: dict,
+    previous: list,
+) -> dict:
+    """Use CrewAI with a strict one-call local Ollama adapter."""
     os.environ["OTEL_SDK_DISABLED"] = "true"
     os.environ["CREWAI_TRACING_ENABLED"] = "false"
-    os.environ.setdefault("CREWAI_STORAGE_DIR", str(Path("artifacts/crewai_state").resolve()))
 
-    # Do not read or create platform credentials for this local-only experiment.
+    os.environ.setdefault(
+        "CREWAI_STORAGE_DIR",
+        str(Path("artifacts/crewai_state").resolve()),
+    )
+
     from crewai_core.auth import token as platform_auth
 
     def no_platform_account():
         raise platform_auth.AuthError("Platform access disabled for this local-only experiment")
 
-    with patch.object(platform_auth, "get_auth_token", no_platform_account):
+    with patch.object(
+        platform_auth,
+        "get_auth_token",
+        no_platform_account,
+    ):
         from crewai import Agent, BaseLLM, Crew, Task
 
     class OneCallLocalLLM(BaseLLM):
         def __init__(self):
-            super().__init__(model=client.model, temperature=0)
+            super().__init__(
+                model=client.model,
+                temperature=0,
+            )
             self.used = False
 
-        def call(self, messages, tools=None, callbacks=None, available_functions=None, **kwargs):
+        def call(
+            self,
+            messages,
+            tools=None,
+            callbacks=None,
+            available_functions=None,
+            **kwargs,
+        ):
             if self.used:
                 raise RuntimeError("One-call budget exhausted; framework retries are disabled")
 
@@ -199,6 +314,7 @@ def crewai_assessment(client: OllamaClient, role: str, features: dict, previous:
                 messages = [{"role": "user", "content": messages}]
 
             result = client.call(messages)
+
             return "Final Answer: " + json.dumps(result)
 
         def supports_function_calling(self):
@@ -215,7 +331,7 @@ def crewai_assessment(client: OllamaClient, role: str, features: dict, previous:
     agent = Agent(
         role=role,
         goal=INSTRUCTIONS,
-        backstory="You assess supplied measurements without outside information.",
+        backstory=("You assess supplied measurements without outside information."),
         llm=adapter,
         function_calling_llm=adapter,
         tools=[],
@@ -227,14 +343,16 @@ def crewai_assessment(client: OllamaClient, role: str, features: dict, previous:
     )
 
     task = Task(
-        description=INSTRUCTIONS
-        + "\n"
-        + json.dumps(
-            {
-                "features": features,
-                "previous_assessments": previous,
-            },
-            allow_nan=False,
+        description=(
+            INSTRUCTIONS
+            + "\n"
+            + json.dumps(
+                {
+                    "features": features,
+                    "previous_assessments": previous,
+                },
+                allow_nan=False,
+            )
         ),
         expected_output=EXPECTED_OUTPUT,
         agent=agent,
@@ -253,7 +371,9 @@ def crewai_assessment(client: OllamaClient, role: str, features: dict, previous:
     return parse_assessment(result.raw)
 
 
-def specialist_inputs(features: dict) -> list[tuple[str, dict]]:
+def specialist_inputs(
+    features: dict,
+) -> list[tuple[str, dict]]:
     """Skip specialists with no known inputs."""
     mechanics = CV_FEATURES | {
         "shot_distance",
@@ -265,7 +385,10 @@ def specialist_inputs(features: dict) -> list[tuple[str, dict]]:
     specialists = []
 
     for role, keys in [
-        ("Game context analyst", ALLOWED_FEATURES - mechanics - HISTORY_FEATURES),
+        (
+            "Game context analyst",
+            ALLOWED_FEATURES - mechanics - HISTORY_FEATURES,
+        ),
         ("Player history analyst", HISTORY_FEATURES),
         ("Shot mechanics and defense analyst", mechanics),
     ]:
@@ -277,20 +400,60 @@ def specialist_inputs(features: dict) -> list[tuple[str, dict]]:
     return specialists
 
 
-def call_budget(features: dict, condition: str) -> int:
-    """Match the number of calls needed for the specified shot."""
+def call_budget(
+    features: dict,
+    condition: str,
+) -> int:
+    """Return the expected calls for this condition and shot."""
     if condition not in CONDITIONS:
         raise ValueError(f"Unknown agent condition: {condition}")
 
-    return 1 if condition == "llm_single" else len(specialist_inputs(features)) + 1
+    if condition in {
+        "llm_single",
+        "llm_single_decomposed",
+    }:
+        return 1
+
+    return len(specialist_inputs(features)) + 1
 
 
-def predict_condition(features: dict, condition: str, assessor) -> dict:
+def predict_condition(
+    features: dict,
+    condition: str,
+    assessor,
+) -> dict:
+    """Run one experimental condition with only allowed features."""
     if set(features) - ALLOWED_FEATURES:
         raise ValueError("Agent inputs must contain only allowlisted pre-release features")
 
     if condition == "llm_single":
-        return assessor("Shot probability analyst", features, [])
+        return assessor(
+            "Shot probability analyst",
+            features,
+            [],
+        )
+
+    if condition == "llm_single_decomposed":
+        return assessor(
+            DECOMPOSITION_ROLE,
+            features,
+            [],
+        )
+
+    if condition == "llm_single_ensemble":
+        results = [
+            assessor(
+                "Independent shot probability analyst",
+                features,
+                [],
+            )
+            for _ in range(call_budget(features, condition))
+        ]
+
+        return {
+            "p_make": float(np.mean([result["p_make"] for result in results])),
+            "rationale": ("Mean of independent probability estimates (no shared assessments)"),
+        }
 
     if condition == "llm_single_budget":
         previous = []
@@ -307,7 +470,10 @@ def predict_condition(features: dict, condition: str, assessor) -> dict:
 
     if condition == "llm_multi":
         opinions = [
-            {"role": role, **assessor(role, subset, [])}
+            {
+                "role": role,
+                **assessor(role, subset, []),
+            }
             for role, subset in specialist_inputs(features)
         ]
 
@@ -339,8 +505,13 @@ def select_evaluation_rows(
     return rows.loc[ranking.sort_values().head(limit).index].sort_values("shot_id")
 
 
-def _usage_number(value, label, *, integer=False):
-    """Reject missing, negative, nonfinite or invalid usage measurements."""
+def _usage_number(
+    value,
+    label,
+    *,
+    integer=False,
+):
+    """Reject missing, negative, or invalid usage measurements."""
     if isinstance(value, bool) or not isinstance(
         value,
         (int, float, np.integer, np.floating),
@@ -355,25 +526,28 @@ def _usage_number(value, label, *, integer=False):
     return int(number) if integer else number
 
 
-def _original_usage(calls, runtime):
-    """Capture original measurements from a fresh successful prediction."""
+def _original_usage(
+    calls,
+    runtime,
+):
+    """Capture usage from a fresh successful inference."""
     return {
         "calls": len(calls),
         "prompt_tokens": sum(
             _usage_number(
-                c["prompt_tokens"],
+                call["prompt_tokens"],
                 "prompt_tokens",
                 integer=True,
             )
-            for c in calls
+            for call in calls
         ),
         "completion_tokens": sum(
             _usage_number(
-                c["completion_tokens"],
+                call["completion_tokens"],
                 "completion_tokens",
                 integer=True,
             )
-            for c in calls
+            for call in calls
         ),
         "runtime_seconds": _usage_number(
             runtime,
@@ -382,8 +556,11 @@ def _original_usage(calls, runtime):
     }
 
 
-def _verify_cache_usage(usage, expected_calls):
-    """Check the recorded original usage against this shot's call budget."""
+def _verify_cache_usage(
+    usage,
+    expected_calls,
+):
+    """Validate stored original usage against the call budget."""
     if not isinstance(usage, dict):
         raise ValueError("Cache original usage must be an object")
 
@@ -428,10 +605,16 @@ def _load_assessment_cache(
         raise ValueError("Cache entry must be an object")
 
     if "schema_version" not in value:
-        if set(value) != {"p_make", "rationale"}:
+        if set(value) != {
+            "p_make",
+            "rationale",
+        }:
             raise ValueError("Invalid legacy cache structure")
 
-        return parse_assessment(json.dumps(value)), None
+        return (
+            parse_assessment(json.dumps(value)),
+            None,
+        )
 
     if value.get("schema_version") != 2:
         raise ValueError("Unknown cache schema version")
@@ -448,7 +631,7 @@ def _load_assessment_cache(
 
 
 def _archive_previous_execution(output):
-    """Preserve past run records before generating a new execution."""
+    """Preserve previous run records before creating new execution files."""
     filenames = [
         "experiment.json",
         "selection.csv",
@@ -464,7 +647,6 @@ def _archive_previous_execution(output):
         return
 
     archive = output / "execution_history" / uuid.uuid4().hex
-
     archive.mkdir(parents=True)
 
     for name in available:
@@ -485,7 +667,7 @@ def _archive_previous_execution(output):
 def summarize_agent_usage(
     predictions: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Summarize current-run compute, including failed calls."""
+    """Summarize current-run inference, including failures."""
     required = {
         "model",
         "status",
@@ -540,7 +722,10 @@ def run_agents(
     if split == "test" and not final:
         raise ValueError("LLM test evaluation requires --final after prompt freeze")
 
-    if split not in {"validation", "test"}:
+    if split not in {
+        "validation",
+        "test",
+    }:
         raise ValueError("LLM evaluation is limited to validation/test")
 
     shots = pd.read_parquet(shots_path)
@@ -553,7 +738,12 @@ def run_agents(
             raise ValueError("CV features must cover the same complete registered cohort")
 
         shots = shots.merge(
-            cv[["shot_id", *sorted(CV_FEATURES)]],
+            cv[
+                [
+                    "shot_id",
+                    *sorted(CV_FEATURES),
+                ]
+            ],
             on="shot_id",
             validate="one_to_one",
         )
@@ -574,7 +764,7 @@ def run_agents(
 
     spec = {
         "shots_sha256": sha256(shots_path),
-        "cv_sha256": sha256(cv_path) if cv_path else None,
+        "cv_sha256": (sha256(cv_path) if cv_path else None),
         "model": model,
         "model_digest": client.digest,
         "prompt_version": PROMPT_VERSION,
@@ -583,6 +773,8 @@ def run_agents(
         "seed": seed,
         "num_predict_per_call": num_predict,
         "conditions": CONDITIONS,
+        "ensemble_temperature": 0.7,
+        "ensemble_seed_rule": ("base seed plus zero-based call index within shot/arm"),
         "implementation_sha256": sha256(__file__),
     }
 
@@ -614,12 +806,18 @@ def run_agents(
             },
         )
 
-    selected[["shot_id", "game_id", "cohort", "split"]].to_csv(
+    selected[
+        [
+            "shot_id",
+            "game_id",
+            "cohort",
+            "split",
+        ]
+    ].to_csv(
         output / "selection.csv",
         index=False,
     )
 
-    # Each execution starts with a fresh trace file.
     (output / "traces.jsonl").write_text(
         "",
         encoding="utf-8",
@@ -706,15 +904,28 @@ def run_agents(
                     record["cached"] = True
 
                 else:
+
+                    def assess(role, f, prior):
+                        try:
+                            if condition == "llm_single_ensemble":
+                                client.seed = seed + len(client.calls) - start_calls
+                                client.temperature = 0.7
+
+                            return crewai_assessment(
+                                client,
+                                role,
+                                f,
+                                prior,
+                            )
+
+                        finally:
+                            client.seed = seed
+                            client.temperature = 0.0
+
                     assessment = predict_condition(
                         features,
                         condition,
-                        lambda role, f, prior: crewai_assessment(
-                            client,
-                            role,
-                            f,
-                            prior,
-                        ),
+                        assess,
                     )
 
                     if len(client.calls) - start_calls != expected_calls:
@@ -738,8 +949,8 @@ def run_agents(
             record.update(
                 {
                     "calls": len(calls),
-                    "prompt_tokens": sum(c.get("prompt_tokens", 0) for c in calls),
-                    "completion_tokens": sum(c.get("completion_tokens", 0) for c in calls),
+                    "prompt_tokens": sum(call.get("prompt_tokens", 0) for call in calls),
+                    "completion_tokens": sum(call.get("completion_tokens", 0) for call in calls),
                     "runtime_seconds": runtime,
                 }
             )
@@ -795,7 +1006,10 @@ def run_agents(
                         }
                     )
 
-            with (output / "traces.jsonl").open("a", encoding="utf-8") as stream:
+            with (output / "traces.jsonl").open(
+                "a",
+                encoding="utf-8",
+            ) as stream:
                 stream.write(
                     json.dumps(
                         {
@@ -812,13 +1026,13 @@ def run_agents(
 
             predictions.append(record)
 
-            # Persist after every shot/condition for interruption recovery.
             pd.DataFrame(predictions).to_csv(
                 output / "predictions.csv",
                 index=False,
             )
 
     frame = pd.DataFrame(predictions)
+
     metrics = write_scores(
         frame,
         output,
