@@ -17,6 +17,7 @@ import pandas as pd
 
 from .common import sha256, write_json
 from .evaluation import score_predictions, validate_predictions
+from .experiment_acceptance import accept_experiment
 from .experiment_validation import validate_artifacts
 
 KEYS = ["shot_id", "model"]
@@ -104,6 +105,10 @@ def cached_flag(value):
 def summarize_experiment(
     run_dir: str | Path,
     output: str | Path,
+    *,
+    require_accepted: bool = False,
+    expected_shots: int | None = None,
+    expected_games: int | None = None,
 ) -> dict:
     run_dir = Path(run_dir)
     output = Path(output)
@@ -125,6 +130,13 @@ def summarize_experiment(
 
     if output.exists() and (not output.is_dir() or any(output.iterdir())):
         raise ValueError("Output directory is not empty; choose a new directory")
+
+    if require_accepted:
+        accept_experiment(
+            run_dir,
+            expected_shots=expected_shots,
+            expected_games=expected_games,
+        )
 
     strict_validation = validate_artifacts(run_dir)
 
@@ -571,17 +583,26 @@ def main():
     parser = argparse.ArgumentParser(description="Summarize a saved local LLM experiment")
     parser.add_argument("--run", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--require-accepted", action="store_true")
+    parser.add_argument("--shots", type=int)
+    parser.add_argument("--games", type=int)
     args = parser.parse_args()
 
-    print(
-        json.dumps(
-            summarize_experiment(
-                args.run,
-                args.output,
-            ),
-            indent=2,
+    if not args.require_accepted and (args.shots is not None or args.games is not None):
+        parser.error("--shots and --games require --require-accepted")
+
+    try:
+        result = summarize_experiment(
+            args.run,
+            args.output,
+            require_accepted=args.require_accepted,
+            expected_shots=args.shots,
+            expected_games=args.games,
         )
-    )
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        parser.exit(1, f"Experiment report failed: {exc}\n")
+
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
