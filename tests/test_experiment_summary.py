@@ -413,3 +413,147 @@ def test_v2_fresh_original_costs_are_reported(tmp_path):
     table = pd.read_csv(tmp_path / "summary" / "experiment_summary.csv")
 
     assert (table["verified_original_tokens"].eq(240)).all()
+
+
+def test_acceptance_gate_allows_accepted_experiment(tmp_path, monkeypatch):
+    run = make_experiment(tmp_path)
+    output = tmp_path / "accepted_report"
+    calls = []
+
+    def fake_accept(run_dir, expected_shots=None, expected_games=None):
+        calls.append((run_dir, expected_shots, expected_games))
+        return {"accepted": True}
+
+    monkeypatch.setattr(
+        "nba_shots.experiment_summary.accept_experiment",
+        fake_accept,
+    )
+
+    result = summarize_experiment(
+        run,
+        output,
+        require_accepted=True,
+        expected_shots=2,
+        expected_games=2,
+    )
+
+    assert calls == [(run, 2, 2)]
+    assert result["strict_validation_passed"] is True
+    assert (output / "experiment_summary.json").exists()
+    assert (output / "cost_provenance.csv").exists()
+
+
+def test_acceptance_gate_rejects_before_writing(tmp_path, monkeypatch):
+    from nba_shots.experiment_validation import ValidationError
+
+    run = make_experiment(tmp_path)
+    output = tmp_path / "rejected_report"
+
+    def fake_accept(run_dir, expected_shots=None, expected_games=None):
+        raise ValidationError("Experiment failed acceptance")
+
+    monkeypatch.setattr(
+        "nba_shots.experiment_summary.accept_experiment",
+        fake_accept,
+    )
+
+    with pytest.raises(ValidationError, match="failed acceptance"):
+        summarize_experiment(
+            run,
+            output,
+            require_accepted=True,
+            expected_shots=2,
+            expected_games=2,
+        )
+
+    assert not output.exists()
+
+
+def test_legacy_reporting_does_not_require_acceptance(tmp_path, monkeypatch):
+    run = make_experiment(tmp_path)
+    output = tmp_path / "legacy_report"
+
+    def unexpected_acceptance(*args, **kwargs):
+        raise AssertionError("Acceptance should be opt-in")
+
+    monkeypatch.setattr(
+        "nba_shots.experiment_summary.accept_experiment",
+        unexpected_acceptance,
+    )
+
+    result = summarize_experiment(run, output)
+
+    assert result["strict_validation_passed"] is True
+    assert (output / "experiment_summary.json").exists()
+
+
+def test_summary_cli_forwards_acceptance_options(monkeypatch, capsys):
+    import sys
+
+    from nba_shots import experiment_summary
+
+    captured = {}
+
+    def fake_summary(run_dir, output, **kwargs):
+        captured["run_dir"] = run_dir
+        captured["output"] = output
+        captured.update(kwargs)
+        return {"strict_validation_passed": True}
+
+    monkeypatch.setattr(
+        experiment_summary,
+        "summarize_experiment",
+        fake_summary,
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "experiment_summary",
+            "--run",
+            "input_run",
+            "--output",
+            "output_report",
+            "--require-accepted",
+            "--shots",
+            "30",
+            "--games",
+            "10",
+        ],
+    )
+
+    experiment_summary.main()
+
+    assert str(captured["run_dir"]) == "input_run"
+    assert str(captured["output"]) == "output_report"
+    assert captured["require_accepted"] is True
+    assert captured["expected_shots"] == 30
+    assert captured["expected_games"] == 10
+
+    assert json.loads(capsys.readouterr().out) == {"strict_validation_passed": True}
+
+
+def test_summary_cli_rejects_counts_without_acceptance(monkeypatch, capsys):
+    import sys
+
+    from nba_shots import experiment_summary
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "experiment_summary",
+            "--run",
+            "input_run",
+            "--output",
+            "output_report",
+            "--shots",
+            "30",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        experiment_summary.main()
+
+    assert exc.value.code == 2
+    assert "--shots and --games require --require-accepted" in (capsys.readouterr().err)
