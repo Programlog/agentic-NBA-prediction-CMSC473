@@ -7,7 +7,12 @@ import pandas as pd
 import pytest
 
 from nba_shots.agents import (
+    CONDITIONS,
     EXPECTED_OUTPUT,
+    FEATURE_DEFINITIONS,
+    FEATURE_GUIDANCE,
+    INSTRUCTIONS,
+    PROMPT_VERSION,
     OllamaClient,
     _load_assessment_cache,
     call_budget,
@@ -17,7 +22,11 @@ from nba_shots.agents import (
     prompt_features,
     select_evaluation_rows,
 )
-from nba_shots.data import assign_splits, normalize_kaggle
+from nba_shots.common import ALLOWED_FEATURES
+from nba_shots.data import (
+    assign_splits,
+    normalize_kaggle,
+)
 
 
 def test_prompts_exclude_labels_and_reidentifying_metadata():
@@ -63,24 +72,29 @@ def test_architecture_and_equal_call_control():
         "llm_single",
         assessor,
     )
+
     assert len(calls) == 1
     assert calls[0][1] == features
 
     calls.clear()
+
     predict_condition(
         features,
         "llm_single_budget",
         assessor,
     )
+
     assert len(calls) == 4
-    assert all(c[1] == features for c in calls)
+    assert all(call[1] == features for call in calls)
 
     calls.clear()
+
     predict_condition(
         features,
         "llm_multi",
         assessor,
     )
+
     assert len(calls) == 4
     assert calls[0][1] == {"period": 1}
     assert calls[1][1] == {"player_prior_make_rate": 0.4}
@@ -108,7 +122,7 @@ def test_specialist_without_inputs_is_skipped_and_budget_matches():
             "rationale": "Test evidence",
         }
 
-    for features in [
+    examples = [
         {
             "shot_distance": 20,
             "period": 1,
@@ -118,7 +132,9 @@ def test_specialist_without_inputs_is_skipped_and_budget_matches():
             "period": 1,
             "player_prior_make_rate": None,
         },
-    ]:
+    ]
+
+    for features in examples:
         calls.clear()
 
         predict_condition(
@@ -127,13 +143,13 @@ def test_specialist_without_inputs_is_skipped_and_budget_matches():
             assessor,
         )
 
-        assert [c[0] for c in calls] == [
+        assert [call[0] for call in calls] == [
             "Game context analyst",
             "Shot mechanics and defense analyst",
             "Shot probability aggregator",
         ]
 
-        assert all(c[1] for c in calls)
+        assert all(call[1] for call in calls)
         assert len(calls[2][2]) == 2
 
         calls.clear()
@@ -144,9 +160,9 @@ def test_specialist_without_inputs_is_skipped_and_budget_matches():
             assessor,
         )
 
+        assert len(calls) == 3
         assert (
-            len(calls)
-            == call_budget(
+            call_budget(
                 features,
                 "llm_multi",
             )
@@ -235,6 +251,7 @@ def test_actual_crewai_adapter_obeys_one_call_budget(
 
         def call(self, messages):
             self.calls.append(messages)
+
             return {
                 "p_make": 0.4,
                 "rationale": "A long contested shot",
@@ -285,7 +302,8 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(
 
     class Session:
         def get(self, url, **kwargs):
-            assert url == "http://127.0.0.1:11434/api/tags"
+            assert url == ("http://127.0.0.1:11434/api/tags")
+
             return Response(
                 {
                     "models": [
@@ -298,7 +316,7 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(
             )
 
         def post(self, url, **kwargs):
-            assert url == "http://127.0.0.1:11434/api/chat"
+            assert url == ("http://127.0.0.1:11434/api/chat")
 
             payload = kwargs["json"]
             encoded = json.dumps(payload)
@@ -341,9 +359,22 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(
         limit=1,
     )
 
-    assert result["actual_calls_this_run"] == 7
-    assert len(requests_seen) == 7
-    assert all(m["coverage"] == 1 for m in result["metrics"])
+    # Missing player history:
+    # 1 single + 3 budget + 1 decomposed + 3 ensemble + 3 multi.
+    assert result["actual_calls_this_run"] == 11
+    assert len(requests_seen) == 11
+
+    assert all(metric["coverage"] == 1 for metric in result["metrics"])
+
+    ensemble_requests = [
+        request for request in requests_seen if request["options"]["temperature"] == 0.7
+    ]
+
+    assert len(ensemble_requests) == 3
+
+    assert [request["options"]["seed"] for request in ensemble_requests] == [42, 43, 44]
+
+    assert sum(request["options"]["temperature"] == 0.0 for request in requests_seen) == 8
 
     sent = [message["content"] for request in requests_seen for message in request["messages"]]
 
@@ -358,7 +389,7 @@ def test_complete_agent_run_uses_local_payloads_and_resumes_cache(
     )
 
     assert resumed["actual_calls_this_run"] == 0
-    assert len(requests_seen) == 7
+    assert len(requests_seen) == 11
 
     with pytest.raises(
         ValueError,
@@ -386,7 +417,7 @@ def test_v2_cache_round_trip_validates_identity_and_usage(tmp_path):
         "condition": "llm_single",
         "model": "qwen3:4b-instruct",
         "model_digest": "local",
-        "prompt_version": "release-v2",
+        "prompt_version": PROMPT_VERSION,
         "implementation_sha256": "sha",
     }
 
@@ -541,8 +572,15 @@ def test_ledger_fresh_then_cached_execution_without_duplicate_traces(
         def __init__(self, *args):
             self.calls = []
             self.digest = "digest"
+            self.seed = 42
+            self.temperature = 0.0
 
-    def fake_assessment(client, role, features, previous):
+    def fake_assessment(
+        client,
+        role,
+        features,
+        previous,
+    ):
         client.calls.append(
             {
                 "prompt_tokens": 100,
@@ -577,7 +615,7 @@ def test_ledger_fresh_then_cached_execution_without_duplicate_traces(
         limit=1,
     )
 
-    assert first["actual_calls_this_run"] == 7
+    assert first["actual_calls_this_run"] == 11
     assert validate_artifacts(output)["valid"] is True
 
     fresh = pd.read_csv(output / "predictions.csv")
@@ -588,7 +626,8 @@ def test_ledger_fresh_then_cached_execution_without_duplicate_traces(
 
     caches = list((output / "cache").glob("*.json"))
 
-    assert len(caches) == 3
+    assert len(caches) == 5
+
     assert all(json.loads(cache.read_text())["schema_version"] == 2 for cache in caches)
 
     second = agents.run_agents(
@@ -604,19 +643,18 @@ def test_ledger_fresh_then_cached_execution_without_duplicate_traces(
 
     assert cached["cached"].all()
     assert cached["calls"].eq(0).all()
-    assert cached["original_calls"].sum() == 7
-    assert cached["original_prompt_tokens"].sum() == 700
-    assert cached["original_completion_tokens"].sum() == 140
+    assert cached["original_calls"].sum() == 11
+    assert cached["original_prompt_tokens"].sum() == 1100
+    assert cached["original_completion_tokens"].sum() == 220
 
     assert cached["original_cost_provenance"].eq("cache_v2").all()
 
-    assert len((output / "traces.jsonl").read_text().splitlines()) == 3
+    assert len((output / "traces.jsonl").read_text().splitlines()) == 5
 
     archives = list((output / "execution_history").iterdir())
 
     assert len(archives) == 1
     assert (archives[0] / "traces.jsonl").is_file()
-
     assert (archives[0] / "experiment.json").is_file()
 
     summary = summarize_experiment(
@@ -628,4 +666,283 @@ def test_ledger_fresh_then_cached_execution_without_duplicate_traces(
 
     ledger = pd.read_csv(tmp_path / "report" / "cost_provenance.csv")
 
-    assert ledger["original_calls_verified"].sum() == 7
+    assert ledger["original_calls_verified"].sum() == 11
+
+
+def test_decomposed_single_agent_uses_one_call():
+    seen = []
+
+    def assessor(role, features, previous):
+        seen.append(
+            (
+                role,
+                features.copy(),
+                list(previous),
+            )
+        )
+
+        return {
+            "p_make": 0.35,
+            "rationale": "Test",
+        }
+
+    features = {
+        "period": 3,
+        "shot_distance": 22,
+        "player_prior_make_rate": 0.42,
+    }
+
+    result = predict_condition(
+        features,
+        "llm_single_decomposed",
+        assessor,
+    )
+
+    assert result["p_make"] == 0.35
+    assert (
+        call_budget(
+            features,
+            "llm_single_decomposed",
+        )
+        == 1
+    )
+
+    assert len(seen) == 1
+
+    role, received, previous = seen[0]
+
+    assert "game context" in role
+    assert "player history" in role
+    assert "defense" in role
+    assert received == features
+    assert previous == []
+
+
+def test_ensemble_averages_predictions_without_feedback():
+    seen = []
+    values = iter([0.1, 0.2, 0.6])
+
+    def assessor(role, features, previous):
+        seen.append(
+            (
+                role,
+                features.copy(),
+                list(previous),
+            )
+        )
+
+        return {
+            "p_make": next(values),
+            "rationale": "Test",
+        }
+
+    features = {
+        "period": 4,
+        "shot_distance": 18,
+    }
+
+    result = predict_condition(
+        features,
+        "llm_single_ensemble",
+        assessor,
+    )
+
+    assert (
+        call_budget(
+            features,
+            "llm_single_ensemble",
+        )
+        == 3
+    )
+
+    assert result["p_make"] == pytest.approx(0.3)
+    assert len(seen) == 3
+
+    assert all(received == features and previous == [] for _, received, previous in seen)
+
+
+def test_all_five_conditions_reject_hidden_outcomes():
+    features = {
+        "shot_distance": 20,
+        "y_true": 1,
+    }
+
+    def assessor(role, inputs, previous):
+        raise AssertionError("Outcome reached the assessor")
+
+    for condition in CONDITIONS:
+        with pytest.raises(
+            ValueError,
+            match="allowlisted",
+        ):
+            predict_condition(
+                features,
+                condition,
+                assessor,
+            )
+
+
+def test_five_condition_adaptive_call_budgets():
+    features = {
+        "period": 1,
+        "shot_distance": 8,
+        "player_prior_make_rate": None,
+    }
+
+    expected = {
+        "llm_single": 1,
+        "llm_single_budget": 3,
+        "llm_single_decomposed": 1,
+        "llm_single_ensemble": 3,
+        "llm_multi": 3,
+    }
+
+    assert {
+        condition: call_budget(
+            features,
+            condition,
+        )
+        for condition in CONDITIONS
+    } == expected
+
+    assert sum(expected.values()) == 11
+
+
+def test_feature_definitions_and_guidance_cover_allowed_inputs():
+    assert set(FEATURE_DEFINITIONS) == ALLOWED_FEATURES
+
+    assert all(description.strip() for description in FEATURE_DEFINITIONS.values())
+
+    assert all(
+        f"{name}: {description}" in FEATURE_GUIDANCE
+        for name, description in FEATURE_DEFINITIONS.items()
+    )
+
+    assert FEATURE_GUIDANCE in INSTRUCTIONS
+    assert "H means home and A means away" in INSTRUCTIONS
+    assert "Missing or null measurements are unknown, not zero" in INSTRUCTIONS
+    assert "y_true" not in FEATURE_DEFINITIONS
+    assert PROMPT_VERSION == "release-v4-feature-semantics"
+
+
+def test_integrated_balanced_selection_runs_all_five_conditions(
+    monkeypatch,
+    tmp_path,
+):
+    from nba_shots import agents
+
+    rows = pd.DataFrame(
+        [
+            {
+                "shot_id": f"shot-{game}-{shot}",
+                "game_id": f"game-{game}",
+                "cohort": "kaggle_2014_15",
+                "split": "validation",
+                "y_true": shot % 2,
+                "shot_distance": float(shot * 5 + 3),
+                "period": 1,
+            }
+            for game in range(6)
+            for shot in range(5)
+        ]
+    )
+
+    source = tmp_path / "shots.parquet"
+    source.write_bytes(b"synthetic-shots")
+
+    monkeypatch.setattr(
+        agents.pd,
+        "read_parquet",
+        lambda _: rows.copy(),
+    )
+
+    monkeypatch.setattr(
+        agents,
+        "validate_splits",
+        lambda _: None,
+    )
+
+    monkeypatch.setattr(
+        agents,
+        "write_scores",
+        lambda frame, *args, **kwargs: [
+            {
+                "coverage": float(
+                    frame.loc[
+                        frame["model"].eq(condition),
+                        "status",
+                    ]
+                    .eq("ok")
+                    .mean()
+                )
+            }
+            for condition in agents.CONDITIONS
+        ],
+    )
+
+    class FakeClient:
+        def __init__(
+            self,
+            model,
+            base_url,
+            seed,
+            num_predict,
+        ):
+            self.model = model
+            self.digest = "test-digest"
+            self.calls = []
+            self.seed = seed
+            self.temperature = 0.0
+
+    def fake_assessment(client, role, features, previous):
+        client.calls.append(
+            {
+                "status": "ok",
+                "prompt_tokens": 10,
+                "completion_tokens": 5,
+                "runtime_seconds": 0.01,
+            }
+        )
+
+        return {
+            "p_make": 0.5,
+            "rationale": "Synthetic prediction",
+        }
+
+    monkeypatch.setattr(agents, "OllamaClient", FakeClient)
+    monkeypatch.setattr(
+        agents,
+        "crewai_assessment",
+        fake_assessment,
+    )
+
+    output = tmp_path / "balanced_run"
+
+    result = agents.run_agents(
+        source,
+        output,
+        limit=15,
+        seed=42,
+        games=5,
+    )
+
+    selection = pd.read_csv(output / "selection.csv")
+    predictions = pd.read_csv(result["predictions"])
+
+    assert len(selection) == 15
+    assert selection["game_id"].nunique() == 5
+    assert (selection.groupby("game_id").size() == 3).all()
+
+    assert len(predictions) == 15 * 5
+    assert predictions["status"].eq("ok").all()
+    assert predictions["cache_key_sha256"].nunique() == len(predictions)
+
+    for condition in agents.CONDITIONS:
+        subset = predictions.loc[predictions["model"].eq(condition)]
+        assert set(subset["shot_id"]) == set(selection["shot_id"])
+
+    spec = json.loads((output / "experiment.json").read_text())["spec"]
+
+    assert spec["sampling_method"] == "balanced_games_v1"
+    assert spec["sampling_games"] == 5
+    assert spec["shot_ids"] == selection["shot_id"].tolist()
