@@ -5,32 +5,42 @@ from pathlib import Path
 import pandas as pd
 
 from .common import utc_now, write_json
-from .evaluation import paired_comparison
+from .evaluation import paired_common_success_comparison
 
 
 def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> dict:
     original_rows = len(predictions)
+
     if selection is not None:
         keys = ["cohort", "split", "shot_id"]
         if not set(keys) <= set(selection) or selection.duplicated(keys).any():
             raise ValueError("Selection requires unique cohort/split/shot_id rows")
+
         predictions = predictions.merge(
             selection[keys], on=keys, how="inner", validate="many_to_one"
         )
+
     for _, group in predictions.groupby(["cohort", "split"]):
         expected = set(group.shot_id)
+
         for _, model_rows in group.groupby("model"):
             if set(model_rows.shot_id) != expected:
                 raise ValueError("Models have different evaluation shots; use --selection to align")
+
     if selection is not None:
         actual = set(predictions[["cohort", "split", "shot_id"]].itertuples(index=False, name=None))
         wanted = set(selection[keys].itertuples(index=False, name=None))
+
         if actual != wanted:
             raise ValueError("Some selected evaluation shots have no predictions")
+
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
+
     metrics = scorer(predictions, output, prefix="combined")
+
     predictions.to_csv(output / "predictions.csv", index=False)
+
     lines = [
         "# NBA shot probability experiments",
         "",
@@ -40,7 +50,9 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
         "loss are better; inspect reliability diagrams separately for calibration.",
         "",
     ]
+
     comparisons = []
+
     for (cohort, split), rows in predictions.groupby(["cohort", "split"]):
         lines += [
             f"## {cohort} / {split}",
@@ -48,40 +60,83 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
             "| Model | Scored / total | Brier | Log loss | ROC-AUC | Accuracy |",
             "|---|---:|---:|---:|---:|---:|",
         ]
+
         for m in metrics:
             if (m["cohort"], m["split"]) != (cohort, split):
                 continue
+
             values = [
                 "undefined" if m[k] is None else f"{m[k]:.5f}"
                 for k in ["brier_score", "log_loss", "roc_auc", "accuracy"]
             ]
+
             lines.append(
                 f"| {m['model']} | {m['n_scored']} / {m['n_total']} | " + " | ".join(values) + " |"
             )
+
         lines.append("")
+
         for base, candidate in [
             ("xgboost", "xgboost_cv"),
             ("llm_single", "llm_multi"),
             ("llm_single_budget", "llm_multi"),
         ]:
             if {base, candidate} <= set(rows.model):
+                base_rows = rows.loc[rows["model"].eq(base)]
+                candidate_rows = rows.loc[rows["model"].eq(candidate)]
+
+                base_ok = (
+                    base_rows["status"].eq("ok")
+                    if "status" in base_rows
+                    else pd.Series(True, index=base_rows.index)
+                )
+
+                candidate_ok = (
+                    candidate_rows["status"].eq("ok")
+                    if "status" in candidate_rows
+                    else pd.Series(True, index=candidate_rows.index)
+                )
+
+                # Always report coverage, even if comparison cannot proceed.
+                lines.append(
+                    f"- Prediction coverage: "
+                    f"{base} {int(base_ok.sum())}/{len(base_rows)} "
+                    f"({base_ok.mean():.1%}); "
+                    f"{candidate} {int(candidate_ok.sum())}/{len(candidate_rows)} "
+                    f"({candidate_ok.mean():.1%})."
+                )
+
                 try:
-                    result = paired_comparison(rows, base, candidate)
+                    result = paired_common_success_comparison(rows, base, candidate)
+
                     comparisons.append({"cohort": cohort, "split": split, **result})
-                    lo, hi = result["brier_delta_95pct_interval"]
+
                     lines.append(
-                        f"- {candidate} − {base}: Brier difference "
+                        f"- Common-success cohort: "
+                        f"{result['n_common_success']} / "
+                        f"{result['n_attempted']} attempted shots."
+                    )
+
+                    lo, hi = result["brier_delta_95pct_interval"]
+
+                    lines.append(
+                        f"- {candidate} \u2212 {base}: Brier difference "
                         f"{result['brier_delta_candidate_minus_baseline']:.5f}, "
                         f"95% game-bootstrap interval [{lo:.5f}, {hi:.5f}]."
                     )
+
                 except ValueError as error:
                     lines.append(f"- {candidate} versus {base}: comparison unavailable: {error}.")
+
         lines += [
             "",
             "Metrics with incomplete coverage describe successful predictions only. "
-            "Paired comparisons require complete, matching shot IDs.",
+            "Paired comparisons require matching attempted shot IDs and use only "
+            "shots where both models succeeded. Coverage is reported separately; "
+            "common-success results may be biased when failures are not random.",
             "",
         ]
+
     lines += [
         "## Interpretation limits",
         "",
@@ -92,8 +147,11 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
         "generalizing a video-cohort result.",
         "",
     ]
-    (output / "report.md").write_text("\n".join(lines))
+
+    (output / "report.md").write_text("\n".join(lines), encoding="utf-8")
+
     write_json(output / "paired_comparisons.json", comparisons)
+
     write_json(
         output / "selection_audit.json",
         {
@@ -102,4 +160,8 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
             "explicit_selection": selection is not None,
         },
     )
-    return {"report": str(output / "report.md"), "metrics": metrics}
+
+    return {
+        "report": str(output / "report.md"),
+        "metrics": metrics,
+    }
