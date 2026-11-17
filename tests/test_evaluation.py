@@ -2,7 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nba_shots.evaluation import paired_comparison, score_predictions, validate_predictions
+from nba_shots.evaluation import (
+    paired_common_success_comparison,
+    paired_comparison,
+    score_predictions,
+    validate_predictions,
+)
 
 
 def predictions():
@@ -60,3 +65,63 @@ def test_invalid_probabilities_and_duplicate_predictions_rejected():
 def test_single_class_auc_is_undefined():
     frame = predictions().loc[lambda p: p.y_true.eq(1)]
     assert all(r["roc_auc"] is None for r in score_predictions(frame))
+
+
+def test_common_success_comparison_reports_failures():
+    frame = predictions()
+
+    # Each model fails on one different shot.
+    frame.loc[
+        frame.model.eq("base") & frame.shot_id.eq("0"),
+        ["status", "p_make"],
+    ] = ["error", np.nan]
+
+    frame.loc[
+        frame.model.eq("perfect") & frame.shot_id.eq("1"),
+        ["status", "p_make"],
+    ] = ["error", np.nan]
+
+    result = paired_common_success_comparison(frame, "base", "perfect")
+
+    assert result["n_attempted"] == 20
+    assert result["baseline_successes"] == 19
+    assert result["candidate_successes"] == 19
+    assert result["baseline_coverage"] == 0.95
+    assert result["candidate_coverage"] == 0.95
+    assert result["n_common_success"] == 18
+    assert result["n_excluded_from_pairing"] == 2
+    assert result["n_shots"] == 18
+    assert result["brier_delta_candidate_minus_baseline"] == -0.25
+
+
+def test_common_success_requires_identical_attempted_shots():
+    frame = predictions()
+    frame = frame.loc[~(frame.model.eq("perfect") & frame.shot_id.eq("0"))]
+
+    with pytest.raises(ValueError, match="same attempted shot IDs"):
+        paired_common_success_comparison(frame, "base", "perfect")
+
+
+def test_common_success_rejects_empty_overlap():
+    frame = predictions()
+
+    frame.loc[frame.model.eq("perfect"), ["status", "p_make"]] = ["error", np.nan]
+
+    with pytest.raises(ValueError, match="No commonly successful shots"):
+        paired_common_success_comparison(frame, "base", "perfect")
+
+
+def test_common_success_matches_strict_comparison_without_failures():
+    frame = predictions()
+
+    strict = paired_comparison(frame, "base", "perfect")
+    common = paired_common_success_comparison(frame, "base", "perfect")
+
+    assert common["n_attempted"] == 20
+    assert common["n_common_success"] == 20
+    assert common["n_excluded_from_pairing"] == 0
+    assert (
+        common["brier_delta_candidate_minus_baseline"]
+        == (strict["brier_delta_candidate_minus_baseline"])
+    )
+    assert common["brier_delta_95pct_interval"] == (strict["brier_delta_95pct_interval"])

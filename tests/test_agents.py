@@ -823,3 +823,126 @@ def test_feature_definitions_and_guidance_cover_allowed_inputs():
     assert "Missing or null measurements are unknown, not zero" in INSTRUCTIONS
     assert "y_true" not in FEATURE_DEFINITIONS
     assert PROMPT_VERSION == "release-v4-feature-semantics"
+
+
+def test_integrated_balanced_selection_runs_all_five_conditions(
+    monkeypatch,
+    tmp_path,
+):
+    from nba_shots import agents
+
+    rows = pd.DataFrame(
+        [
+            {
+                "shot_id": f"shot-{game}-{shot}",
+                "game_id": f"game-{game}",
+                "cohort": "kaggle_2014_15",
+                "split": "validation",
+                "y_true": shot % 2,
+                "shot_distance": float(shot * 5 + 3),
+                "period": 1,
+            }
+            for game in range(6)
+            for shot in range(5)
+        ]
+    )
+
+    source = tmp_path / "shots.parquet"
+    source.write_bytes(b"synthetic-shots")
+
+    monkeypatch.setattr(
+        agents.pd,
+        "read_parquet",
+        lambda _: rows.copy(),
+    )
+
+    monkeypatch.setattr(
+        agents,
+        "validate_splits",
+        lambda _: None,
+    )
+
+    monkeypatch.setattr(
+        agents,
+        "write_scores",
+        lambda frame, *args, **kwargs: [
+            {
+                "coverage": float(
+                    frame.loc[
+                        frame["model"].eq(condition),
+                        "status",
+                    ]
+                    .eq("ok")
+                    .mean()
+                )
+            }
+            for condition in agents.CONDITIONS
+        ],
+    )
+
+    class FakeClient:
+        def __init__(
+            self,
+            model,
+            base_url,
+            seed,
+            num_predict,
+        ):
+            self.model = model
+            self.digest = "test-digest"
+            self.calls = []
+            self.seed = seed
+            self.temperature = 0.0
+
+    def fake_assessment(client, role, features, previous):
+        client.calls.append(
+            {
+                "status": "ok",
+                "prompt_tokens": 10,
+                "completion_tokens": 5,
+                "runtime_seconds": 0.01,
+            }
+        )
+
+        return {
+            "p_make": 0.5,
+            "rationale": "Synthetic prediction",
+        }
+
+    monkeypatch.setattr(agents, "OllamaClient", FakeClient)
+    monkeypatch.setattr(
+        agents,
+        "crewai_assessment",
+        fake_assessment,
+    )
+
+    output = tmp_path / "balanced_run"
+
+    result = agents.run_agents(
+        source,
+        output,
+        limit=15,
+        seed=42,
+        games=5,
+    )
+
+    selection = pd.read_csv(output / "selection.csv")
+    predictions = pd.read_csv(result["predictions"])
+
+    assert len(selection) == 15
+    assert selection["game_id"].nunique() == 5
+    assert (selection.groupby("game_id").size() == 3).all()
+
+    assert len(predictions) == 15 * 5
+    assert predictions["status"].eq("ok").all()
+    assert predictions["cache_key_sha256"].nunique() == len(predictions)
+
+    for condition in agents.CONDITIONS:
+        subset = predictions.loc[predictions["model"].eq(condition)]
+        assert set(subset["shot_id"]) == set(selection["shot_id"])
+
+    spec = json.loads((output / "experiment.json").read_text())["spec"]
+
+    assert spec["sampling_method"] == "balanced_games_v1"
+    assert spec["sampling_games"] == 5
+    assert spec["shot_ids"] == selection["shot_id"].tolist()
