@@ -361,8 +361,10 @@ uv run --frozen --all-extras nba-shots train \
   --output artifacts/basketevent_run1
 ```
 
-- **Collection** downloads one game's label JSON at a time, keeps the shot rows and
-  deletes the JSON (5.5 GB in total). Reruns skip finished games.
+- **Collection** downloads one game's label JSON at a time and keeps only the clips with
+  a shot event, gzipped (about 170 MB in total), beside the game's play-by-play and shot
+  chart. Features are computed by `prepare-basketevent`, so changing them needs no new
+  download. Reruns skip finished games.
 - **Matching:** BasketEvent events use play-by-play V3 fields, so each is matched to
   exactly one field goal by period, clock and description (`PlayByPlayV3` actionNumber
   equals `ShotChartDetail` GAME_EVENT_ID). Ambiguous keys stay unmatched. A shot in
@@ -370,12 +372,17 @@ uv run --frozen --all-extras nba-shots train \
 - **Release** is the last frame with the ball centre inside the shooter's box (widened
   by a quarter box) that is followed by the ball climbing 0.3 box heights within 7
   frames. Checked visually on a three-pointer, a layup and a floater.
-- **Box features** (`xgboost_boxes`) are measured at release in shooter box heights (bh),
-  which cancels camera zoom: ball height above the feet, jump (feet rise vs 0.4-0.8 s
-  earlier), ball rise speed over the first 4 flight frames, nearest-opponent distance,
-  opponents within 1 bh, defender closing speed and shooter speed over the 5 frames
-  before release. Shooter speed subtracts the median motion of the other players so
-  camera pans do not count. Opponents are players with the other jersey colour.
+- **Box features** (`xgboost_boxes`) are measured at release in the shooter's standing
+  box height 0.4-0.8 s earlier (bh), which cancels camera zoom; the release box itself is
+  about a third taller because the arms are up. Shooter: ball height above the feet,
+  jump, ball rise speed over the first 4 flight frames, and speed over the 5 frames
+  before release minus the other players' median motion (camera pans). Defender
+  (nearest player in the other jersey colour): distance, opponents within 1 bh, closing
+  speed, whether they are on the basket side (from the ball's sideways flight), and how
+  much taller their box is than when standing (arms raised). Distances stretch vertical
+  screen gaps by `DEPTH_STRETCH` = 2.0 because the broadcast camera foreshortens depth;
+  the factor was chosen by grouped 5-fold CV on training games only, where 1.0-4.0
+  differed by under 0.0006 Brier.
 - **Only shots with a detected release enter the cohort**, for every model. Keeping the
   others with blank features leaked the outcome: a clip holding several shot events is
   usually a miss and its putback (21% made vs 37%), so "all features blank" predicted a

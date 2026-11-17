@@ -7,6 +7,7 @@ from the boxes alone, so features exist for labeled clips with or without video.
 
 from __future__ import annotations
 
+import gzip
 import json
 import shutil
 import tempfile
@@ -28,6 +29,10 @@ SHOT_ACTIONS = {"Made Shot", "Missed Shot"}
 HAND_REACH = 0.25  # ball centre within the shooter box widened by a quarter box per side
 RISE_BH, RISE_FRAMES = 0.3, 7  # then the ball climbs 0.3 box heights within 7 frames
 SPEED_FRAMES, FLIGHT_FRAMES = 5, 4
+STANCE_FRAMES = (20, 9)  # 0.4-0.8 s before release
+# The broadcast camera looks down at the court, so a step toward or away from it moves the
+# feet fewer pixels than a sideways step; vertical gaps are stretched by this factor.
+DEPTH_STRETCH = 2.0  # chosen on training games; 1.0-4.0 differed by under 0.0006 CV Brier
 FEATURE_COLUMNS = sorted(BOX_FEATURES)
 EVENT_KEY = ["period", "clock", "description"]
 
@@ -84,8 +89,19 @@ def release_frame(shooter: np.ndarray, ball: np.ndarray) -> int | None:
     return None
 
 
+def _stance(track: np.ndarray, r: int) -> np.ndarray:
+    """Boxes 0.4-0.8 s before release, before the arms go up."""
+    return track[max(0, r - STANCE_FRAMES[0]) : max(0, r - STANCE_FRAMES[1])]
+
+
+def _court_distance(a: np.ndarray, b: np.ndarray, h: float) -> float:
+    """Feet-to-feet distance in body heights, undoing the camera's vertical foreshortening."""
+    dx, dy = _feet(a) - _feet(b)
+    return float(np.hypot(dx, dy * DEPTH_STRETCH) / h)
+
+
 def clip_features(clip: dict, shooter_key: str) -> dict:
-    """Box features at release, in shooter box heights (bh); NaN where not measurable."""
+    """Box features at release, in shooter body heights (bh); NaN where not measurable."""
     values = {name: np.nan for name in FEATURE_COLUMNS}
     empty = {**values, "release_frame": None, "shooter_box": None, "defender_box": None}
     shooter, ball = boxes(clip[shooter_key]), boxes(clip.get("ball") or {})
@@ -94,13 +110,16 @@ def clip_features(clip: dict, shooter_key: str) -> dict:
     r = release_frame(shooter, ball)
     if r is None:
         return {**empty, "box_status": "release_not_found"}
-    h, feet = shooter[r, 3], _feet(shooter[r])
+    # Raised arms make the release box about a third taller, so the unit is the standing box.
+    stance = _stance(shooter, r)
+    h = np.nanmedian(stance[:, 3]) if np.isfinite(stance).any() else np.nanmedian(shooter[:r, 3])
+    feet = _feet(shooter[r])
     values["release_height_bh"] = (feet[1] - _centre(ball[r])[1]) / h
-    stance = _feet(shooter[max(0, r - 20) : max(0, r - 9)])[:, 1]  # 0.4-0.8 s before release
     if np.isfinite(stance).any():
-        values["jump_bh"] = (np.nanmedian(stance) - feet[1]) / h
-    flight = _centre(_at(ball, r + FLIGHT_FRAMES))[1]
-    values["ball_rise_bhps"] = (_centre(ball[r])[1] - flight) / h * FPS / FLIGHT_FRAMES
+        values["jump_bh"] = (np.nanmedian(_feet(stance)[:, 1]) - feet[1]) / h
+    flight = _centre(_at(ball, r + FLIGHT_FRAMES))
+    values["ball_rise_bhps"] = (_centre(ball[r])[1] - flight[1]) / h * FPS / FLIGHT_FRAMES
+    toward_basket = np.sign(flight[0] - _centre(ball[r])[0])
 
     team = clip[shooter_key].get("jersey_color")
     others = [
@@ -108,19 +127,24 @@ def clip_features(clip: dict, shooter_key: str) -> dict:
         for k, v in clip.items()
         if k not in (shooter_key, "ball") and isinstance(v, dict)
     ]
-    opponents = [
-        (track, np.linalg.norm(_feet(_at(track, r)) - feet) / h) for track, o in others if o
-    ]
+    opponents = [(track, _court_distance(_at(track, r), shooter[r], h)) for track, o in others if o]
     opponents = [(track, d) for track, d in opponents if np.isfinite(d)]
     defender = None
     if opponents:
         defender, nearest = min(opponents, key=lambda pair: pair[1])
         values["defender_distance_bh"] = nearest
         values["defenders_within_1bh"] = float(sum(d <= 1 for _, d in opponents))
+        if toward_basket:  # the ball's sideways flight shows which side the basket is on
+            side = np.sign(_feet(_at(defender, r))[0] - feet[0])
+            values["defender_in_front"] = float(side == toward_basket)
+        # A contesting defender raises the arms, which makes the box taller than when standing.
+        standing = _stance(defender, r)[:, 3]
+        if np.isfinite(standing).any():
+            values["defender_hand_up"] = _at(defender, r)[3] / np.nanmedian(standing)
     p = r - SPEED_FRAMES
     if p >= 0:
         if defender is not None:
-            earlier = np.linalg.norm(_feet(_at(defender, p)) - _feet(shooter[p])) / h
+            earlier = _court_distance(_at(defender, p), shooter[p], h)
             values["defender_closing_bhps"] = (earlier - nearest) * FPS / SPEED_FRAMES
         # Subtract everyone else's median motion so camera pans do not count as movement.
         moves = [_feet(_at(track, r)) - _feet(_at(track, p)) for track, _ in others]
@@ -186,8 +210,35 @@ def _ok_first(column: pd.Series) -> pd.Series:
     return column.ne("ok") if column.name == "box_status" else column
 
 
+def _has_shot(clip: dict) -> bool:
+    return any(
+        isinstance(v, dict)
+        and isinstance(v.get("event"), dict)
+        and v["event"].get("actionType") in SHOT_ACTIONS
+        for v in clip.values()
+    )
+
+
+def _game_events(shot_file: Path, videos: set[str]) -> pd.DataFrame:
+    """Features for one collected game, recomputed from its saved labels."""
+    game = shot_file.name[:10]
+    with gzip.open(shot_file.with_name(f"{game}_labels.json.gz"), "rt") as stream:
+        clips = json.load(stream)
+    plays = pd.read_csv(shot_file.with_name(f"{game}_plays.csv"), dtype={"clock": str})
+    split = json.loads(shot_file.with_name(f"{game}.json").read_text())["split"]
+    rows = game_rows(clips, plays)
+    return rows.assign(
+        game_id=game,
+        has_video=rows["clip"].astype(str).str.removesuffix(".json").isin(videos),
+        basketevent_split=split,
+    )
+
+
 def collect_basketevent(output: str | Path, limit: int | None = None) -> dict:
-    """Download labels one game at a time, keep shot rows, delete the JSON; reruns resume."""
+    """Download labels one game at a time; keep shot clips gzipped beside NBA records; resumable.
+
+    Features are computed later by prepare-basketevent, so changing them needs no download.
+    """
     from huggingface_hub import HfApi, snapshot_download
     from nba_api.stats.endpoints import playbyplayv3, shotchartdetail
 
@@ -204,7 +255,13 @@ def collect_basketevent(output: str | Path, limit: int | None = None) -> dict:
     games = sorted({tuple(f.split("/")[:2]) for f in files if f.count("/") == 2})
     write_json(
         source,
-        {"repository": REPO, "revision": info.sha, "season": SEASON, "games": len(games)},
+        {
+            "repository": REPO,
+            "revision": info.sha,
+            "season": SEASON,
+            "games": len(games),
+            "videos": sorted(videos),
+        },
     )
     counts = {"done": 0, "skipped": 0, "failed": 0}
     for split, game in games[:limit]:
@@ -226,7 +283,9 @@ def collect_basketevent(output: str | Path, limit: int | None = None) -> dict:
                 str(p.relative_to(workdir)): json.loads(p.read_text())
                 for p in sorted((workdir / split / game).glob("*.json"))
             }
+            clips = {path: clip for path, clip in clips.items() if _has_shot(clip)}
             plays = playbyplayv3.PlayByPlayV3(game_id=game, timeout=30).get_data_frames()[0]
+            plays = plays[["actionNumber", "isFieldGoal", *EVENT_KEY]]
             rows = game_rows(clips, plays)
             raw = shotchartdetail.ShotChartDetail(
                 team_id=0,
@@ -239,14 +298,14 @@ def collect_basketevent(output: str | Path, limit: int | None = None) -> dict:
             ).shot_chart_detail.get_data_frame()
             if raw.empty:
                 raise ValueError("NBA returned no shot attempts for this game")
-            rows["has_video"] = rows["clip"].str.removesuffix(".json").isin(videos)
-            rows["basketevent_split"] = split
             raw.to_csv(games_dir / f"{game}_shots.csv", index=False)
-            rows.to_csv(games_dir / f"{game}_clips.csv", index=False)
+            plays.to_csv(games_dir / f"{game}_plays.csv", index=False)
+            with gzip.open(games_dir / f"{game}_labels.json.gz", "wt") as stream:
+                json.dump(clips, stream)
             record.update(
                 {
                     "status": "ok",
-                    "clips": len(clips),
+                    "shot_clips": len(clips),
                     "shot_events": len(rows),
                     "matched": int(rows.game_event_id.notna().sum()),
                     "release_found": int(rows.box_status.eq("ok").sum()),
@@ -280,13 +339,8 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
     if not shot_files:
         raise ValueError("No collected games; run collect-basketevent first")
     raw = pd.concat([pd.read_csv(p, dtype={"GAME_ID": str}) for p in shot_files])
-    events = pd.concat(
-        [
-            pd.read_csv(str(p).replace("_shots", "_clips")).assign(game_id=p.name[:10])
-            for p in shot_files
-        ],
-        ignore_index=True,
-    )
+    videos = set(json.loads((collection / "source.json").read_text())["videos"])
+    events = pd.concat([_game_events(p, videos) for p in shot_files], ignore_index=True)
     abbreviations = {t["id"]: t["abbreviation"] for t in teams.get_teams()}
     shots = normalize_recent(raw.reset_index(drop=True), SEASON, abbreviations)
     matched = events.dropna(subset=["game_event_id"]).copy()
