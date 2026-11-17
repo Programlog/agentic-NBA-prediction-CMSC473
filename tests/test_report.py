@@ -142,3 +142,50 @@ def test_report_shows_coverage_with_insufficient_games(tmp_path):
     assert "llm_multi 2/2 (100.0%)" in report
     assert "At least two held-out games" in report
     assert comparisons == []
+
+
+def test_report_audits_both_shot_outcomes(tmp_path):
+    frame = report_predictions()
+
+    create_report(frame, tmp_path, write_scores)
+
+    audits = json.loads((tmp_path / "outcome_audit.json").read_text(encoding="utf-8"))
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+
+    assert len(audits) == 1
+
+    audit = audits[0]
+    assert audit["total_shots"] == 8
+    assert audit["made_shots"] == 4
+    assert audit["missed_shots"] == 4
+    assert audit["make_rate"] == 0.5
+    assert audit["both_outcomes_present"] is True
+
+    assert "Unique shots: 8" in report
+    assert "Made shots: 4" in report
+    assert "Missed shots: 4" in report
+    assert "Make rate: 50.0%" in report
+    assert "Only one shot outcome is represented" not in report
+
+
+def test_report_warns_when_only_made_shots_are_present(tmp_path):
+    frame = report_predictions()
+    frame = frame.loc[frame["shot_id"].isin(["shot-1", "shot-3"])].copy()
+
+    create_report(frame, tmp_path, write_scores)
+
+    audits = json.loads((tmp_path / "outcome_audit.json").read_text(encoding="utf-8"))
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+
+    assert len(audits) == 1
+
+    audit = audits[0]
+    assert audit["total_shots"] == 2
+    assert audit["made_shots"] == 2
+    assert audit["missed_shots"] == 0
+    assert audit["make_rate"] == 1.0
+    assert audit["both_outcomes_present"] is False
+
+    assert "Make rate: 100.0%" in report
+    assert "Only one shot outcome is represented" in report
+    assert "ROC-AUC is undefined" in report

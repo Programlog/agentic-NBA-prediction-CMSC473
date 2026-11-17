@@ -8,6 +8,8 @@ import os
 import shutil
 import time
 import uuid
+from functools import wraps
+from inspect import signature
 from pathlib import Path
 from unittest.mock import patch
 from urllib.parse import urlparse
@@ -15,6 +17,7 @@ from urllib.parse import urlparse
 import numpy as np
 import pandas as pd
 import requests
+from filelock import FileLock, Timeout
 
 from .common import (
     ALLOWED_FEATURES,
@@ -786,6 +789,32 @@ def summarize_agent_usage(
     return pd.DataFrame.from_records(records)
 
 
+def exclusive_experiment_output(func):
+    """Allow only one execution per experiment output directory."""
+
+    @wraps(func)
+    def guarded(*args, **kwargs):
+        bound = signature(func).bind(*args, **kwargs)
+        output = Path(bound.arguments["output"]).resolve()
+
+        # Keep the lock outside the experiment artifact directory.
+        output.parent.mkdir(parents=True, exist_ok=True)
+        lock_path = output.with_name(output.name + ".run.lock")
+
+        lock = FileLock(str(lock_path), timeout=0)
+
+        try:
+            with lock:
+                return func(*args, **kwargs)
+        except Timeout as exc:
+            raise ValueError(
+                f"Experiment output is already locked by another execution: {output}"
+            ) from exc
+
+    return guarded
+
+
+@exclusive_experiment_output
 def run_agents(
     shots_path,
     output,
