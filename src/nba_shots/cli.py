@@ -104,6 +104,7 @@ def main(argv=None):
             "llm_single_decomposed",
             "llm_single_ensemble",
             "llm_multi",
+            "llm_multi_disagreement",
         ],
         default=None,
         help="Run only these conditions (default: all five); the core three are required",
