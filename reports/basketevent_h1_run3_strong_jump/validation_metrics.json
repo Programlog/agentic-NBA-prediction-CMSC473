@@ -1,0 +1,54 @@
+[
+  {
+    "cohort": "basketevent_2025_26",
+    "split": "validation",
+    "model": "constant",
+    "n_total": 1300,
+    "n_scored": 1300,
+    "n_failed": 0,
+    "coverage": 1.0,
+    "brier_score": 0.19639612338021564,
+    "log_loss": 0.5817383196102707,
+    "roc_auc": 0.5,
+    "accuracy": 0.7315384615384616
+  },
+  {
+    "cohort": "basketevent_2025_26",
+    "split": "validation",
+    "model": "logistic_regression",
+    "n_total": 1300,
+    "n_scored": 1300,
+    "n_failed": 0,
+    "coverage": 1.0,
+    "brier_score": 0.19511417607297116,
+    "log_loss": 0.5787369950598589,
+    "roc_auc": 0.553204438699725,
+    "accuracy": 0.7315384615384616
+  },
+  {
+    "cohort": "basketevent_2025_26",
+    "split": "validation",
+    "model": "xgboost",
+    "n_total": 1300,
+    "n_scored": 1300,
+    "n_failed": 0,
+    "coverage": 1.0,
+    "brier_score": 0.19780013694832152,
+    "log_loss": 0.5851584697367896,
+    "roc_auc": 0.5479046336385467,
+    "accuracy": 0.7261538461538461
+  },
+  {
+    "cohort": "basketevent_2025_26",
+    "split": "validation",
+    "model": "xgboost_boxes",
+    "n_total": 1300,
+    "n_scored": 1300,
+    "n_failed": 0,
+    "coverage": 1.0,
+    "brier_score": 0.19752517597871566,
+    "log_loss": 0.5844924122360378,
+    "roc_auc": 0.560052907661668,
+    "accuracy": 0.7261538461538461
+  }
+]

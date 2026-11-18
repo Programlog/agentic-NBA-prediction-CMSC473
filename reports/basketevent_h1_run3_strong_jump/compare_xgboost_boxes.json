@@ -1,0 +1,14 @@
+{
+  "baseline": "xgboost",
+  "candidate": "xgboost_boxes",
+  "n_shots": 1300,
+  "n_games": 32,
+  "brier_delta_candidate_minus_baseline": -0.0002749609696058313,
+  "brier_delta_95pct_interval": [
+    -0.0037097198745042284,
+    0.003251530683607675
+  ],
+  "method": "paired bootstrap of whole games; negative delta favors candidate",
+  "repetitions": 1000,
+  "seed": 42
+}
