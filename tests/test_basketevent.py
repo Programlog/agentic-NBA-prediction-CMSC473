@@ -11,6 +11,7 @@ from nba_shots.basketevent import (
     game_rows,
     match_events,
     prepare_basketevent,
+    shot_family,
 )
 from nba_shots.common import BOX_FEATURES, load_config
 from nba_shots.data import assign_splits, normalize_kaggle
@@ -188,6 +189,11 @@ def test_prepare_keeps_only_shots_with_a_release(tmp_path):
                 "MINUTES_REMAINING": 7,
                 "SECONDS_REMAINING": 40,
                 "SHOT_TYPE": "2PT Field Goal",
+                "ACTION_TYPE": "Pullup Jump shot",
+                "SHOT_ZONE_BASIC": "Mid-Range",
+                "SHOT_ZONE_AREA": "Center(C)",
+                "LOC_X": 10,
+                "LOC_Y": 175,
             }
             for number, *_ in plays
         ]
@@ -202,3 +208,52 @@ def test_prepare_keeps_only_shots_with_a_release(tmp_path):
     assert len(cohort) == 6 and set(cohort.shot_id) == set(features.shot_id)
     assert features[FEATURE_COLUMNS].notna().all().all()
     assert audit["status_counts"] == {"ok": 6, "multiple_shot_events": 1}
+    # Shot chart descriptors travel with each shot for the stronger baseline.
+    assert cohort[["action_type", "shot_family", "shot_zone", "loc_y"]].iloc[0].tolist() == [
+        "Pullup Jump shot",
+        "jump",
+        "Mid-Range",
+        175,
+    ]
+    assert audit["family_counts"] == {"jump": {"shots": 6, "make_rate": 1.0}}
+
+
+@pytest.mark.parametrize(
+    "action, family",
+    [
+        ("Jump Shot", "jump"),
+        ("Step Back Jump shot", "jump"),
+        ("Turnaround Fadeaway shot", "jump"),
+        ("Driving Floating Bank Jump Shot", "floater"),
+        ("Running Finger Roll Layup Shot", "layup"),
+        ("Putback Layup Shot", "layup"),
+        ("Alley Oop Dunk Shot", "dunk"),
+        ("Turnaround Bank Hook Shot", "hook"),
+    ],
+)
+def test_shot_family(action, family):
+    assert shot_family(action) == family
+
+
+def test_shot_families_restrict_training_and_scoring(raw_shots, tmp_path):
+    from nba_shots.models import evaluate_run, train_baselines
+
+    frame, _ = normalize_kaggle(raw_shots)
+    frame, _ = assign_splits(frame)
+    frame["shot_family"] = np.where(frame.shot_distance > 10, "jump", "layup")
+    frame["action_type"] = np.where(frame.shot_distance > 10, "Jump Shot", "Layup Shot")
+    shots_path = tmp_path / "shots.parquet"
+    frame.to_parquet(shots_path)
+    cfg = load_config()
+    cfg.update(shot_families=["jump"], categorical_features=["location", "action_type"])
+    cfg["xgboost"]["n_estimators"] = 2
+    train_baselines(shots_path, tmp_path / "run", cfg)
+    predictions = pd.read_csv(tmp_path / "run" / "validation_predictions.csv")
+    jump = set(frame.loc[frame.shot_family.eq("jump") & frame.split.eq("validation"), "shot_id"])
+    assert set(predictions.shot_id) == jump
+    evaluate_run(tmp_path / "run", shots_path, "test", final=True)
+    test = pd.read_csv(tmp_path / "run" / "test_predictions.csv")
+    assert set(test.shot_id) <= set(frame.loc[frame.shot_family.eq("jump"), "shot_id"])
+    (tmp_path / "bad.json").write_text(json.dumps({"shot_families": ["jumper"]}))
+    with pytest.raises(ValueError, match="shot_families"):
+        load_config(tmp_path / "bad.json")

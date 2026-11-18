@@ -26,6 +26,7 @@ DEFAULT_CONFIG = {
     ],
     "categorical_features": ["location"],
     "include_player_history": False,
+    "shot_families": None,  # e.g. ["jump"]: train and score only these shots (BasketEvent)
     "xgboost": {
         "n_estimators": 300,
         "max_depth": 4,
@@ -39,6 +40,12 @@ DEFAULT_CONFIG = {
 }
 TABULAR_FEATURES = frozenset(DEFAULT_CONFIG["numeric_features"] + ["location"])
 HISTORY_FEATURES = frozenset({"player_prior_attempts", "player_prior_make_rate"})
+# NBA shot chart descriptors (type, zone, court position) kept for BasketEvent shots. They are
+# model inputs only, outside ALLOWED_FEATURES, so the LLM prompts keep their feature set.
+SHOT_CHART_FEATURES = frozenset(
+    {"action_type", "shot_family", "shot_zone", "shot_area", "loc_x", "loc_y"}
+)
+SHOT_FAMILIES = ("dunk", "layup", "hook", "floater", "jump")
 CV_FEATURES = frozenset(
     {
         "elbow_angle_deg",
@@ -101,8 +108,11 @@ def load_config(path: str | Path | None = None) -> dict:
     features = cfg["numeric_features"] + cfg["categorical_features"]
     if len(features) != len(set(features)) or not features:
         raise ValueError("Features must be nonempty and unique")
-    if set(features) - TABULAR_FEATURES:
+    if set(features) - TABULAR_FEATURES - SHOT_CHART_FEATURES:
         raise ValueError("Base configuration may contain only approved tabular features")
+    families = cfg["shot_families"]
+    if families is not None and (not families or set(families) - set(SHOT_FAMILIES)):
+        raise ValueError(f"shot_families must be null or a nonempty subset of {SHOT_FAMILIES}")
     return cfg
 
 

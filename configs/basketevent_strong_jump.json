@@ -1,0 +1,8 @@
+{
+  "numeric_features": [
+    "shot_distance", "game_clock_seconds", "period", "shot_value", "loc_x", "loc_y"
+  ],
+  "categorical_features": ["location", "action_type", "shot_zone", "shot_area"],
+  "include_player_history": true,
+  "shot_families": ["jump"]
+}

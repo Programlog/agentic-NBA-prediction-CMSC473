@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from .common import BOX_FEATURES, environment, utc_now, write_json
-from .data import add_player_history, assign_splits
+from .data import add_player_history, assign_splits, normalize_game_id
 from .vision import normalize_recent
 
 REPO = "zaywas/BasketEvent"
@@ -219,6 +219,40 @@ def _has_shot(clip: dict) -> bool:
     )
 
 
+def shot_family(action: str) -> str:
+    """Coarse shot type from the NBA action type; release mechanics differ most between these."""
+    action = action.lower()
+    for family, word in [
+        ("dunk", "dunk"),
+        ("layup", "layup"),
+        ("layup", "finger roll"),
+        ("hook", "hook"),
+        ("floater", "floating"),
+    ]:
+        if word in action:
+            return family
+    return "jump"
+
+
+def _chart_columns(raw: pd.DataFrame) -> pd.DataFrame:
+    """Shot type, zone and court position (tenths of feet) from the NBA shot chart."""
+    action = raw.ACTION_TYPE.astype(str)
+    return pd.DataFrame(
+        {
+            "shot_id": "nba:"
+            + raw.GAME_ID.map(normalize_game_id)
+            + ":"
+            + raw.GAME_EVENT_ID.astype(str),
+            "action_type": action,
+            "shot_family": action.map(shot_family),
+            "shot_zone": raw.SHOT_ZONE_BASIC.astype(str),
+            "shot_area": raw.SHOT_ZONE_AREA.astype(str),
+            "loc_x": pd.to_numeric(raw.LOC_X),
+            "loc_y": pd.to_numeric(raw.LOC_Y),
+        }
+    )
+
+
 def _game_events(shot_file: Path, videos: set[str]) -> pd.DataFrame:
     """Features for one collected game, recomputed from its saved labels."""
     game = shot_file.name[:10]
@@ -342,7 +376,10 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
     videos = set(json.loads((collection / "source.json").read_text())["videos"])
     events = pd.concat([_game_events(p, videos) for p in shot_files], ignore_index=True)
     abbreviations = {t["id"]: t["abbreviation"] for t in teams.get_teams()}
-    shots = normalize_recent(raw.reset_index(drop=True), SEASON, abbreviations)
+    raw = raw.reset_index(drop=True)
+    shots = normalize_recent(raw, SEASON, abbreviations).merge(
+        _chart_columns(raw), on="shot_id", how="left", validate="one_to_one"
+    )
     matched = events.dropna(subset=["game_event_id"]).copy()
     matched["shot_id"] = (
         "nba:" + matched.game_id + ":" + matched.game_event_id.astype(int).astype(str)
@@ -385,6 +422,10 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
             .box_status.apply(lambda s: float(s.eq("ok").mean()))
             .rename(index=str)
             .to_dict(),
+            "family_counts": {
+                family: {"shots": len(y), "make_rate": float(y.mean())}
+                for family, y in shots.groupby("shot_family").y_true
+            },
             "with_video": int(matched.has_video.sum()),
             "environment": environment(),
         },

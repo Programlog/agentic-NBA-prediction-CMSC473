@@ -20,6 +20,7 @@ from .common import (
     ALLOWED_FEATURES,
     EXTRA_FEATURES,
     HISTORY_FEATURES,
+    SHOT_CHART_FEATURES,
     environment,
     sha256,
     utc_now,
@@ -37,7 +38,8 @@ def feature_columns(config: dict, extra: str | None = None) -> tuple[list[str], 
     if extra:
         numeric += sorted(EXTRA_FEATURES[extra])
     features = numeric + categorical
-    if not features or len(set(features)) != len(features) or set(features) - ALLOWED_FEATURES:
+    allowed = ALLOWED_FEATURES | SHOT_CHART_FEATURES
+    if not features or len(set(features)) != len(features) or set(features) - allowed:
         raise ValueError("Features must be unique members of the pre-release allowlist")
     return numeric, categorical
 
@@ -103,6 +105,16 @@ def validate_splits(shots: pd.DataFrame) -> None:
         raise ValueError("Splits must be strictly chronological")
 
 
+def select_families(shots: pd.DataFrame, config: dict) -> pd.DataFrame:
+    """Keep only the configured shot families, after splitting, so games keep their split."""
+    families = config.get("shot_families")
+    if not families:
+        return shots
+    if "shot_family" not in shots:
+        raise ValueError("shot_families needs a cohort with shot_family; re-run preparation")
+    return shots.loc[shots["shot_family"].isin(families)]
+
+
 def extra_kind(table: pd.DataFrame) -> str:
     """Which extra feature set (pose or detection boxes) a feature table provides."""
     kinds = [kind for kind, names in EXTRA_FEATURES.items() if names <= set(table)]
@@ -144,6 +156,7 @@ def train_baselines(
             validate="one_to_one",
         )
         models.append(f"xgboost_{kind}")
+    shots = select_families(shots, config)
     train = shots.loc[shots["split"].eq("train")]
     validation = shots.loc[shots["split"].eq("validation")]
     if train["y_true"].nunique() != 2:
@@ -214,7 +227,7 @@ def evaluate_run(
         shots = shots.merge(
             cv[["shot_id", *names]], on="shot_id", how="left", validate="one_to_one"
         )
-    rows = shots.loc[shots["split"].eq(split)]
+    rows = select_families(shots, metadata["config"]).loc[lambda s: s["split"].eq(split)]
     outputs = []
     for name in metadata["models"]:
         artifact = joblib.load(run_dir / f"{name}.joblib")
