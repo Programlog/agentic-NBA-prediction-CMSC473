@@ -34,6 +34,9 @@ def main(argv=None):
     crossval.add_argument("--config", type=Path)
     crossval.add_argument("--cv", type=Path)
     crossval.add_argument("--folds", type=int, default=5)
+    crossval.add_argument(
+        "--forward", action="store_true", help="Fit each block only on earlier blocks"
+    )
     baseline = sub.add_parser("baseline", help="Download, prepare and train in one command")
     baseline.add_argument("--input", type=Path)
     baseline.add_argument("--output", type=Path, default=Path("artifacts/baseline"))
@@ -158,7 +161,7 @@ def execute(args):
         config_path = args.config or (prepared_config if prepared_config.exists() else None)
         if args.command == "cross-validate":
             return cross_validate(
-                args.shots, args.output, load_config(config_path), args.cv, args.folds
+                args.shots, args.output, load_config(config_path), args.cv, args.folds, args.forward
             )
         return train_baselines(args.shots, args.output, load_config(config_path), args.cv)
     if args.command in {"compare", "report"}:

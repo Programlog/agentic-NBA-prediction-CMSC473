@@ -302,3 +302,23 @@ def test_cross_validation_scores_each_development_shot_once(raw_shots, tmp_path)
     (tmp_path / "bad.json").write_text(json.dumps({"extra_features": ["shot_distance"]}))
     with pytest.raises(ValueError, match="extra_features"):
         load_config(tmp_path / "bad.json")
+
+
+def test_forward_cross_validation_never_fits_on_later_games(raw_shots, tmp_path):
+    from nba_shots.models import cross_validate
+
+    frame, _ = normalize_kaggle(raw_shots)
+    frame, _ = assign_splits(frame)
+    shots_path = tmp_path / "shots.parquet"
+    frame.to_parquet(shots_path)
+    cfg = load_config()
+    cfg["xgboost"]["n_estimators"] = 2
+    cross_validate(shots_path, tmp_path / "run", cfg, folds=3, forward=True)
+    predictions = pd.read_csv(tmp_path / "run" / "cv_predictions.csv", dtype={"game_id": str})
+    run = json.loads((tmp_path / "run" / "run.json").read_text())
+    first = run["folds"][0]
+    dates = frame.set_index("shot_id").game_date
+    scored = dates.loc[predictions.shot_id]
+    # The first block has no earlier games to learn from, so only later blocks are scored.
+    assert run["forward"] and scored.min() > first["date_max"]
+    assert predictions.groupby("model").size().nunique() == 1

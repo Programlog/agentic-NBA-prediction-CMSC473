@@ -227,9 +227,13 @@ def cross_validate(
     config: dict,
     cv_path: str | Path | None = None,
     folds: int = 5,
+    forward: bool = False,
 ) -> list[dict]:
     """Score every training and validation shot once, each by models fit on the other date
     blocks; the test split is never read. Predictions carry split "cv" for paired comparison.
+
+    forward fits each block only on earlier blocks, so no model sees a later game; the first
+    block then has nothing to learn from and is not scored.
     """
     shots_path, output_dir = Path(shots_path), Path(output_dir)
     if output_dir.exists() and any(output_dir.iterdir()):
@@ -253,6 +257,7 @@ def cross_validate(
         "cv_path": str(Path(cv_path).resolve()) if cv_path else None,
         "cv_sha256": sha256(cv_path) if cv_path else None,
         "evaluation_split": "cv",
+        "forward": forward,
         "folds": [
             {
                 "fold": k,
@@ -270,8 +275,9 @@ def cross_validate(
         extra = name.removeprefix("xgboost_") if name.startswith("xgboost_") else None
         numeric, categorical = feature_columns(config, extra)
         features = numeric + categorical
-        for k in range(folds):
-            fit, held = pool.loc[pool["fold"].ne(k)], pool.loc[pool["fold"].eq(k)]
+        for k in range(1 if forward else 0, folds):
+            fit = pool.loc[pool["fold"].lt(k) if forward else pool["fold"].ne(k)]
+            held = pool.loc[pool["fold"].eq(k)]
             pipeline = make_pipeline(name, config, extra).fit(fit[features], fit["y_true"])
             predictions.append(
                 prediction_frame(held, name, pipeline.predict_proba(held[features])[:, 1])
