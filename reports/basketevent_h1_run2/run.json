@@ -1,0 +1,130 @@
+{
+  "started_at": "2026-11-12T06:31:14.115424+00:00",
+  "config": {
+    "seed": 42,
+    "train_fraction": 0.7,
+    "validation_fraction": 0.15,
+    "numeric_features": [
+      "shot_distance",
+      "defender_distance",
+      "game_clock_seconds",
+      "shot_clock",
+      "period",
+      "dribbles",
+      "touch_time",
+      "shot_value"
+    ],
+    "categorical_features": [
+      "location"
+    ],
+    "include_player_history": false,
+    "xgboost": {
+      "n_estimators": 300,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "min_child_weight": 10,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 5,
+      "n_jobs": 4
+    }
+  },
+  "environment": {
+    "python": "3.11.18",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "packages": {
+      "nba-shots": "0.1.0",
+      "numpy": "2.4.6",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.2.0",
+      "ultralytics": "8.4.184",
+      "crewai": "1.15.28",
+      "litellm": "1.97.0",
+      "matplotlib": "3.11.2"
+    },
+    "git_commit": "40cd4fd97baeacbc98ef0dc5dfb69d06a54732b3",
+    "git_dirty": true
+  },
+  "shots_path": "/Users/prannavc/Desktop/473/agentic-NBA-prediction-CMSC473/data/processed/basketevent_cohort_v2/shots.parquet",
+  "shots_sha256": "5ae30cb03726fe907ea7c381ea1bd7449b7667729ddde32528ec3975146dc233",
+  "cv_path": "/Users/prannavc/Desktop/473/agentic-NBA-prediction-CMSC473/data/processed/basketevent_cohort_v2/box_features.parquet",
+  "cv_sha256": "d5670cbbcf75ee3e7523791ab0f2320758ed133d41f6ad0db3796b2e876ee662",
+  "evaluation_split": "validation",
+  "models": {
+    "constant": {
+      "features": [
+        "shot_distance",
+        "defender_distance",
+        "game_clock_seconds",
+        "shot_clock",
+        "period",
+        "dribbles",
+        "touch_time",
+        "shot_value",
+        "location"
+      ],
+      "fit_rows": 11025,
+      "validation_rows": 2138,
+      "runtime_seconds": 0.02139262482523918
+    },
+    "logistic_regression": {
+      "features": [
+        "shot_distance",
+        "defender_distance",
+        "game_clock_seconds",
+        "shot_clock",
+        "period",
+        "dribbles",
+        "touch_time",
+        "shot_value",
+        "location"
+      ],
+      "fit_rows": 11025,
+      "validation_rows": 2138,
+      "runtime_seconds": 0.017191666876897216
+    },
+    "xgboost": {
+      "features": [
+        "shot_distance",
+        "defender_distance",
+        "game_clock_seconds",
+        "shot_clock",
+        "period",
+        "dribbles",
+        "touch_time",
+        "shot_value",
+        "location"
+      ],
+      "fit_rows": 11025,
+      "validation_rows": 2138,
+      "runtime_seconds": 0.17213500011712313
+    },
+    "xgboost_boxes": {
+      "features": [
+        "shot_distance",
+        "defender_distance",
+        "game_clock_seconds",
+        "shot_clock",
+        "period",
+        "dribbles",
+        "touch_time",
+        "shot_value",
+        "ball_rise_bhps",
+        "defender_closing_bhps",
+        "defender_distance_bh",
+        "defender_hand_up",
+        "defender_in_front",
+        "defenders_within_1bh",
+        "jump_bh",
+        "release_height_bh",
+        "shooter_speed_bhps",
+        "location"
+      ],
+      "fit_rows": 11025,
+      "validation_rows": 2138,
+      "runtime_seconds": 0.20861004083417356
+    }
+  },
+  "completed_at": "2026-11-12T06:31:26.128063+00:00"
+}
