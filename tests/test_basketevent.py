@@ -270,3 +270,35 @@ def test_shot_families_restrict_training_and_scoring(raw_shots, tmp_path):
     (tmp_path / "bad.json").write_text(json.dumps({"shot_families": ["jumper"]}))
     with pytest.raises(ValueError, match="shot_families"):
         load_config(tmp_path / "bad.json")
+
+
+def test_cross_validation_scores_each_development_shot_once(raw_shots, tmp_path):
+    from nba_shots.models import cross_validate
+
+    frame, _ = normalize_kaggle(raw_shots)
+    frame, _ = assign_splits(frame)
+    shots_path = tmp_path / "shots.parquet"
+    frame.to_parquet(shots_path)
+    rng = np.random.default_rng(0)
+    table = pd.DataFrame(
+        {"shot_id": frame.shot_id, **{n: rng.normal(size=len(frame)) for n in BOX_FEATURES}}
+    )
+    table_path = tmp_path / "boxes.parquet"
+    table.to_parquet(table_path)
+    cfg = load_config()
+    cfg.update(extra_features=["defender_distance_bh"])
+    cfg["xgboost"]["n_estimators"] = 2
+    cross_validate(shots_path, tmp_path / "run", cfg, table_path, folds=3)
+    predictions = pd.read_csv(tmp_path / "run" / "cv_predictions.csv")
+    development = set(frame.loc[frame.split.ne("test"), "shot_id"])
+    for _, rows in predictions.groupby("model"):
+        assert sorted(rows.shot_id) == sorted(development)  # once each; test never scored
+    run = json.loads((tmp_path / "run" / "run.json").read_text())
+    folds = run["folds"]
+    assert [f["fold"] for f in folds] == [0, 1, 2]
+    assert all(a["date_max"] < b["date_min"] for a, b in zip(folds, folds[1:]))
+    boxes = run["models"]["xgboost_boxes"]["features"]
+    assert "defender_distance_bh" in boxes and "jump_bh" not in boxes
+    (tmp_path / "bad.json").write_text(json.dumps({"extra_features": ["shot_distance"]}))
+    with pytest.raises(ValueError, match="extra_features"):
+        load_config(tmp_path / "bad.json")

@@ -27,6 +27,7 @@ DEFAULT_CONFIG = {
     "categorical_features": ["location"],
     "include_player_history": False,
     "shot_families": None,  # e.g. ["jump"]: train and score only these shots (BasketEvent)
+    "extra_features": None,  # e.g. ["defender_distance_bh"]: a subset of the box or pose set
     "xgboost": {
         "n_estimators": 300,
         "max_depth": 4,
@@ -110,6 +111,9 @@ def load_config(path: str | Path | None = None) -> dict:
         raise ValueError("Features must be nonempty and unique")
     if set(features) - TABULAR_FEATURES - SHOT_CHART_FEATURES:
         raise ValueError("Base configuration may contain only approved tabular features")
+    extra = cfg["extra_features"]
+    if extra is not None and (not extra or set(extra) - CV_FEATURES - BOX_FEATURES):
+        raise ValueError("extra_features must be null or a nonempty subset of one extra set")
     families = cfg["shot_families"]
     if families is not None and (not families or set(families) - set(SHOT_FAMILIES)):
         raise ValueError(f"shot_families must be null or a nonempty subset of {SHOT_FAMILIES}")

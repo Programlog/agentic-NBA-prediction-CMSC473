@@ -36,7 +36,10 @@ def feature_columns(config: dict, extra: str | None = None) -> tuple[list[str], 
     if config["include_player_history"]:
         numeric += sorted(HISTORY_FEATURES)
     if extra:
-        numeric += sorted(EXTRA_FEATURES[extra])
+        chosen = config.get("extra_features") or EXTRA_FEATURES[extra]
+        if set(chosen) - EXTRA_FEATURES[extra]:
+            raise ValueError(f"extra_features must come from the {extra} set")
+        numeric += sorted(chosen)
     features = numeric + categorical
     allowed = ALLOWED_FEATURES | SHOT_CHART_FEATURES
     if not features or len(set(features)) != len(features) or set(features) - allowed:
@@ -115,6 +118,32 @@ def select_families(shots: pd.DataFrame, config: dict) -> pd.DataFrame:
     return shots.loc[shots["shot_family"].isin(families)]
 
 
+def merge_extra(shots: pd.DataFrame, cv_path: str | Path) -> tuple[pd.DataFrame, str]:
+    """Join a pose or box feature table that covers the entire registered cohort."""
+    cv = pd.read_parquet(cv_path)
+    if "shot_id" not in cv or cv["shot_id"].duplicated().any():
+        raise ValueError("CV table requires unique shot IDs")
+    if set(shots["shot_id"]) != set(cv["shot_id"]):
+        raise ValueError("CV table must cover the entire registered cohort, including failures")
+    kind = extra_kind(cv)
+    merged = shots.merge(
+        cv[["shot_id", *sorted(EXTRA_FEATURES[kind])]],
+        on="shot_id",
+        how="left",
+        validate="one_to_one",
+    )
+    return merged, kind
+
+
+def date_folds(shots: pd.DataFrame, folds: int) -> pd.Series:
+    """Fold per shot: contiguous blocks of whole dates, so no game or day is split."""
+    dates = np.sort(shots["game_date"].unique())
+    if folds < 2 or len(dates) < folds:
+        raise ValueError("Cross-validation needs at least two folds and a date per fold")
+    block = {d: k for k, part in enumerate(np.array_split(dates, folds)) for d in part}
+    return shots["game_date"].map(block)
+
+
 def extra_kind(table: pd.DataFrame) -> str:
     """Which extra feature set (pose or detection boxes) a feature table provides."""
     kinds = [kind for kind, names in EXTRA_FEATURES.items() if names <= set(table)]
@@ -143,18 +172,7 @@ def train_baselines(
     validate_splits(shots)
     models = ["constant", "logistic_regression", "xgboost"]
     if cv_path:
-        cv = pd.read_parquet(cv_path)
-        if "shot_id" not in cv or cv["shot_id"].duplicated().any():
-            raise ValueError("CV table requires unique shot IDs")
-        if set(shots["shot_id"]) != set(cv["shot_id"]):
-            raise ValueError("CV table must cover the entire registered cohort, including failures")
-        kind = extra_kind(cv)
-        shots = shots.merge(
-            cv[["shot_id", *sorted(EXTRA_FEATURES[kind])]],
-            on="shot_id",
-            how="left",
-            validate="one_to_one",
-        )
+        shots, kind = merge_extra(shots, cv_path)
         models.append(f"xgboost_{kind}")
     shots = select_families(shots, config)
     train = shots.loc[shots["split"].eq("train")]
@@ -198,6 +216,70 @@ def train_baselines(
     all_predictions = pd.concat(predictions, ignore_index=True)
     all_predictions.to_csv(output_dir / "validation_predictions.csv", index=False)
     metrics = write_scores(all_predictions, output_dir)
+    metadata["completed_at"] = utc_now()
+    write_json(output_dir / "run.json", metadata)
+    return metrics
+
+
+def cross_validate(
+    shots_path: str | Path,
+    output_dir: str | Path,
+    config: dict,
+    cv_path: str | Path | None = None,
+    folds: int = 5,
+) -> list[dict]:
+    """Score every training and validation shot once, each by models fit on the other date
+    blocks; the test split is never read. Predictions carry split "cv" for paired comparison.
+    """
+    shots_path, output_dir = Path(shots_path), Path(output_dir)
+    if output_dir.exists() and any(output_dir.iterdir()):
+        raise ValueError(f"Run directory is not empty: {output_dir}; choose a new run")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    shots = pd.read_parquet(shots_path)
+    validate_splits(shots)
+    models = ["constant", "logistic_regression", "xgboost"]
+    if cv_path:
+        shots, kind = merge_extra(shots, cv_path)
+        models.append(f"xgboost_{kind}")
+    shots = select_families(shots, config)
+    pool = shots.loc[shots["split"].isin(["train", "validation"])].assign(split="cv")
+    pool["fold"] = date_folds(pool, folds)
+    metadata = {
+        "started_at": utc_now(),
+        "config": config,
+        "environment": environment(),
+        "shots_path": str(shots_path.resolve()),
+        "shots_sha256": sha256(shots_path),
+        "cv_path": str(Path(cv_path).resolve()) if cv_path else None,
+        "cv_sha256": sha256(cv_path) if cv_path else None,
+        "evaluation_split": "cv",
+        "folds": [
+            {
+                "fold": k,
+                "date_min": rows["game_date"].min(),
+                "date_max": rows["game_date"].max(),
+                "games": int(rows["game_id"].nunique()),
+                "shots": len(rows),
+            }
+            for k, rows in pool.groupby("fold")
+        ],
+        "models": {},
+    }
+    predictions = []
+    for name in models:
+        extra = name.removeprefix("xgboost_") if name.startswith("xgboost_") else None
+        numeric, categorical = feature_columns(config, extra)
+        features = numeric + categorical
+        for k in range(folds):
+            fit, held = pool.loc[pool["fold"].ne(k)], pool.loc[pool["fold"].eq(k)]
+            pipeline = make_pipeline(name, config, extra).fit(fit[features], fit["y_true"])
+            predictions.append(
+                prediction_frame(held, name, pipeline.predict_proba(held[features])[:, 1])
+            )
+        metadata["models"][name] = {"features": features}
+    all_predictions = pd.concat(predictions, ignore_index=True)
+    all_predictions.to_csv(output_dir / "cv_predictions.csv", index=False)
+    metrics = write_scores(all_predictions, output_dir, prefix="cv")
     metadata["completed_at"] = utc_now()
     write_json(output_dir / "run.json", metadata)
     return metrics

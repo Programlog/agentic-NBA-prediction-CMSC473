@@ -26,6 +26,14 @@ def main(argv=None):
     train.add_argument("--output", type=Path, required=True)
     train.add_argument("--config", type=Path)
     train.add_argument("--cv", type=Path)
+    crossval = sub.add_parser(
+        "cross-validate", help="Score train+validation shots by date-blocked folds; no test"
+    )
+    crossval.add_argument("--shots", type=Path, required=True)
+    crossval.add_argument("--output", type=Path, required=True)
+    crossval.add_argument("--config", type=Path)
+    crossval.add_argument("--cv", type=Path)
+    crossval.add_argument("--folds", type=int, default=5)
     baseline = sub.add_parser("baseline", help="Download, prepare and train in one command")
     baseline.add_argument("--input", type=Path)
     baseline.add_argument("--output", type=Path, default=Path("artifacts/baseline"))
@@ -134,8 +142,8 @@ def execute(args):
         return {"csv": str(download_kaggle(args.output))}
     if args.command == "prepare":
         return {"shots": str(prepare_csv(args.input, args.output, load_config(args.config)))}
-    if args.command in {"train", "baseline", "evaluate"}:
-        from .models import evaluate_run, train_baselines
+    if args.command in {"train", "baseline", "evaluate", "cross-validate"}:
+        from .models import cross_validate, evaluate_run, train_baselines
 
         if args.command == "evaluate":
             return evaluate_run(args.run, args.shots, args.split, args.final)
@@ -148,6 +156,10 @@ def execute(args):
             return train_baselines(prepared, args.output / "models", config)
         prepared_config = args.shots.parent / "config.json"
         config_path = args.config or (prepared_config if prepared_config.exists() else None)
+        if args.command == "cross-validate":
+            return cross_validate(
+                args.shots, args.output, load_config(config_path), args.cv, args.folds
+            )
         return train_baselines(args.shots, args.output, load_config(config_path), args.cv)
     if args.command in {"compare", "report"}:
         import pandas as pd
