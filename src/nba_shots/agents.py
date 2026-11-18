@@ -26,7 +26,7 @@ from .common import (
 from .evaluation import write_scores
 from .models import validate_splits
 
-PROMPT_VERSION = "release-v2"
+PROMPT_VERSION = "release-v3-controls"
 OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -37,7 +37,19 @@ OUTPUT_SCHEMA = {
     "additionalProperties": False,
 }
 # Maximum calls per shot; call_budget drops a specialist (and a budget call) without inputs.
-CONDITIONS = {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
+CONDITIONS = {
+    "llm_single": 1,
+    "llm_single_budget": 4,  # Existing iterative control retained for comparison.
+    "llm_single_decomposed": 1,
+    "llm_single_ensemble": 4,  # Actual call count adapts to present specialists.
+    "llm_multi": 4,
+}
+DECOMPOSITION_ROLE = (
+    "Single analyst: in ONE assessment, separately consider game context, "
+    "player history, and shot mechanics/defense; ignore missing groups, "
+    "then combine the available evidence into one probability. "
+    "Use only supplied features; do not invent outside information"
+)
 INSTRUCTIONS = (
     "Estimate the probability an NBA field goal is made at the instant of release. "
     "Only use the supplied pre-release measurements; null means unknown. "
@@ -96,6 +108,7 @@ class OllamaClient:
             raise ValueError("num_predict must be between 32 and 1024")
         self.model, self.base_url = model, base_url.rstrip("/")
         self.seed, self.num_predict = seed, num_predict
+        self.temperature = 0.0
         self.session = requests.Session()
         self.session.trust_env = False
         self.calls = []
@@ -108,7 +121,13 @@ class OllamaClient:
 
     def call(self, messages):
         started = time.perf_counter()
-        log = {"messages": messages, "status": "error", "p_make": None}
+        log = {
+            "messages": messages,
+            "status": "error",
+            "p_make": None,
+            "sampling_seed": self.seed,
+            "sampling_temperature": self.temperature,
+        }
         self.calls.append(log)
         try:
             response = self.session.post(
@@ -120,7 +139,7 @@ class OllamaClient:
                     "stream": False,
                     "think": False,
                     "options": {
-                        "temperature": 0,
+                        "temperature": self.temperature,
                         "seed": self.seed,
                         "num_ctx": 8192,
                         "num_predict": self.num_predict,
@@ -245,7 +264,11 @@ def call_budget(features: dict, condition: str) -> int:
     """llm_single_budget matches the calls llm_multi actually makes for the same shot."""
     if condition not in CONDITIONS:
         raise ValueError(f"Unknown agent condition: {condition}")
-    return 1 if condition == "llm_single" else len(specialist_inputs(features)) + 1
+    return (
+        1
+        if condition in {"llm_single", "llm_single_decomposed"}
+        else len(specialist_inputs(features)) + 1
+    )
 
 
 def predict_condition(features: dict, condition: str, assessor) -> dict:
@@ -253,6 +276,20 @@ def predict_condition(features: dict, condition: str, assessor) -> dict:
         raise ValueError("Agent inputs must contain only allowlisted pre-release features")
     if condition == "llm_single":
         return assessor("Shot probability analyst", features, [])
+    if condition == "llm_single_decomposed":
+        # Same complete feature payload as the multi-agent aggregator; no extra call.
+        return assessor(DECOMPOSITION_ROLE, features, [])
+    if condition == "llm_single_ensemble":
+        # Independent stochastic assessments: never expose earlier predictions.
+        # The run harness varies seeds/temperature for this arm only.
+        results = [
+            assessor("Independent shot probability analyst", features, [])
+            for _ in range(call_budget(features, condition))
+        ]
+        return {
+            "p_make": float(np.mean([r["p_make"] for r in results])),
+            "rationale": "Mean of independent probability estimates (no shared assessments)",
+        }
     if condition == "llm_single_budget":
         previous = []
         for _ in range(call_budget(features, condition)):
@@ -268,15 +305,168 @@ def predict_condition(features: dict, condition: str, assessor) -> dict:
     raise ValueError(f"Unknown agent condition: {condition}")
 
 
-def select_evaluation_rows(shots: pd.DataFrame, split: str, limit: int, seed=42):
-    if limit < 1 or limit > 500:
-        raise ValueError("Use between 1 and 500 preregistered LLM evaluation shots")
-    rows = shots.loc[shots.split.eq(split)].sort_values("shot_id")
+def select_evaluation_rows(
+    shots: pd.DataFrame,
+    split: str,
+    limit: int,
+    seed: int = 42,
+    games: int | None = None,
+) -> pd.DataFrame:
+    """Select shots deterministically, optionally balanced across games.
+
+    With games=None, preserve the existing shot-ID hash selection.
+    Balanced mode selects eligible games first, then shots within games.
+    Neither method uses outcomes, predictions, or feature completeness.
+    """
+    if isinstance(limit, bool) or not isinstance(limit, int):
+        raise ValueError("Shot limit must be an integer")
+
+    if not 1 <= limit <= 500:
+        raise ValueError("Use between 1 and 500 LLM evaluation shots")
+
+    if split not in {"validation", "test"}:
+        raise ValueError("Only validation/test shots can be selected")
+
+    required = {"shot_id", "game_id", "cohort", "split"}
+
+    if missing := required - set(shots.columns):
+        raise ValueError(f"Missing sampling columns: {sorted(missing)}")
+
+    rows = shots.loc[shots["split"].eq(split)].copy()
+
     if rows.empty:
         raise ValueError("No shots in the requested split")
-    # Selection depends on IDs/seed, never labels or extracted feature quality.
-    ranking = rows.shot_id.map(lambda s: hashlib.sha256(f"{seed}:{s}".encode()).hexdigest())
-    return rows.loc[ranking.sort_values().head(limit).index].sort_values("shot_id")
+
+    if rows[list(required)].isna().any().any():
+        raise ValueError("Sampling metadata cannot be missing")
+
+    if rows["shot_id"].duplicated().any():
+        raise ValueError("Shot IDs must be unique")
+
+    if rows["cohort"].nunique() != 1:
+        raise ValueError("Cannot mix dataset cohorts")
+
+    if len(rows) < limit:
+        raise ValueError(f"Requested {limit} shots but only {len(rows)} are available")
+
+    # Preserve the original algorithm for older experiments.
+    if games is None:
+        rows = rows.sort_values("shot_id")
+
+        ranking = rows["shot_id"].map(
+            lambda shot: hashlib.sha256(f"{seed}:{shot}".encode()).hexdigest()
+        )
+
+        return rows.loc[ranking.sort_values().head(limit).index].sort_values("shot_id")
+
+    if isinstance(games, bool) or not isinstance(games, int):
+        raise ValueError("Number of games must be an integer")
+
+    if not 2 <= games <= limit:
+        raise ValueError("Number of games must be between 2 and the shot limit")
+
+    def rank(kind: str, value: str) -> str:
+        return hashlib.sha256(f"{seed}:{kind}:{value}".encode()).hexdigest()
+
+    base_count, remainder = divmod(limit, games)
+
+    # Each eligible game must support the largest allocation.
+    max_per_game = base_count + (remainder > 0)
+
+    game_sizes = rows.groupby("game_id").size()
+
+    eligible_games = [game for game, count in game_sizes.items() if count >= max_per_game]
+
+    if len(eligible_games) < games:
+        raise ValueError(
+            f"Need {games} games with at least "
+            f"{max_per_game} shots each; "
+            f"only {len(eligible_games)} qualify"
+        )
+
+    # Choose games using IDs and seed, never shot outcomes.
+    selected_games = sorted(
+        eligible_games,
+        key=lambda game: (
+            rank("game", str(game)),
+            str(game),
+        ),
+    )[:games]
+
+    selected_parts = []
+
+    for position, game in enumerate(selected_games):
+        allocation = base_count + (position < remainder)
+
+        game_rows = rows.loc[rows["game_id"].eq(game)].copy()
+
+        game_rows["_sampling_rank"] = game_rows["shot_id"].map(lambda shot: rank("shot", str(shot)))
+
+        selected_parts.append(game_rows.sort_values(["_sampling_rank", "shot_id"]).head(allocation))
+
+    selected = pd.concat(
+        selected_parts,
+        ignore_index=True,
+    )
+
+    counts = selected.groupby("game_id").size()
+
+    if len(selected) != limit or len(counts) != games or counts.max() - counts.min() > 1:
+        raise ValueError("Balanced sampling violated shot/game allocation")
+
+    return selected.drop(columns="_sampling_rank").sort_values("shot_id").reset_index(drop=True)
+
+
+
+def summarize_agent_usage(predictions: pd.DataFrame) -> pd.DataFrame:
+    """Per-arm execution coverage and *this-run* compute, including failed calls.
+
+    Cache hits count toward coverage but consume zero new calls/tokens; those
+    historical costs remain in their original run's trace, not this report.
+    """
+    required = {
+        "model", "status", "cached", "calls", "prompt_tokens",
+        "completion_tokens", "runtime_seconds",
+    }
+    if missing := required - set(predictions):
+        raise ValueError(f"Usage report missing columns: {sorted(missing)}")
+
+    # Reject incomplete or impossible measurements before aggregation.
+    # Pandas may otherwise skip missing values when computing totals.
+    numeric_columns = (
+        "calls",
+        "prompt_tokens",
+        "completion_tokens",
+        "runtime_seconds",
+    )
+
+    for column in numeric_columns:
+        values = predictions[column]
+
+        if (
+            not pd.api.types.is_numeric_dtype(values)
+            or not np.isfinite(values.to_numpy(dtype=float)).all()
+            or (values < 0).any()
+        ):
+            raise ValueError(
+                f"Invalid usage measurement in column: {column}"
+            )
+    records = []
+    for name, rows in predictions.groupby("model", sort=True):
+        ok = rows["status"].eq("ok")
+        records.append({
+            "condition": name,
+            "shots_attempted": len(rows),
+            "shots_succeeded": int(ok.sum()),
+            "shots_failed": int((~ok).sum()),
+            "coverage": float(ok.mean()),
+            "cache_hits": int(rows["cached"].sum()),
+            "calls_this_run": int(rows["calls"].sum()),
+            "prompt_tokens_this_run": int(rows["prompt_tokens"].sum()),
+            "completion_tokens_this_run": int(rows["completion_tokens"].sum()),
+            "runtime_seconds_this_run": float(rows["runtime_seconds"].sum()),
+        })
+    return pd.DataFrame.from_records(records)
 
 
 def run_agents(
@@ -290,6 +480,7 @@ def run_agents(
     seed=42,
     num_predict=512,
     base_url="http://127.0.0.1:11434",
+    games=None,
 ) -> dict:
     if split == "test" and not final:
         raise ValueError("LLM test evaluation requires --final after prompt freeze")
@@ -304,7 +495,9 @@ def run_agents(
         shots = shots.merge(
             cv[["shot_id", *sorted(CV_FEATURES)]], on="shot_id", validate="one_to_one"
         )
-    selected = select_evaluation_rows(shots, split, limit, seed)
+    selected = select_evaluation_rows(
+        shots, split, limit, seed, games=games
+    )
     client = OllamaClient(model, base_url, seed, num_predict)
     spec = {
         "shots_sha256": sha256(shots_path),
@@ -315,8 +508,16 @@ def run_agents(
         "split": split,
         "shot_ids": selected.shot_id.tolist(),
         "seed": seed,
+        "sampling_method": (
+            "legacy_hash_v1"
+            if games is None
+            else "balanced_games_v1"
+        ),
+        "sampling_games": games,
         "num_predict_per_call": num_predict,
         "conditions": CONDITIONS,
+        "ensemble_temperature": 0.7,
+        "ensemble_seed_rule": "base seed plus zero-based call index within shot/arm",
         "implementation_sha256": sha256(__file__),
     }
     output = Path(output)
@@ -363,11 +564,21 @@ def run_agents(
                     assessment = parse_assessment(cache.read_text())
                     record["cached"] = True
                 else:
-                    assessment = predict_condition(
-                        features,
-                        condition,
-                        lambda role, f, prior: crewai_assessment(client, role, f, prior),
-                    )
+                    def assess(role, f, prior):
+                        # Do not alter the other deterministic arms. Within the
+                        # ensemble, change the seed for each independent draw.
+                        # Sampling temperature is a declared experimental difference,
+                        # NOT proof that token/call budgets have been matched.
+                        try:
+                            if condition == "llm_single_ensemble":
+                                client.seed = seed + len(client.calls) - start_calls
+                                client.temperature = 0.7
+                            return crewai_assessment(client, role, f, prior)
+                        finally:
+                            client.seed = seed
+                            client.temperature = 0.0
+
+                    assessment = predict_condition(features, condition, assess)
                     if len(client.calls) - start_calls != expected_calls:
                         raise ValueError(
                             "Actual calls did not match the registered inference budget"
@@ -404,9 +615,12 @@ def run_agents(
             pd.DataFrame(predictions).to_csv(output / "predictions.csv", index=False)
     frame = pd.DataFrame(predictions)
     metrics = write_scores(frame, output, prefix=split)
+    usage = summarize_agent_usage(frame)
+    usage.to_csv(output / "usage_by_condition.csv", index=False)
     result = {
         "predictions": str(output / "predictions.csv"),
         "metrics": metrics,
+        "usage_report": str(output / "usage_by_condition.csv"),
         "actual_calls_this_run": len(client.calls),
         "completed_at": utc_now(),
     }
