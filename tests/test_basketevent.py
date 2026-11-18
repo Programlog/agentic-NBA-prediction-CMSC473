@@ -150,6 +150,19 @@ def test_box_table_trains_a_separate_xgboost(raw_shots, tmp_path):
         train_baselines(shots_path, tmp_path / "bad-run", cfg, table_path)
 
 
+def test_glitched_boxes_do_not_change_the_body_height_unit():
+    clean = clip_rows("a", synthetic_clip())[0]
+    clip = synthetic_clip()
+    # The detector locks onto a hand for most stance frames: 15 px tall instead of 150, which
+    # unfiltered would make the unit ten times too small.
+    for k in range(41, 49):
+        x, y, w, h = clip["player_0"]["trajectory"][k]
+        clip["player_0"]["trajectory"][k] = [x, y + h - 15, w, 15]
+    (row,) = clip_rows("a", clip)
+    for name in FEATURE_COLUMNS:
+        assert row[name] == pytest.approx(clean[name], nan_ok=True), name
+
+
 def test_depth_gaps_count_more_than_sideways_gaps():
     clip = synthetic_clip()
     # Same on-screen gap as the sideways defender, but toward the camera: it counts double.

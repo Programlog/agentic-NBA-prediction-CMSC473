@@ -30,6 +30,7 @@ HAND_REACH = 0.25  # ball centre within the shooter box widened by a quarter box
 RISE_BH, RISE_FRAMES = 0.3, 7  # then the ball climbs 0.3 box heights within 7 frames
 SPEED_FRAMES, FLIGHT_FRAMES = 5, 4
 STANCE_FRAMES = (20, 9)  # 0.4-0.8 s before release
+STEADY_RATIO = 2.0  # a player's box more than 2x shorter or taller than usual is a glitch
 # The broadcast camera looks down at the court, so a step toward or away from it moves the
 # feet fewer pixels than a sideways step; vertical gaps are stretched by this factor.
 DEPTH_STRETCH = 2.0  # chosen on training games; 1.0-4.0 differed by under 0.0006 CV Brier
@@ -46,6 +47,23 @@ def boxes(entity: dict) -> np.ndarray:
     for i, box in enumerate(raw):
         if isinstance(box, list) and len(box) == 4 and None not in box and min(box[2:]) > 0:
             result[i] = box
+    return result
+
+
+def steady(track: np.ndarray) -> np.ndarray:
+    """Blank boxes far from the player's usual height in the clip.
+
+    The detector sometimes locks onto a hand or a fragment of the player for a few frames; the
+    box shrinks to about a tenth of its height, and every body-height unit blows up with it.
+    """
+    h = track[:, 3]
+    if not np.isfinite(h).any():
+        return track
+    usual = np.nanmedian(h)
+    with np.errstate(invalid="ignore"):
+        glitch = (h < usual / STEADY_RATIO) | (h > usual * STEADY_RATIO)
+    result = track.copy()
+    result[glitch] = np.nan
     return result
 
 
@@ -104,7 +122,7 @@ def clip_features(clip: dict, shooter_key: str) -> dict:
     """Box features at release, in shooter body heights (bh); NaN where not measurable."""
     values = {name: np.nan for name in FEATURE_COLUMNS}
     empty = {**values, "release_frame": None, "shooter_box": None, "defender_box": None}
-    shooter, ball = boxes(clip[shooter_key]), boxes(clip.get("ball") or {})
+    shooter, ball = steady(boxes(clip[shooter_key])), boxes(clip.get("ball") or {})
     if not np.isfinite(ball).any():
         return {**empty, "box_status": "no_ball"}
     r = release_frame(shooter, ball)
@@ -123,7 +141,7 @@ def clip_features(clip: dict, shooter_key: str) -> dict:
 
     team = clip[shooter_key].get("jersey_color")
     others = [
-        (boxes(v), team is not None and v.get("jersey_color") not in (None, team))
+        (steady(boxes(v)), team is not None and v.get("jersey_color") not in (None, team))
         for k, v in clip.items()
         if k not in (shooter_key, "ball") and isinstance(v, dict)
     ]
