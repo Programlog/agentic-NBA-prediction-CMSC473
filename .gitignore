@@ -14,4 +14,4 @@ __pycache__/
 /runs/
 /dist/
 *.egg-info/
-*.pt
+*.pt.matplotlib/
