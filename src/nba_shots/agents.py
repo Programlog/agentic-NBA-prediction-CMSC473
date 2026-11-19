@@ -52,6 +52,9 @@ CONDITIONS = {
     "llm_multi": 4,
 }
 
+# Opt-in experimental arms are excluded from historical five-arm defaults.
+OPTIONAL_CONDITIONS = {"llm_multi_disagreement": 4}
+
 # Conditions every registered experiment must contain: the one-call baseline,
 # the budget-matched single-agent control, and the multi-agent system.
 REQUIRED_CONDITIONS = ("llm_single", "llm_single_budget", "llm_multi")
@@ -62,13 +65,14 @@ def registered_conditions(conditions=None) -> dict:
     if conditions is None:
         return dict(CONDITIONS)
     requested = list(conditions)
-    if unknown := sorted(set(requested) - set(CONDITIONS)):
+    available = {**CONDITIONS, **OPTIONAL_CONDITIONS}
+    if unknown := sorted(set(requested) - set(available)):
         raise ValueError(f"Unknown agent condition(s): {unknown}")
     if len(set(requested)) != len(requested):
         raise ValueError("Agent conditions must not repeat")
     if missing := [c for c in REQUIRED_CONDITIONS if c not in requested]:
         raise ValueError(f"Experiments must include the required conditions: {missing}")
-    return {name: budget for name, budget in CONDITIONS.items() if name in requested}
+    return {name: budget for name, budget in available.items() if name in requested}
 
 
 DECOMPOSITION_ROLE = (
@@ -427,7 +431,7 @@ def call_budget(
     condition: str,
 ) -> int:
     """Return the expected calls for this condition and shot."""
-    if condition not in CONDITIONS:
+    if condition not in CONDITIONS and condition not in OPTIONAL_CONDITIONS:
         raise ValueError(f"Unknown agent condition: {condition}")
 
     if condition in {
@@ -437,6 +441,43 @@ def call_budget(
         return 1
 
     return len(specialist_inputs(features)) + 1
+
+
+def disagreement_aware_role(opinions: list[dict]) -> str:
+    """Build aggregator instructions using specialist disagreement statistics."""
+    if not opinions:
+        raise ValueError(
+            "Disagreement-aware aggregation requires specialist opinions"
+        )
+
+    probabilities = np.asarray(
+        [opinion["p_make"] for opinion in opinions],
+        dtype=float,
+    )
+
+    if not np.isfinite(probabilities).all():
+        raise ValueError("Specialist probabilities must be finite")
+
+    if not ((probabilities >= 0) & (probabilities <= 1)).all():
+        raise ValueError("Specialist probabilities must be between 0 and 1")
+
+    mean_probability = float(np.mean(probabilities))
+    probability_range = float(np.max(probabilities) - np.min(probabilities))
+    standard_deviation = float(np.std(probabilities))
+
+    return (
+        "Disagreement-aware shot probability aggregator. "
+        f"{len(probabilities)} specialists provided estimates. "
+        f"Their mean probability is {mean_probability:.4f}, "
+        f"their probability range is {probability_range:.4f}, "
+        f"and their standard deviation is {standard_deviation:.4f}. "
+        "Review the specialist rationales and available shot features. "
+        "When specialists disagree, identify which evidence is most relevant "
+        "and explain how it affects your final probability estimate. "
+        "Do not automatically move the probability toward 0.5 because "
+        "of disagreement. Do not invent missing measurements. "
+        "Return a probability between 0 and 1."
+    )
 
 
 def predict_condition(
@@ -501,6 +542,21 @@ def predict_condition(
 
         return assessor(
             "Shot probability aggregator",
+            features,
+            opinions,
+        )
+
+    if condition == "llm_multi_disagreement":
+        opinions = [
+            {
+                "role": role,
+                **assessor(role, subset, []),
+            }
+            for role, subset in specialist_inputs(features)
+        ]
+
+        return assessor(
+            disagreement_aware_role(opinions),
             features,
             opinions,
         )
