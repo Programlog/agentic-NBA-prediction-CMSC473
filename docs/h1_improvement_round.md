@@ -30,3 +30,33 @@ improvement exceeds one bootstrap standard error (95% interval width / 3.92). A 
 kept is dropped and the next step builds on the last kept design. The final design is the last
 kept one; its H1 comparison (boxes vs baseline) is the reported result, and every step's result is
 reported, kept or not.
+
+## Round 1 results
+
+E1 on the 24 hand-marked clips: a margin of 0.15 box heights above the shooter's box (was 0.25)
+put 15 releases within 1 frame of the reviewer (was 10), so it was carried forward; within 3
+frames fell from 88% to 79%.
+
+| Step | Box vs baseline, Brier | 95% interval | Gain over last kept | 1 SE | Kept |
+|---|---|---|---|---|---|
+| D0, current final | -0.00093 | -0.00169 to -0.00008 | | | |
+| D1 = D0 + E1 release rule | -0.00096 | -0.00170 to -0.00020 | 0.00000 | 0.00028 | no |
+| D2 = D0 + E2 smoothing | -0.00086 | -0.00165 to -0.00005 | -0.00007 | 0.00011 | no |
+| D3 = D0 + E3 player-relative | -0.00101 | -0.00181 to -0.00022 | 0.00008 | 0.00014 | no |
+
+No step was kept; D0 stays the final design. A more accurate release frame did not change the
+predictions, so the signal in release height is posture at release rather than its timing.
+
+# Round 2 (fixed before running)
+
+Same starting point (D0), same folds, same decision rule, steps applied cumulatively. Each adds one
+posture measurement from the boxes, all at the release frame r, in the shooter's standing body
+height (bh):
+
+1. **F1, arm extension.** Shooter box height at r over standing height: how far the arms are up.
+2. **F2, release vs jump peak.** Seconds from the highest point of the feet within 8 frames of r to
+   r; negative when the ball leaves on the way up.
+3. **F3, lean.** Sideways offset of the ball from the feet at r, signed so that positive is toward
+   the basket (from the ball's sideways flight), in bh.
+
+R1 = D0 + F1, R2 = last kept + F2, R3 = last kept + F3.
