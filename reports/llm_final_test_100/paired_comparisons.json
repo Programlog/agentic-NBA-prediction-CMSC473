@@ -1,0 +1,58 @@
+[
+  {
+    "cohort": "kaggle_2014_15",
+    "split": "test",
+    "baseline": "llm_single",
+    "candidate": "llm_multi",
+    "n_shots": 100,
+    "n_games": 50,
+    "brier_delta_candidate_minus_baseline": -0.04476575000000001,
+    "brier_delta_95pct_interval": [
+      -0.06993198125000001,
+      -0.021247281250000003
+    ],
+    "method": "paired bootstrap of whole games; negative delta favors candidate",
+    "repetitions": 1000,
+    "seed": 42,
+    "comparison_population": "common_successful_shots",
+    "n_attempted": 100,
+    "baseline_successes": 100,
+    "candidate_successes": 100,
+    "baseline_coverage": 1.0,
+    "candidate_coverage": 1.0,
+    "n_common_success": 100,
+    "n_excluded_from_pairing": 0,
+    "paired_baseline_brier": 0.29307,
+    "paired_candidate_brier": 0.24830424999999998,
+    "paired_baseline_log_loss": 0.7914506408568766,
+    "paired_candidate_log_loss": 0.6821443054679855
+  },
+  {
+    "cohort": "kaggle_2014_15",
+    "split": "test",
+    "baseline": "llm_single_budget",
+    "candidate": "llm_multi",
+    "n_shots": 100,
+    "n_games": 50,
+    "brier_delta_candidate_minus_baseline": -0.025237749999999982,
+    "brier_delta_95pct_interval": [
+      -0.04408654374999998,
+      -0.00727505
+    ],
+    "method": "paired bootstrap of whole games; negative delta favors candidate",
+    "repetitions": 1000,
+    "seed": 42,
+    "comparison_population": "common_successful_shots",
+    "n_attempted": 100,
+    "baseline_successes": 100,
+    "candidate_successes": 100,
+    "baseline_coverage": 1.0,
+    "candidate_coverage": 1.0,
+    "n_common_success": 100,
+    "n_excluded_from_pairing": 0,
+    "paired_baseline_brier": 0.27354199999999995,
+    "paired_candidate_brier": 0.24830424999999998,
+    "paired_baseline_log_loss": 0.745066056798962,
+    "paired_candidate_log_loss": 0.6821443054679855
+  }
+]

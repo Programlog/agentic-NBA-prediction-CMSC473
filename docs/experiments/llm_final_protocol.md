@@ -133,14 +133,14 @@ numbers are not results.
 
 | Field | Value |
 |---|---|
-| Machine / OS | |
-| Ollama version | |
-| Model digest (run) | |
-| Model digest (pilot) | |
-| Prepared-data SHA-256 | |
-| Git commit | |
-| Started / finished (UTC) | |
-| Attempts needed | |
+| Machine / OS | Apple M2, 16 GB, macOS 15 (Darwin 24.6.0, arm64) |
+| Ollama version | 0.40.8 |
+| Model digest (run) | `0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0` |
+| Model digest (pilot) | Not available: the pilot's `experiment.json` was never committed and was not on the run machine. Unverified. |
+| Prepared-data SHA-256 | `4528a5be2a3bfca9349043a9e2c5331bb2096fdf568bcdd297e2e4f9efce69f1` |
+| Git commit | `aed2c6d44a929189b7ad17877e036bcfd4a72869` |
+| Started / finished (UTC) | 2026-11-19T03:48:58Z / 2026-11-19T05:50:46Z |
+| Attempts needed | 1 (300/300 predictions, 700 calls, 0 failures) |
 
 ## Limitations fixed in advance
 
