@@ -1,4 +1,4 @@
-"""Regression tests for saved LLM experiment summaries."""
+"""Regression tests for strict, cache-aware LLM run summaries."""
 
 import json
 
@@ -8,8 +8,7 @@ import pytest
 from nba_shots.experiment_summary import summarize_experiment
 
 
-def make_experiment(tmp_path, failed=False, cached=False):
-    """Build a synthetic two-game, two-condition experiment."""
+def make_experiment(tmp_path, *, failed=False, cached=False):
     run = tmp_path / "run"
     run.mkdir()
 
@@ -22,10 +21,7 @@ def make_experiment(tmp_path, failed=False, cached=False):
         "prompt_version": "test-v1",
         "split": "validation",
         "shot_ids": shots,
-        "conditions": {
-            "llm_single": 1,
-            "llm_multi": 1,
-        },
+        "conditions": {condition: 1 for condition in conditions},
     }
 
     (run / "experiment.json").write_text(
@@ -36,21 +32,19 @@ def make_experiment(tmp_path, failed=False, cached=False):
     selection = pd.DataFrame(
         [
             {
-                "shot_id": "shot-a",
-                "game_id": "game-1",
+                "shot_id": shot,
+                "game_id": f"game-{i + 1}",
                 "cohort": "test_cohort",
                 "split": "validation",
-            },
-            {
-                "shot_id": "shot-b",
-                "game_id": "game-2",
-                "cohort": "test_cohort",
-                "split": "validation",
-            },
+            }
+            for i, shot in enumerate(shots)
         ]
     )
 
-    selection.to_csv(run / "selection.csv", index=False)
+    selection.to_csv(
+        run / "selection.csv",
+        index=False,
+    )
 
     predictions = []
     traces = []
@@ -73,13 +67,13 @@ def make_experiment(tmp_path, failed=False, cached=False):
                 "y_true": shot_number,
                 "model": condition,
                 "p_make": (None if is_failed else 0.3 + shot_number * 0.4),
-                "status": "error" if is_failed else "ok",
-                "error": "Synthetic failure" if is_failed else None,
+                "status": ("error" if is_failed else "ok"),
+                "error": ("Synthetic failure" if is_failed else None),
                 "cached": is_cached,
                 "calls": call_count,
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
-                "runtime_seconds": 0.01 if is_cached else 2.5,
+                "runtime_seconds": (0.01 if is_cached else 2.5),
             }
 
             predictions.append(record)
@@ -111,29 +105,63 @@ def make_experiment(tmp_path, failed=False, cached=False):
         index=False,
     )
 
-    with (run / "traces.jsonl").open(
-        "w",
-        encoding="utf-8",
-    ) as stream:
+    with (run / "traces.jsonl").open("w", encoding="utf-8") as stream:
         for trace in traces:
             stream.write(json.dumps(trace) + "\n")
+
+    usage_rows = []
+
+    for condition in conditions:
+        rows = [record for record in predictions if record["model"] == condition]
+
+        attempted = len(rows)
+
+        succeeded = sum(record["status"] == "ok" for record in rows)
+
+        usage_rows.append(
+            {
+                "condition": condition,
+                "shots_attempted": attempted,
+                "shots_succeeded": succeeded,
+                "shots_failed": attempted - succeeded,
+                "coverage": succeeded / attempted,
+                "cache_hits": sum(record["cached"] for record in rows),
+                "calls_this_run": sum(record["calls"] for record in rows),
+                "prompt_tokens_this_run": sum(record["prompt_tokens"] for record in rows),
+                "completion_tokens_this_run": sum(record["completion_tokens"] for record in rows),
+                "runtime_seconds_this_run": sum(record["runtime_seconds"] for record in rows),
+            }
+        )
+
+    pd.DataFrame(usage_rows).to_csv(
+        run / "usage_by_condition.csv",
+        index=False,
+    )
 
     return run
 
 
-def test_creates_all_three_summary_outputs(tmp_path):
+def test_creates_all_summary_outputs(tmp_path):
     run = make_experiment(tmp_path)
     output = tmp_path / "summary"
 
-    result = summarize_experiment(run, output)
+    result = summarize_experiment(
+        run,
+        output,
+    )
 
     assert result["conditions"] == 2
     assert result["shots"] == 2
     assert result["games"] == 2
+    assert result["strict_validation_passed"] is True
 
-    assert (output / "experiment_summary.csv").exists()
-    assert (output / "experiment_summary.json").exists()
-    assert (output / "experiment_summary.md").exists()
+    for filename in (
+        "experiment_summary.csv",
+        "experiment_summary.json",
+        "experiment_summary.md",
+        "cost_provenance.csv",
+    ):
+        assert (output / filename).exists()
 
     table = pd.read_csv(output / "experiment_summary.csv")
 
@@ -150,9 +178,15 @@ def test_creates_all_three_summary_outputs(tmp_path):
 
 
 def test_failures_are_included_in_coverage(tmp_path):
-    run = make_experiment(tmp_path, failed=True)
+    run = make_experiment(
+        tmp_path,
+        failed=True,
+    )
 
-    summarize_experiment(run, tmp_path / "summary")
+    summarize_experiment(
+        run,
+        tmp_path / "summary",
+    )
 
     table = pd.read_csv(tmp_path / "summary" / "experiment_summary.csv")
 
@@ -164,10 +198,16 @@ def test_failures_are_included_in_coverage(tmp_path):
     assert multi["coverage"] == 0.5
 
 
-def test_cached_predictions_do_not_claim_new_calls(tmp_path):
-    run = make_experiment(tmp_path, cached=True)
+def test_cached_predictions_use_zero_current_calls(tmp_path):
+    run = make_experiment(
+        tmp_path,
+        cached=True,
+    )
 
-    summarize_experiment(run, tmp_path / "summary")
+    summarize_experiment(
+        run,
+        tmp_path / "summary",
+    )
 
     table = pd.read_csv(tmp_path / "summary" / "experiment_summary.csv")
 
@@ -185,8 +225,8 @@ def test_cached_predictions_do_not_claim_new_calls(tmp_path):
 
 def test_rejects_trace_token_mismatch(tmp_path):
     run = make_experiment(tmp_path)
-
     path = run / "traces.jsonl"
+
     traces = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
     traces[0]["calls"][0]["prompt_tokens"] = 999
@@ -198,39 +238,54 @@ def test_rejects_trace_token_mismatch(tmp_path):
 
     with pytest.raises(
         ValueError,
-        match="prompt_tokens differs from trace",
+        match="prompt_tokens",
     ):
-        summarize_experiment(run, tmp_path / "summary")
+        summarize_experiment(
+            run,
+            tmp_path / "summary",
+        )
 
 
 def test_rejects_missing_registered_prediction(tmp_path):
     run = make_experiment(tmp_path)
-
     path = run / "predictions.csv"
+
     frame = pd.read_csv(path)
-    frame.iloc[:-1].to_csv(path, index=False)
+    frame.iloc[:-1].to_csv(
+        path,
+        index=False,
+    )
 
     with pytest.raises(
         ValueError,
-        match="do not match registered shots",
+        match="coverage differs",
     ):
-        summarize_experiment(run, tmp_path / "summary")
+        summarize_experiment(
+            run,
+            tmp_path / "summary",
+        )
 
 
 def test_rejects_duplicate_traces(tmp_path):
     run = make_experiment(tmp_path)
-
     path = run / "traces.jsonl"
+
     lines = path.read_text(encoding="utf-8").splitlines()
 
-    with path.open("a", encoding="utf-8") as stream:
+    with path.open(
+        "a",
+        encoding="utf-8",
+    ) as stream:
         stream.write(lines[0] + "\n")
 
     with pytest.raises(
         ValueError,
-        match="Duplicate inference trace",
+        match="duplicate shot/condition",
     ):
-        summarize_experiment(run, tmp_path / "summary")
+        summarize_experiment(
+            run,
+            tmp_path / "summary",
+        )
 
 
 def test_refuses_to_overwrite_existing_summary(tmp_path):
@@ -244,3 +299,261 @@ def test_refuses_to_overwrite_existing_summary(tmp_path):
         match="not empty",
     ):
         summarize_experiment(run, output)
+
+
+def test_cached_cost_provenance_is_explicitly_unknown(tmp_path):
+    run = make_experiment(
+        tmp_path,
+        cached=True,
+    )
+
+    output = tmp_path / "summary"
+    summarize_experiment(run, output)
+
+    ledger = pd.read_csv(output / "cost_provenance.csv")
+
+    cached_row = ledger.loc[
+        ledger["shot_id"].eq("shot-a") & ledger["condition"].eq("llm_single")
+    ].iloc[0]
+
+    assert cached_row["cost_provenance"] == "cached_original_unknown"
+
+    assert cached_row["calls_this_run"] == 0
+    assert cached_row["prompt_tokens_this_run"] == 0
+    assert pd.isna(cached_row["original_calls_verified"])
+    assert pd.isna(cached_row["original_prompt_tokens_verified"])
+
+    summary = pd.read_csv(output / "experiment_summary.csv")
+
+    single = summary.loc[summary["condition"].eq("llm_single")].iloc[0]
+
+    assert single["unknown_original_costs"] == 1
+    assert not bool(single["original_cost_complete"])
+    assert pd.isna(single["verified_original_tokens"])
+
+
+def test_fresh_inference_has_verified_cost_records(tmp_path):
+    run = make_experiment(tmp_path)
+    output = tmp_path / "summary"
+
+    result = summarize_experiment(
+        run,
+        output,
+    )
+
+    assert result["strict_validation_passed"] is True
+
+    ledger = pd.read_csv(output / "cost_provenance.csv")
+
+    assert (ledger["cost_provenance"] == "fresh_trace").all()
+
+    assert (ledger["original_calls_verified"] == 1).all()
+
+    assert (ledger["original_prompt_tokens_verified"] == 100).all()
+
+    assert (ledger["original_completion_tokens_verified"] == 20).all()
+
+    summary = pd.read_csv(output / "experiment_summary.csv")
+
+    assert summary["original_cost_complete"].all()
+
+    assert (summary["verified_original_tokens"] == 240).all()
+
+
+def test_rejects_inconsistent_usage_summary(tmp_path):
+    run = make_experiment(tmp_path)
+    path = run / "usage_by_condition.csv"
+
+    usage = pd.read_csv(path)
+    usage.loc[0, "calls_this_run"] = 999
+
+    usage.to_csv(
+        path,
+        index=False,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="calls_this_run",
+    ):
+        summarize_experiment(
+            run,
+            tmp_path / "summary",
+        )
+
+
+def test_v2_fresh_original_costs_are_reported(tmp_path):
+    run = make_experiment(tmp_path)
+    path = run / "predictions.csv"
+
+    predictions = pd.read_csv(path)
+
+    predictions["original_cost_provenance"] = "fresh_trace"
+    predictions["original_calls"] = predictions["calls"]
+    predictions["original_prompt_tokens"] = predictions["prompt_tokens"]
+    predictions["original_completion_tokens"] = predictions["completion_tokens"]
+    predictions["original_runtime_seconds"] = predictions["runtime_seconds"]
+
+    predictions.to_csv(
+        path,
+        index=False,
+    )
+
+    summarize_experiment(
+        run,
+        tmp_path / "summary",
+    )
+
+    ledger = pd.read_csv(tmp_path / "summary" / "cost_provenance.csv")
+
+    assert ledger["original_calls_verified"].sum() == 4
+
+    assert ledger["original_prompt_tokens_verified"].sum() == 400
+
+    table = pd.read_csv(tmp_path / "summary" / "experiment_summary.csv")
+
+    assert (table["verified_original_tokens"].eq(240)).all()
+
+
+def test_acceptance_gate_allows_accepted_experiment(tmp_path, monkeypatch):
+    run = make_experiment(tmp_path)
+    output = tmp_path / "accepted_report"
+    calls = []
+
+    def fake_accept(run_dir, expected_shots=None, expected_games=None):
+        calls.append((run_dir, expected_shots, expected_games))
+        return {"accepted": True}
+
+    monkeypatch.setattr(
+        "nba_shots.experiment_summary.accept_experiment",
+        fake_accept,
+    )
+
+    result = summarize_experiment(
+        run,
+        output,
+        require_accepted=True,
+        expected_shots=2,
+        expected_games=2,
+    )
+
+    assert calls == [(run, 2, 2)]
+    assert result["strict_validation_passed"] is True
+    assert (output / "experiment_summary.json").exists()
+    assert (output / "cost_provenance.csv").exists()
+
+
+def test_acceptance_gate_rejects_before_writing(tmp_path, monkeypatch):
+    from nba_shots.experiment_validation import ValidationError
+
+    run = make_experiment(tmp_path)
+    output = tmp_path / "rejected_report"
+
+    def fake_accept(run_dir, expected_shots=None, expected_games=None):
+        raise ValidationError("Experiment failed acceptance")
+
+    monkeypatch.setattr(
+        "nba_shots.experiment_summary.accept_experiment",
+        fake_accept,
+    )
+
+    with pytest.raises(ValidationError, match="failed acceptance"):
+        summarize_experiment(
+            run,
+            output,
+            require_accepted=True,
+            expected_shots=2,
+            expected_games=2,
+        )
+
+    assert not output.exists()
+
+
+def test_legacy_reporting_does_not_require_acceptance(tmp_path, monkeypatch):
+    run = make_experiment(tmp_path)
+    output = tmp_path / "legacy_report"
+
+    def unexpected_acceptance(*args, **kwargs):
+        raise AssertionError("Acceptance should be opt-in")
+
+    monkeypatch.setattr(
+        "nba_shots.experiment_summary.accept_experiment",
+        unexpected_acceptance,
+    )
+
+    result = summarize_experiment(run, output)
+
+    assert result["strict_validation_passed"] is True
+    assert (output / "experiment_summary.json").exists()
+
+
+def test_summary_cli_forwards_acceptance_options(monkeypatch, capsys):
+    import sys
+
+    from nba_shots import experiment_summary
+
+    captured = {}
+
+    def fake_summary(run_dir, output, **kwargs):
+        captured["run_dir"] = run_dir
+        captured["output"] = output
+        captured.update(kwargs)
+        return {"strict_validation_passed": True}
+
+    monkeypatch.setattr(
+        experiment_summary,
+        "summarize_experiment",
+        fake_summary,
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "experiment_summary",
+            "--run",
+            "input_run",
+            "--output",
+            "output_report",
+            "--require-accepted",
+            "--shots",
+            "30",
+            "--games",
+            "10",
+        ],
+    )
+
+    experiment_summary.main()
+
+    assert str(captured["run_dir"]) == "input_run"
+    assert str(captured["output"]) == "output_report"
+    assert captured["require_accepted"] is True
+    assert captured["expected_shots"] == 30
+    assert captured["expected_games"] == 10
+
+    assert json.loads(capsys.readouterr().out) == {"strict_validation_passed": True}
+
+
+def test_summary_cli_rejects_counts_without_acceptance(monkeypatch, capsys):
+    import sys
+
+    from nba_shots import experiment_summary
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "experiment_summary",
+            "--run",
+            "input_run",
+            "--output",
+            "output_report",
+            "--shots",
+            "30",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        experiment_summary.main()
+
+    assert exc.value.code == 2
+    assert "--shots and --games require --require-accepted" in (capsys.readouterr().err)

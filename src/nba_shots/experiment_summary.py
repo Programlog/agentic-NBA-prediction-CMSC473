@@ -1,7 +1,9 @@
-"""Validate and summarize saved local LLM experiment results.
+"""Produce trace-validated cost and prediction summaries from saved LLM runs.
 
-No model inference is performed. Costs describe the recorded execution,
-not hypothetical uncached inference or monetary API charges.
+Run:
+    python -m nba_shots.experiment_summary --run DIR --output NEW_DIR
+
+No model inference is performed.
 """
 
 from __future__ import annotations
@@ -15,26 +17,21 @@ import pandas as pd
 
 from .common import sha256, write_json
 from .evaluation import score_predictions, validate_predictions
+from .experiment_acceptance import accept_experiment
+from .experiment_validation import validate_artifacts
 
 KEYS = ["shot_id", "model"]
-
-USAGE_COLUMNS = [
-    "calls",
-    "prompt_tokens",
-    "completion_tokens",
-    "runtime_seconds",
-]
+IDENTITY = ["shot_id", "game_id", "cohort", "split"]
 
 
-def read_traces(path: Path) -> dict:
-    """Read exactly one inference trace per shot and condition."""
+def read_traces(path: Path) -> dict[tuple[str, str], dict]:
     if not path.is_file():
         raise FileNotFoundError(f"Missing traces: {path}")
 
     traces = {}
 
     with path.open(encoding="utf-8") as stream:
-        for number, line in enumerate(stream, start=1):
+        for number, line in enumerate(stream, 1):
             if not line.strip():
                 continue
 
@@ -44,12 +41,15 @@ def read_traces(path: Path) -> dict:
                 raise ValueError(f"Invalid trace JSON on line {number}") from error
 
             if not isinstance(trace, dict):
-                raise ValueError("Each trace must be an object")
+                raise ValueError("Each inference trace must be an object")
 
-            key = (trace.get("shot_id"), trace.get("condition"))
+            key = (
+                trace.get("shot_id"),
+                trace.get("condition"),
+            )
 
-            if not all(isinstance(x, str) and x for x in key):
-                raise ValueError("Trace needs shot_id and condition")
+            if not all(isinstance(value, str) and value for value in key):
+                raise ValueError("Trace needs nonempty shot_id and condition")
 
             if key in traces:
                 raise ValueError(f"Duplicate inference trace for {key}")
@@ -68,59 +68,81 @@ def read_traces(path: Path) -> dict:
     return traces
 
 
-def numeric_value(value, label: str) -> float:
-    """Reject absent, nonnumeric, negative, or nonfinite usage."""
+def numeric_value(value, label):
     if isinstance(value, bool):
         raise ValueError(f"Invalid {label}")
 
     try:
-        result = float(value)
+        value = float(value)
     except (TypeError, ValueError) as error:
         raise ValueError(f"Invalid {label}") from error
 
-    if not math.isfinite(result) or result < 0:
+    if not math.isfinite(value) or value < 0:
         raise ValueError(f"Invalid {label}")
 
-    return result
+    return value
 
 
-def exact_count(value, label: str) -> int:
-    number = numeric_value(value, label)
+def exact_count(value, label):
+    value = numeric_value(value, label)
 
-    if not number.is_integer():
+    if not value.is_integer():
         raise ValueError(f"{label} must be an integer")
 
-    return int(number)
+    return int(value)
+
+
+def cached_flag(value):
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, str) and value.strip().lower() in {"true", "false"}:
+        return value.strip().lower() == "true"
+
+    raise ValueError(f"Invalid prediction cached flag: {value!r}")
 
 
 def summarize_experiment(
     run_dir: str | Path,
     output: str | Path,
+    *,
+    require_accepted: bool = False,
+    expected_shots: int | None = None,
+    expected_games: int | None = None,
 ) -> dict:
-    """Build an audited summary from predictions and inference traces."""
     run_dir = Path(run_dir)
     output = Path(output)
 
-    experiment_path = run_dir / "experiment.json"
-    predictions_path = run_dir / "predictions.csv"
-    selection_path = run_dir / "selection.csv"
-    traces_path = run_dir / "traces.jsonl"
+    input_files = {
+        name: run_dir / name
+        for name in (
+            "experiment.json",
+            "predictions.csv",
+            "selection.csv",
+            "traces.jsonl",
+            "usage_by_condition.csv",
+        )
+    }
 
-    for path in [
-        experiment_path,
-        predictions_path,
-        selection_path,
-        traces_path,
-    ]:
+    for path in input_files.values():
         if not path.is_file():
             raise FileNotFoundError(f"Missing experiment file: {path}")
 
-    if output.exists() and any(output.iterdir()):
+    if output.exists() and (not output.is_dir() or any(output.iterdir())):
         raise ValueError("Output directory is not empty; choose a new directory")
 
-    experiment = json.loads(experiment_path.read_text(encoding="utf-8"))
-    spec = experiment["spec"]
+    if require_accepted:
+        accept_experiment(
+            run_dir,
+            expected_shots=expected_shots,
+            expected_games=expected_games,
+        )
 
+    strict_validation = validate_artifacts(run_dir)
+
+    experiment = json.loads(input_files["experiment.json"].read_text(encoding="utf-8"))
+
+    spec = experiment["spec"]
     conditions = spec["conditions"]
     shot_ids = spec["shot_ids"]
     split = spec["split"]
@@ -128,46 +150,27 @@ def summarize_experiment(
     if not isinstance(conditions, dict) or not conditions:
         raise ValueError("Experiment has no registered conditions")
 
-    if not isinstance(shot_ids, list) or not shot_ids:
-        raise ValueError("Experiment has no registered shots")
+    if not isinstance(shot_ids, list) or not shot_ids or len(shot_ids) != len(set(shot_ids)):
+        raise ValueError("Invalid registered shot IDs")
 
-    if len(shot_ids) != len(set(shot_ids)):
-        raise ValueError("Duplicate registered shot IDs")
+    dtype = {field: str for field in [*IDENTITY, "model"]}
 
     predictions = pd.read_csv(
-        predictions_path,
-        dtype={
-            "shot_id": str,
-            "game_id": str,
-            "cohort": str,
-            "split": str,
-            "model": str,
-        },
+        input_files["predictions.csv"],
+        dtype=dtype,
     )
 
     validate_predictions(predictions)
 
     selection = pd.read_csv(
-        selection_path,
-        dtype={
-            "shot_id": str,
-            "game_id": str,
-            "cohort": str,
-            "split": str,
-        },
+        input_files["selection.csv"],
+        dtype=dtype,
     )
 
-    required_selection = {
-        "shot_id",
-        "game_id",
-        "cohort",
-        "split",
-    }
-
-    if not required_selection <= set(selection.columns):
+    if not set(IDENTITY) <= set(selection):
         raise ValueError("Selection is missing required columns")
 
-    if selection[sorted(required_selection)].isna().any().any():
+    if selection[IDENTITY].isna().any().any():
         raise ValueError("Selection metadata cannot be missing")
 
     if selection["shot_id"].duplicated().any():
@@ -180,88 +183,249 @@ def summarize_experiment(
         raise ValueError("Selection split differs from experiment")
 
     selected = selection.set_index("shot_id")
-    expected_pairs = {(shot_id, condition) for shot_id in shot_ids for condition in conditions}
 
-    actual_pairs = set(predictions[KEYS].itertuples(index=False, name=None))
+    expected_pairs = {(shot, condition) for shot in shot_ids for condition in conditions}
+
+    actual_pairs = set(
+        predictions[KEYS].itertuples(
+            index=False,
+            name=None,
+        )
+    )
 
     if actual_pairs != expected_pairs:
         raise ValueError("Prediction rows do not match registered shots and conditions")
 
-    for row in predictions.itertuples(index=False):
-        selected_row = selected.loc[row.shot_id]
-
-        if (
-            row.game_id != selected_row["game_id"]
-            or row.cohort != selected_row["cohort"]
-            or row.split != selected_row["split"]
-        ):
-            raise ValueError("Prediction metadata differs from selection")
-
-    traces = read_traces(traces_path)
+    traces = read_traces(input_files["traces.jsonl"])
 
     if set(traces) != expected_pairs:
         raise ValueError("Inference traces do not match registered shots and conditions")
 
+    provenance_rows = []
+
     for row in predictions.itertuples(index=False):
+        selected_row = selected.loc[row.shot_id]
+
+        if any(getattr(row, field) != selected_row[field] for field in IDENTITY[1:]):
+            raise ValueError("Prediction metadata differs from selection")
+
         trace = traces[(row.shot_id, row.model)]
-        trace_result = trace["result"]
+        result = trace["result"]
         calls = trace["calls"]
+        cached = cached_flag(row.cached)
 
         if (
-            trace_result.get("shot_id") != row.shot_id
-            or trace_result.get("model") != row.model
-            or trace_result.get("status") != row.status
+            result.get("shot_id", row.shot_id) != row.shot_id
+            or result.get("model", row.model) != row.model
+            or result.get("status") != row.status
         ):
             raise ValueError("Inference trace result disagrees with prediction")
 
-        if exact_count(row.calls, "prediction calls") != len(calls):
+        if "cached" in result and result["cached"] != cached:
+            raise ValueError("Inference trace cached flag disagrees with prediction")
+
+        if exact_count(
+            row.calls,
+            "prediction calls",
+        ) != len(calls):
             raise ValueError("Prediction call count differs from trace")
 
-        for column in ["prompt_tokens", "completion_tokens"]:
-            trace_total = sum(exact_count(call.get(column, 0), column) for call in calls)
+        for column in (
+            "prompt_tokens",
+            "completion_tokens",
+        ):
+            trace_total = sum(
+                exact_count(
+                    call.get(column, 0),
+                    column,
+                )
+                for call in calls
+            )
 
-            if exact_count(getattr(row, column), column) != trace_total:
+            if (
+                exact_count(
+                    getattr(row, column),
+                    column,
+                )
+                != trace_total
+            ):
                 raise ValueError(f"Prediction {column} differs from trace")
 
         trace_runtime = numeric_value(
-            trace_result.get("runtime_seconds"),
+            result.get("runtime_seconds"),
             "trace runtime",
         )
-        prediction_runtime = numeric_value(
+
+        runtime = numeric_value(
             row.runtime_seconds,
             "prediction runtime",
         )
 
         if not math.isclose(
             trace_runtime,
-            prediction_runtime,
+            runtime,
             rel_tol=1e-9,
             abs_tol=1e-6,
         ):
             raise ValueError("Prediction runtime differs from trace")
 
-        if bool(row.cached) and calls:
+        if cached and calls:
             raise ValueError("Cached result unexpectedly made inference calls")
 
+        provenance_flag = getattr(
+            row,
+            "original_cost_provenance",
+            None,
+        )
+
+        fresh = not cached
+
+        if provenance_flag is None:
+            provenance_flag = "cached_original_unknown" if cached else "fresh_trace"
+
+        elif provenance_flag == "unknown":
+            provenance_flag = "cached_original_unknown" if cached else "fresh_unknown"
+
+        verified = provenance_flag in {
+            "fresh_trace",
+            "cache_v2",
+        }
+
+        original_calls = getattr(
+            row,
+            "original_calls",
+            None,
+        )
+
+        original_prompt = getattr(
+            row,
+            "original_prompt_tokens",
+            None,
+        )
+
+        original_completion = getattr(
+            row,
+            "original_completion_tokens",
+            None,
+        )
+
+        original_runtime = getattr(
+            row,
+            "original_runtime_seconds",
+            None,
+        )
+
+        current_calls = exact_count(
+            row.calls,
+            "calls",
+        )
+
+        current_prompt = exact_count(
+            row.prompt_tokens,
+            "prompt_tokens",
+        )
+
+        current_completion = exact_count(
+            row.completion_tokens,
+            "completion_tokens",
+        )
+
+        verified_calls = (
+            exact_count(original_calls, "original_calls")
+            if verified and original_calls is not None
+            else (current_calls if fresh and provenance_flag == "fresh_trace" else None)
+        )
+
+        verified_prompt = (
+            exact_count(
+                original_prompt,
+                "original_prompt_tokens",
+            )
+            if verified and original_prompt is not None
+            else (current_prompt if fresh and provenance_flag == "fresh_trace" else None)
+        )
+
+        verified_completion = (
+            exact_count(
+                original_completion,
+                "original_completion_tokens",
+            )
+            if verified and original_completion is not None
+            else (current_completion if fresh and provenance_flag == "fresh_trace" else None)
+        )
+
+        verified_runtime = (
+            numeric_value(
+                original_runtime,
+                "original_runtime_seconds",
+            )
+            if verified and original_runtime is not None
+            else (runtime if fresh and provenance_flag == "fresh_trace" else None)
+        )
+
+        provenance_rows.append(
+            {
+                "shot_id": row.shot_id,
+                "game_id": row.game_id,
+                "cohort": row.cohort,
+                "split": row.split,
+                "condition": row.model,
+                "status": row.status,
+                "cached": cached,
+                "cost_provenance": provenance_flag,
+                "calls_this_run": current_calls,
+                "prompt_tokens_this_run": current_prompt,
+                "completion_tokens_this_run": current_completion,
+                "runtime_seconds_this_run": runtime,
+                "original_calls_verified": verified_calls,
+                "original_prompt_tokens_verified": verified_prompt,
+                "original_completion_tokens_verified": verified_completion,
+                "original_runtime_seconds_verified": verified_runtime,
+            }
+        )
+
+    provenance = pd.DataFrame(provenance_rows)
     metrics = score_predictions(predictions)
     summaries = []
 
     for metric in metrics:
         condition = metric["model"]
 
-        rows = predictions.loc[predictions["model"].eq(condition)]
+        rows = predictions.loc[
+            predictions["model"].eq(condition)
+            & predictions["cohort"].eq(metric["cohort"])
+            & predictions["split"].eq(metric["split"])
+        ]
 
-        calls = sum(exact_count(value, "calls") for value in rows["calls"])
+        condition_provenance = provenance.loc[
+            provenance["condition"].eq(condition)
+            & provenance["cohort"].eq(metric["cohort"])
+            & provenance["split"].eq(metric["split"])
+        ]
 
-        prompt_tokens = sum(exact_count(value, "prompt_tokens") for value in rows["prompt_tokens"])
+        calls = sum(exact_count(v, "calls") for v in rows["calls"])
+
+        prompt_tokens = sum(exact_count(v, "prompt_tokens") for v in rows["prompt_tokens"])
 
         completion_tokens = sum(
-            exact_count(value, "completion_tokens") for value in rows["completion_tokens"]
+            exact_count(v, "completion_tokens") for v in rows["completion_tokens"]
         )
 
-        runtime = sum(numeric_value(value, "runtime_seconds") for value in rows["runtime_seconds"])
+        runtime = sum(numeric_value(v, "runtime_seconds") for v in rows["runtime_seconds"])
 
-        cache_hits = int(rows["cached"].eq(True).sum())
+        cache_hits = int(condition_provenance["cached"].sum())
+
+        original_complete = bool(
+            condition_provenance["original_prompt_tokens_verified"].notna().all()
+        )
+
+        verified_original_tokens = None
+
+        if original_complete:
+            verified_original_tokens = int(
+                condition_provenance["original_prompt_tokens_verified"].sum()
+                + condition_provenance["original_completion_tokens_verified"].sum()
+            )
 
         summaries.append(
             {
@@ -277,6 +441,12 @@ def summarize_experiment(
                 "roc_auc": metric["roc_auc"],
                 "accuracy": metric["accuracy"],
                 "cache_hits": cache_hits,
+                "fresh_predictions": len(rows) - cache_hits,
+                "unknown_original_costs": int(
+                    condition_provenance["original_prompt_tokens_verified"].isna().sum()
+                ),
+                "original_cost_complete": original_complete,
+                "verified_original_tokens": verified_original_tokens,
                 "calls_this_run": calls,
                 "prompt_tokens_this_run": prompt_tokens,
                 "completion_tokens_this_run": completion_tokens,
@@ -285,7 +455,13 @@ def summarize_experiment(
             }
         )
 
-    summaries.sort(key=lambda row: row["condition"])
+    summaries.sort(
+        key=lambda item: (
+            item["cohort"],
+            item["split"],
+            item["condition"],
+        )
+    )
 
     audit = {
         "model": spec["model"],
@@ -297,23 +473,22 @@ def summarize_experiment(
         "games": int(selection["game_id"].nunique()),
         "prediction_rows": len(predictions),
         "trace_rows": len(traces),
-        "source_files_sha256": {
-            name: sha256(path)
-            for name, path in [
-                ("experiment.json", experiment_path),
-                ("predictions.csv", predictions_path),
-                ("selection.csv", selection_path),
-                ("traces.jsonl", traces_path),
-            ]
-        },
+        "strict_artifact_validation": strict_validation,
+        "fresh_predictions": int((~provenance["cached"]).sum()),
+        "cached_predictions_original_cost_unknown": int(
+            (provenance["cached"] & provenance["original_calls_verified"].isna()).sum()
+        ),
+        "original_cost_accounting_complete": bool(
+            provenance["original_calls_verified"].notna().all()
+        ),
+        "source_files_sha256": {name: sha256(path) for name, path in input_files.items()},
         "cost_interpretation": (
-            "Calls, tokens and runtime describe this recorded "
-            "execution. Cached predictions have zero new calls "
-            "but do not represent zero original inference cost."
+            "Current-run costs are validated against traces and "
+            "usage reports. Version-2 cache entries preserve original "
+            "costs. Legacy cached assessments may lack original costs."
         ),
         "comparison_limit": (
-            "Descriptive results only. One-shot or few-game "
-            "experiments cannot establish model superiority."
+            "Descriptive results only. Few-shot experiments cannot establish model superiority."
         ),
     }
 
@@ -334,38 +509,48 @@ def summarize_experiment(
         "|---|---:|---:|---:|---:|---:|---:|",
     ]
 
-    def display(value):
+    def show_score(value):
         return "N/A" if value is None else f"{value:.4f}"
 
-    for row in summaries:
+    for item in summaries:
         lines.append(
-            f"| {row['condition']} | "
-            f"{row['shots_succeeded']} / {row['shots_attempted']} | "
-            f"{display(row['brier_score'])} | "
-            f"{display(row['log_loss'])} | "
-            f"{row['calls_this_run']} | "
-            f"{row['total_tokens_this_run']} | "
-            f"{row['runtime_seconds_this_run']:.1f} |"
+            f"| {item['condition']} | "
+            f"{item['shots_succeeded']} / {item['shots_attempted']} | "
+            f"{show_score(item['brier_score'])} | "
+            f"{show_score(item['log_loss'])} | "
+            f"{item['calls_this_run']} | "
+            f"{item['total_tokens_this_run']} | "
+            f"{item['runtime_seconds_this_run']:.1f} |"
         )
 
-    lines += [
-        "",
-        "## Interpretation",
-        "",
-        "- Lower Brier score and log loss are better.",
-        "- Performance scores use successful predictions only; coverage must also be considered.",
-        "- Calls, tokens and runtime reflect this recorded run. "
-        "Cache hits are not free original inference.",
-        "- No causal or statistical superiority claim is made from this descriptive table.",
-        "- Game-level uncertainty requires sufficient "
-        "matched games and a separate paired analysis.",
-        "",
-    ]
+    lines.extend(
+        [
+            "",
+            "## Interpretation",
+            "",
+            "- Lower Brier score and log loss are better.",
+            "- Scores use successful predictions only; inspect coverage.",
+            "- Strict artifact validation passed.",
+            "- Recorded runtime is not universal architecture latency.",
+            "- Cache hits are not free original inference.",
+            "- Legacy cached predictions can have unknown original costs.",
+            "- Matched-game analysis is required for meaningful comparisons.",
+            "",
+        ]
+    )
 
-    output.mkdir(parents=True, exist_ok=True)
+    output.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
     pd.DataFrame(summaries).to_csv(
         output / "experiment_summary.csv",
+        index=False,
+    )
+
+    provenance.to_csv(
+        output / "cost_provenance.csv",
         index=False,
     )
 
@@ -386,32 +571,38 @@ def summarize_experiment(
         "summary_csv": str(output / "experiment_summary.csv"),
         "summary_json": str(output / "experiment_summary.json"),
         "summary_markdown": str(output / "experiment_summary.md"),
+        "cost_provenance_csv": str(output / "cost_provenance.csv"),
+        "strict_validation_passed": strict_validation["valid"],
         "conditions": len(summaries),
         "shots": len(shot_ids),
         "games": audit["games"],
     }
 
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(description="Summarize a saved local LLM experiment")
-    parser.add_argument(
-        "--run",
-        type=Path,
-        required=True,
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        required=True,
-    )
+    parser.add_argument("--run", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--require-accepted", action="store_true")
+    parser.add_argument("--shots", type=int)
+    parser.add_argument("--games", type=int)
     args = parser.parse_args()
 
-    print(
-        json.dumps(
-            summarize_experiment(args.run, args.output),
-            indent=2,
+    if not args.require_accepted and (args.shots is not None or args.games is not None):
+        parser.error("--shots and --games require --require-accepted")
+
+    try:
+        result = summarize_experiment(
+            args.run,
+            args.output,
+            require_accepted=args.require_accepted,
+            expected_shots=args.shots,
+            expected_games=args.games,
         )
-    )
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        parser.exit(1, f"Experiment report failed: {exc}\n")
+
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
