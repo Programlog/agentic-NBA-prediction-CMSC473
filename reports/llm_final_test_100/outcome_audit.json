@@ -1,0 +1,11 @@
+[
+  {
+    "cohort": "kaggle_2014_15",
+    "split": "test",
+    "total_shots": 100,
+    "made_shots": 42,
+    "missed_shots": 58,
+    "make_rate": 0.42,
+    "both_outcomes_present": true
+  }
+]

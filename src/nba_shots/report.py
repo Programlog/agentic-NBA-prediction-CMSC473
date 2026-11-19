@@ -52,11 +52,49 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
     ]
 
     comparisons = []
+    outcome_audits = []
 
     for (cohort, split), rows in predictions.groupby(["cohort", "split"]):
+        # A shot appears once for each model, but counts only once here.
+        unique_shots = rows.drop_duplicates(subset=["shot_id"])
+        made = int(unique_shots["y_true"].eq(1).sum())
+        missed = int(unique_shots["y_true"].eq(0).sum())
+        total = len(unique_shots)
+        both_classes = made > 0 and missed > 0
+
+        outcome_audits.append(
+            {
+                "cohort": cohort,
+                "split": split,
+                "total_shots": total,
+                "made_shots": made,
+                "missed_shots": missed,
+                "make_rate": made / total,
+                "both_outcomes_present": both_classes,
+            }
+        )
+
         lines += [
             f"## {cohort} / {split}",
             "",
+            "### Shot outcome composition",
+            "",
+            f"- Unique shots: {total}",
+            f"- Made shots: {made}",
+            f"- Missed shots: {missed}",
+            f"- Make rate: {made / total:.1%}",
+            f"- Both outcome classes present: {'yes' if both_classes else 'no'}",
+            "",
+            *(
+                [
+                    "**Warning:** Only one shot outcome is represented. "
+                    "ROC-AUC is undefined, and this sample cannot evaluate "
+                    "discrimination between made and missed shots.",
+                    "",
+                ]
+                if not both_classes
+                else []
+            ),
             "| Model | Scored / total | Brier | Log loss | ROC-AUC | Accuracy |",
             "|---|---:|---:|---:|---:|---:|",
         ]
@@ -80,6 +118,8 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
             ("xgboost", "xgboost_cv"),
             ("llm_single", "llm_multi"),
             ("llm_single_budget", "llm_multi"),
+            ("llm_single_decomposed", "llm_multi"),
+            ("llm_single_ensemble", "llm_multi"),
         ]:
             if {base, candidate} <= set(rows.model):
                 base_rows = rows.loc[rows["model"].eq(base)]
@@ -151,6 +191,7 @@ def create_report(predictions: pd.DataFrame, output, scorer, selection=None) -> 
     (output / "report.md").write_text("\n".join(lines), encoding="utf-8")
 
     write_json(output / "paired_comparisons.json", comparisons)
+    write_json(output / "outcome_audit.json", outcome_audits)
 
     write_json(
         output / "selection_audit.json",
