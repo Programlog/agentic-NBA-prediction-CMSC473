@@ -184,12 +184,19 @@ could not be verified against the final test model digest.
 - [Paired bootstrap comparisons (JSON)](reports/llm_final_test_100/paired_comparisons.json)
 - [Per-shot predictions (CSV)](reports/llm_final_test_100/predictions.csv)
 - [Final execution script](scripts/run_llm_final.sh)
+- [Result figures](reports/llm_final_test_100/figures/) (regenerate with `scripts/make_h2_figures.py`)
 
 The final runner checks the frozen implementation and prepared-data
 configuration before using `--split test --final`. Its documented
 setup expects the recorded model digest and prepared data artifacts;
 running it with different inputs or code is a **new experiment**, not
 a reproduction of the frozen run.
+
+The frozen run was re-executed on November 19, 2026 and reproduced all 600
+committed predictions exactly (see
+[Reproduction](docs/experiments/llm_final_results.md#reproduction)). Use commit
+`64ee854` to rerun it; later `agents.py` changes intentionally fail the runner's
+frozen-hash check.
 
 ### Follow-up: disagreement-aware aggregation
 

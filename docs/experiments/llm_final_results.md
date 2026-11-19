@@ -75,6 +75,35 @@ so the difference is not explained by extra compute.
   validation smoke test passed, one attempt accepted, strict artifact validation passed,
   XGBoost scored from the frozen day-1 models without refitting.
 
+## Reproduction
+
+The frozen run was executed a second time on the same machine with
+`scripts/run_llm_final.sh` at commit `64ee854` (2026-11-19, 06:18–08:26 UTC), after the
+first run's raw artifacts were lost locally. It was accepted on the first attempt and
+**reproduced the original exactly**: all 600 rows of `predictions.csv` (300 LLM and 300
+baseline predictions) had identical probabilities, and prompt and completion token
+counts were identical (738,073 / 122,252). Only recorded runtimes differed. With
+temperature 0 and a fixed seed, the run is deterministic on this hardware and Ollama
+version.
+
+To reproduce, check out commit `64ee854` or earlier: later changes to
+`src/nba_shots/agents.py` (adaptive aggregation) change its hash, so the runner refuses
+to start on newer commits by design.
+
+## Figures
+
+Generated from this report by `uv run python scripts/make_h2_figures.py`.
+
+![H2 design](../../reports/llm_final_test_100/figures/h2_0_design.png)
+
+![H2 effect with 95% intervals](../../reports/llm_final_test_100/figures/h2_2_effect_intervals.png)
+
+![Brier score, all models](../../reports/llm_final_test_100/figures/h2_1_brier_all_models.png)
+
+![Average predicted make probability vs. actual](../../reports/llm_final_test_100/figures/h2_3_overconfidence.png)
+
+The overconfidence figure is exploratory and was not part of the pre-registered analysis.
+
 ## Limitations (fixed in advance, plus one observed)
 
 - One small local model (4B parameters, 4-bit). Results may not hold for larger models.
