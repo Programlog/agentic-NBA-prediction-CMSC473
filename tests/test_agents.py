@@ -946,3 +946,86 @@ def test_integrated_balanced_selection_runs_all_five_conditions(
     assert spec["sampling_method"] == "balanced_games_v1"
     assert spec["sampling_games"] == 5
     assert spec["shot_ids"] == selection["shot_id"].tolist()
+
+
+def test_condition_subset_requires_core_conditions_and_keeps_canonical_order():
+    from nba_shots import agents
+
+    assert agents.registered_conditions(None) == agents.CONDITIONS
+    assert agents.registered_conditions(["llm_multi", "llm_single", "llm_single_budget"]) == {
+        "llm_single": 1,
+        "llm_single_budget": 4,
+        "llm_multi": 4,
+    }
+
+    with pytest.raises(ValueError, match="required conditions"):
+        agents.registered_conditions(["llm_single", "llm_multi"])
+
+    with pytest.raises(ValueError, match="Unknown agent condition"):
+        agents.registered_conditions([*agents.REQUIRED_CONDITIONS, "llm_unknown"])
+
+    with pytest.raises(ValueError, match="must not repeat"):
+        agents.registered_conditions([*agents.REQUIRED_CONDITIONS, "llm_multi"])
+
+
+def test_final_test_run_with_core_conditions_registers_only_those(monkeypatch, tmp_path):
+    from nba_shots import agents
+
+    rows = pd.DataFrame(
+        [
+            {
+                "shot_id": f"shot-{game}-{shot}",
+                "game_id": f"game-{game}",
+                "cohort": "kaggle_2014_15",
+                "split": "test",
+                "y_true": shot % 2,
+                "shot_distance": float(shot * 5 + 3),
+                "period": 1,
+            }
+            for game in range(4)
+            for shot in range(4)
+        ]
+    )
+    source = tmp_path / "shots.parquet"
+    source.write_bytes(b"synthetic-shots")
+    monkeypatch.setattr(agents.pd, "read_parquet", lambda _: rows.copy())
+    monkeypatch.setattr(agents, "validate_splits", lambda _: None)
+    monkeypatch.setattr(agents, "write_scores", lambda *args, **kwargs: [])
+
+    class FakeClient:
+        def __init__(self, model, base_url, seed, num_predict):
+            self.model = model
+            self.digest = "test-digest"
+            self.calls = []
+            self.seed = seed
+            self.temperature = 0.0
+
+    def fake_assessment(client, role, features, previous):
+        client.calls.append(
+            {"status": "ok", "prompt_tokens": 10, "completion_tokens": 5, "runtime_seconds": 0.01}
+        )
+        return {"p_make": 0.5, "rationale": "Synthetic prediction"}
+
+    monkeypatch.setattr(agents, "OllamaClient", FakeClient)
+    monkeypatch.setattr(agents, "crewai_assessment", fake_assessment)
+
+    core = list(agents.REQUIRED_CONDITIONS)
+
+    with pytest.raises(ValueError, match="requires --final"):
+        agents.run_agents(
+            source, tmp_path / "unfrozen", split="test", limit=6, games=3, conditions=core
+        )
+
+    output = tmp_path / "final_run"
+    result = agents.run_agents(
+        source, output, split="test", final=True, limit=6, games=3, conditions=core
+    )
+
+    predictions = pd.read_csv(result["predictions"])
+    spec = json.loads((output / "experiment.json").read_text())["spec"]
+
+    assert spec["conditions"] == {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
+    assert spec["split"] == "test"
+    assert set(predictions["model"]) == set(core)
+    assert len(predictions) == 6 * 3
+    assert predictions["status"].eq("ok").all()

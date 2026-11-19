@@ -52,6 +52,25 @@ CONDITIONS = {
     "llm_multi": 4,
 }
 
+# Conditions every registered experiment must contain: the one-call baseline,
+# the budget-matched single-agent control, and the multi-agent system.
+REQUIRED_CONDITIONS = ("llm_single", "llm_single_budget", "llm_multi")
+
+
+def registered_conditions(conditions=None) -> dict:
+    """Return the requested conditions in canonical order with their call budgets."""
+    if conditions is None:
+        return dict(CONDITIONS)
+    requested = list(conditions)
+    if unknown := sorted(set(requested) - set(CONDITIONS)):
+        raise ValueError(f"Unknown agent condition(s): {unknown}")
+    if len(set(requested)) != len(requested):
+        raise ValueError("Agent conditions must not repeat")
+    if missing := [c for c in REQUIRED_CONDITIONS if c not in requested]:
+        raise ValueError(f"Experiments must include the required conditions: {missing}")
+    return {name: budget for name, budget in CONDITIONS.items() if name in requested}
+
+
 DECOMPOSITION_ROLE = (
     "Single analyst: in ONE assessment, separately consider game context, "
     "player history, and shot mechanics/defense; ignore missing groups, "
@@ -827,7 +846,10 @@ def run_agents(
     num_predict=512,
     base_url="http://127.0.0.1:11434",
     games=None,
+    conditions=None,
 ) -> dict:
+    conditions = registered_conditions(conditions)
+
     if split == "test" and not final:
         raise ValueError("LLM test evaluation requires --final after prompt freeze")
 
@@ -884,7 +906,7 @@ def run_agents(
         "sampling_method": ("legacy_hash_v1" if games is None else "balanced_games_v1"),
         "sampling_games": games,
         "num_predict_per_call": num_predict,
-        "conditions": CONDITIONS,
+        "conditions": conditions,
         "ensemble_temperature": 0.7,
         "ensemble_seed_rule": ("base seed plus zero-based call index within shot/arm"),
         "implementation_sha256": sha256(__file__),
@@ -940,7 +962,7 @@ def run_agents(
     for row in selected.to_dict("records"):
         features = prompt_features(row)
 
-        for condition in CONDITIONS:
+        for condition in conditions:
             expected_calls = call_budget(
                 features,
                 condition,

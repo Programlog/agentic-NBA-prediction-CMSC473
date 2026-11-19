@@ -8,7 +8,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from .agents import CONDITIONS
+from .agents import CONDITIONS, REQUIRED_CONDITIONS
 from .experiment_validation import ValidationError, validate_artifacts
 
 
@@ -37,8 +37,14 @@ def accept_experiment(
     registered_shots = spec["shot_ids"]
     registered_conditions = set(spec["conditions"])
 
-    if registered_conditions != set(CONDITIONS):
-        raise ValidationError("Experiment does not contain the five required LLM conditions")
+    if not registered_conditions <= set(CONDITIONS):
+        raise ValidationError("Experiment registers unknown LLM conditions")
+
+    if not set(REQUIRED_CONDITIONS) <= registered_conditions:
+        raise ValidationError(
+            "Experiment does not contain the required LLM conditions: "
+            + ", ".join(REQUIRED_CONDITIONS)
+        )
 
     if expected_shots is None:
         expected_shots = len(registered_shots)

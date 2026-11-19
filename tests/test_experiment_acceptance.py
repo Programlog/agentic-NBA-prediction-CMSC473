@@ -114,7 +114,7 @@ def test_rejects_incomplete_condition_set(experiment):
         encoding="utf-8",
     )
 
-    with pytest.raises(ValidationError, match="five required LLM conditions"):
+    with pytest.raises(ValidationError, match="required LLM conditions"):
         accept_experiment(run_dir)
 
 
@@ -164,4 +164,34 @@ def test_strict_validator_failure_is_propagated(experiment, monkeypatch):
     )
 
     with pytest.raises(ValidationError, match="duplicate trace records"):
+        accept_experiment(run_dir)
+
+
+def test_accepts_core_three_condition_experiment(experiment):
+    run_dir, spec, _, _, write_rows = experiment
+    core = {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
+    spec["conditions"] = core
+    (run_dir / "experiment.json").write_text(json.dumps({"spec": spec}), encoding="utf-8")
+    write_rows(
+        "predictions.csv",
+        [
+            {"shot_id": shot, "model": model, "status": "ok"}
+            for shot in spec["shot_ids"]
+            for model in core
+        ],
+    )
+
+    result = accept_experiment(run_dir, expected_shots=2, expected_games=2)
+
+    assert result["accepted"] is True
+    assert result["conditions"] == 3
+    assert result["predictions"] == 6
+
+
+def test_rejects_unknown_registered_condition(experiment):
+    run_dir, spec, _, _, _ = experiment
+    spec["conditions"] = {**CONDITIONS, "llm_unknown": 1}
+    (run_dir / "experiment.json").write_text(json.dumps({"spec": spec}), encoding="utf-8")
+
+    with pytest.raises(ValidationError, match="unknown LLM conditions"):
         accept_experiment(run_dir)
