@@ -1,14 +1,66 @@
 # NBA Shot Prediction
 
-CMSC473 project comparing tabular shot prediction, release-time video features, and
-single versus multi-agent LLMs using free tools.
+## NBA Shot Prediction with Agentic AI and Computer Vision
 
-Tabular baselines, video annotation/pose-extraction tools, and local Ollama/CrewAI
-agent pipelines are implemented. The **final H2 held-out experiment is complete**:
-multi-agent orchestration improved Brier score over a call-budget-matched
-single-agent control on 100 test shots, although XGBoost remained the stronger
-shot predictor. See [final H2 results](docs/experiments/llm_final_results.md)
-and [initial baseline results](reports/day1.md).
+### Problem
+
+NBA shot success depends on a variety of factors, such as shot location,
+defender proximity, game context, and player history or statistics. These
+factors are often captured in traditional NBA shot data. However, useful
+information may still be missed, including shooting mechanics, release
+angle, defender positioning, and contest height, which can be investigated
+by analyzing video clips.
+
+Since individual shot outcomes are random by nature, our goal is **not to
+perfectly predict whether every shot goes in**. Instead, we aim to
+**estimate shot quality and shot-success probability at the instant of
+release**.
+
+We analyze the Computer Vision and Agentic AI systems separately to
+determine whether improvements come from additional computer-vision
+features, the architecture of the agentic system, or both.
+
+### Research Questions
+
+- **H1 — Computer Vision:** Do shot-mechanic and defender features derived
+  from computer vision improve NBA shot-success predictions beyond
+  traditional NBA statistics?
+- **H2 — Agentic AI:** When utilizing the same features, does a multi-agent
+  LLM pipeline improve NBA shot-success predictions compared with
+  conventional supervised-learning models such as XGBoost and a single
+  LLM using the same available inputs?
+
+### Approach
+
+- **Data:** Link shot logs, player statistics, tracking data, and video
+  clips by game ID, event number, and game clock where data is available.
+- **Baseline models:** Use logistic regression and XGBoost on traditional
+  shot-log features such as shot distance, defender distance, shot clock,
+  and game clock.
+- **Computer Vision:** Use YOLO detection and YOLO-Pose to investigate
+  additional shooting-mechanics and defender-contest features from video
+  frames around the release. Extracted image measurements are proxies,
+  not automatically verified physical release angles or heights.
+- **Agentic system:** Specialized agents analyze the available features
+  from different perspectives, including game context, player history,
+  and shot mechanics/defense. Their outputs feed into a prediction agent,
+  which produces the final shot-success probability. Agents with missing
+  inputs are skipped.
+- **Evaluation:** Compare models on held-out games using Brier score,
+  log loss, accuracy, and ROC-AUC, with emphasis on probability
+  calibration and analyzing failure cases.
+
+These describe the project's overall approach, **not a claim that every
+planned data source, video feature, or H1 experiment has been completed**.
+
+### Current Status
+
+The tabular baseline, video-annotation and pose-extraction tools, and
+local Ollama/CrewAI agent pipeline have been implemented. The **final
+held-out H2 comparison is complete**: the multi-agent system improved on
+the budget-matched single-LLM baseline, but did not outperform XGBoost.
+See [final H2 results](docs/experiments/llm_final_results.md) and
+[initial baseline results](reports/day1.md).
 
 ## Quick start
 
@@ -57,9 +109,18 @@ annotations, pose extraction, local LLMs, and comparisons on matching shots.
 
 ## H2: Single-agent vs. multi-agent LLMs (completed)
 
-**Research question:** With the same pre-release shot features and number of
-model calls, does a specialized multi-agent pipeline predict shot success
-better than a single-analyst LLM?
+**H2: Agents add value beyond the features themselves.** Specialized
+agents separately analyze the available shot features from different
+perspectives, including game context and shot mechanics/defense. A
+prediction agent takes the outputs from these specialized agents to
+produce a final shot-success probability.
+
+The proposal calls for comparing the multi-agent system against both
+XGBoost on the same features and a single LLM using the same inputs.
+For the final held-out H2 decision, the team selected the
+**call-budget-matched single-LLM comparison** as the primary test;
+XGBoost was included as a reference rather than a criterion for
+supporting H2.
 
 The [pre-registered final protocol](docs/experiments/llm_final_protocol.md)
 was frozen before test inference. The November 19, 2026 evaluation used
@@ -132,12 +193,16 @@ a reproduction of the frozen run.
 
 ### Follow-up: disagreement-aware aggregation
 
-An additional *validation-only* experiment investigates whether giving
-the final multi-agent aggregator explicit specialist-disagreement
-statistics (mean, range, and standard deviation) improves predictions
-relative to the original aggregator. This is **new, exploratory work**:
-it is not part of the frozen H2 hypothesis test, and no performance
-claim is made here until a completed validation analysis is available.
+The next experiment builds on the proposal's idea that specialized
+agents analyze the available information from different perspectives
+before a prediction agent generates the final shot-success probability.
+It tests whether explicitly measuring disagreements among those
+specialized agents (mean, range, and standard deviation of their
+estimates) helps the prediction agent interpret conflicting evidence.
+
+This is **exploratory validation-only work**, separate from the frozen
+H2 test. Results will be reported only after the validation experiment
+and its comparisons are complete.
 
 ## Checks
 
