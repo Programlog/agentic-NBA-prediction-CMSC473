@@ -107,6 +107,23 @@ See [experiment instructions](docs/experiments.md) for video collection, release
 annotations, pose extraction, local LLMs, and comparisons on matching shots.
 
 
+### H1: Computer-vision experiments (ongoing)
+
+The exploratory H1 pipeline has tested BasketEvent clip matching, YOLO pose
+extraction, CoTracker3 point tracking, frame-by-frame visual audits, and
+translation-only camera-motion compensation. Results include incomplete/failed
+pose and video-retrieval attempts as well as successful tracking runs.
+
+On a **10-shot, single-game** camera-motion pilot, **10/10 clips processed** and
+all camera estimates passed the algorithm's internal validity checks. Mean
+shooter displacement changed from **0.02473 to 0.02814** after correction;
+mean defender displacement changed from **0.04035 to 0.04395** across six
+annotated defenders. These changes **do not demonstrate improved accuracy**.
+No held-out H1 predictive comparison is complete.
+
+- [Chronological H1 experiment log (including failures)](docs/experiments/H1_EXPERIMENT_LOG.md)
+- [Detailed camera-motion pilot and 10-shot results](docs/experiments/h1_camera_motion_results.md)
+
 ## H2: Single-agent vs. multi-agent LLMs (completed)
 
 **H2: Agents add value beyond the features themselves.** Specialized
