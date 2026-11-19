@@ -181,6 +181,8 @@ def test_prepare_keeps_only_shots_with_a_release(tmp_path):
         game = f"00225000{day:02d}"
         clips = {f"test/{game}/a.json": synthetic_clip()}
         plays = [(412, 1, *EVENT.values())]
+        if day == 2:
+            plays += [(413, 0, EVENT["clock"], EVENT["period"], "Gobert BLOCK (1 BLK)")]
         if day == 1:
             clips[f"test/{game}/b.json"] = two_shots
             plays += [(500, 1, "PT07M10.00S", 4, EVENT["description"])]
@@ -208,7 +210,8 @@ def test_prepare_keeps_only_shots_with_a_release(tmp_path):
                 "LOC_X": 10,
                 "LOC_Y": 175,
             }
-            for number, *_ in plays
+            for number, field_goal, *_ in plays
+            if field_goal
         ]
         pd.DataFrame(shots).to_csv(games / f"{game}_shots.csv", index=False)
         (games / f"{game}.json").write_text(json.dumps({"split": "test"}))
@@ -229,6 +232,9 @@ def test_prepare_keeps_only_shots_with_a_release(tmp_path):
         175,
     ]
     assert audit["family_counts"] == {"jump": {"shots": 6, "make_rate": 1.0}}
+    # A block logged at the shot's period and clock marks it; the block itself is no shot.
+    assert cohort.loc[cohort.blocked, "shot_id"].tolist() == ["nba:0022500002:412"]
+    assert audit["blocked_shots"] == 1
 
 
 @pytest.mark.parametrize(
@@ -255,18 +261,24 @@ def test_shot_families_restrict_training_and_scoring(raw_shots, tmp_path):
     frame, _ = assign_splits(frame)
     frame["shot_family"] = np.where(frame.shot_distance > 10, "jump", "layup")
     frame["action_type"] = np.where(frame.shot_distance > 10, "Jump Shot", "Layup Shot")
+    frame["blocked"] = frame.index % 5 == 0
     shots_path = tmp_path / "shots.parquet"
     frame.to_parquet(shots_path)
     cfg = load_config()
-    cfg.update(shot_families=["jump"], categorical_features=["location", "action_type"])
+    cfg.update(
+        shot_families=["jump"],
+        exclude_blocked=True,
+        categorical_features=["location", "action_type"],
+    )
     cfg["xgboost"]["n_estimators"] = 2
     train_baselines(shots_path, tmp_path / "run", cfg)
     predictions = pd.read_csv(tmp_path / "run" / "validation_predictions.csv")
-    jump = set(frame.loc[frame.shot_family.eq("jump") & frame.split.eq("validation"), "shot_id"])
+    kept = frame.shot_family.eq("jump") & ~frame.blocked
+    jump = set(frame.loc[kept & frame.split.eq("validation"), "shot_id"])
     assert set(predictions.shot_id) == jump
     evaluate_run(tmp_path / "run", shots_path, "test", final=True)
     test = pd.read_csv(tmp_path / "run" / "test_predictions.csv")
-    assert set(test.shot_id) <= set(frame.loc[frame.shot_family.eq("jump"), "shot_id"])
+    assert set(test.shot_id) <= set(frame.loc[kept, "shot_id"])
     (tmp_path / "bad.json").write_text(json.dumps({"shot_families": ["jumper"]}))
     with pytest.raises(ValueError, match="shot_families"):
         load_config(tmp_path / "bad.json")

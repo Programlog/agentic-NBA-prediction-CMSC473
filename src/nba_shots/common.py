@@ -28,6 +28,7 @@ DEFAULT_CONFIG = {
     "include_player_history": False,
     "shot_families": None,  # e.g. ["jump"]: train and score only these shots (BasketEvent)
     "extra_features": None,  # e.g. ["defender_distance_bh"]: a subset of the box or pose set
+    "exclude_blocked": False,  # drop blocked shots (BasketEvent): a block can shape the release
     "xgboost": {
         "n_estimators": 300,
         "max_depth": 4,

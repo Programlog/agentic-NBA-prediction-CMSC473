@@ -271,6 +271,19 @@ def _chart_columns(raw: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def blocked_events(plays: pd.DataFrame) -> set[int]:
+    """Field goals logged with a block at the same period and clock.
+
+    A block lands within the frames that release detection and ball rise look at, so it can
+    shape the release features; such shots are always misses.
+    """
+    blocks = plays.loc[plays.description.str.contains("BLOCK", na=False), ["period", "clock"]]
+    shots = plays.loc[plays.isFieldGoal.eq(1)].merge(
+        blocks.drop_duplicates(), on=["period", "clock"]
+    )
+    return set(shots.actionNumber.astype(int))
+
+
 def _game_events(shot_file: Path, videos: set[str]) -> pd.DataFrame:
     """Features for one collected game, recomputed from its saved labels."""
     game = shot_file.name[:10]
@@ -279,8 +292,10 @@ def _game_events(shot_file: Path, videos: set[str]) -> pd.DataFrame:
     plays = pd.read_csv(shot_file.with_name(f"{game}_plays.csv"), dtype={"clock": str})
     split = json.loads(shot_file.with_name(f"{game}.json").read_text())["split"]
     rows = game_rows(clips, plays)
+    blocked = blocked_events(plays)
     return rows.assign(
         game_id=game,
+        blocked=rows.game_event_id.isin(blocked),
         has_video=rows["clip"].astype(str).str.removesuffix(".json").isin(videos),
         basketevent_split=split,
     )
@@ -407,6 +422,7 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
     labeled = matched.merge(shots[["shot_id", "y_true"]], on="shot_id")
     matched = matched.loc[matched.box_status.eq("ok")]
     shots = shots.loc[shots.shot_id.isin(matched.shot_id)].assign(cohort=COHORT)
+    shots = shots.merge(matched[["shot_id", "blocked"]], on="shot_id", validate="one_to_one")
     shots, splits = assign_splits(shots, config["train_fraction"], config["validation_fraction"])
     if config["include_player_history"]:
         shots = add_player_history(shots)
@@ -440,6 +456,7 @@ def prepare_basketevent(collection: str | Path, output: str | Path, config: dict
             .box_status.apply(lambda s: float(s.eq("ok").mean()))
             .rename(index=str)
             .to_dict(),
+            "blocked_shots": int(shots.blocked.sum()),
             "family_counts": {
                 family: {"shots": len(y), "make_rate": float(y.mean())}
                 for family, y in shots.groupby("shot_family").y_true

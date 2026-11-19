@@ -108,14 +108,19 @@ def validate_splits(shots: pd.DataFrame) -> None:
         raise ValueError("Splits must be strictly chronological")
 
 
-def select_families(shots: pd.DataFrame, config: dict) -> pd.DataFrame:
-    """Keep only the configured shot families, after splitting, so games keep their split."""
+def select_shots(shots: pd.DataFrame, config: dict) -> pd.DataFrame:
+    """Keep the configured shot families and drop blocked shots if asked, after splitting, so
+    games keep their split."""
     families = config.get("shot_families")
-    if not families:
-        return shots
-    if "shot_family" not in shots:
-        raise ValueError("shot_families needs a cohort with shot_family; re-run preparation")
-    return shots.loc[shots["shot_family"].isin(families)]
+    if families:
+        if "shot_family" not in shots:
+            raise ValueError("shot_families needs a cohort with shot_family; re-run preparation")
+        shots = shots.loc[shots["shot_family"].isin(families)]
+    if config.get("exclude_blocked"):
+        if "blocked" not in shots:
+            raise ValueError("exclude_blocked needs a cohort with blocked; re-run preparation")
+        shots = shots.loc[~shots["blocked"]]
+    return shots
 
 
 def merge_extra(shots: pd.DataFrame, cv_path: str | Path) -> tuple[pd.DataFrame, str]:
@@ -174,7 +179,7 @@ def train_baselines(
     if cv_path:
         shots, kind = merge_extra(shots, cv_path)
         models.append(f"xgboost_{kind}")
-    shots = select_families(shots, config)
+    shots = select_shots(shots, config)
     train = shots.loc[shots["split"].eq("train")]
     validation = shots.loc[shots["split"].eq("validation")]
     if train["y_true"].nunique() != 2:
@@ -245,7 +250,7 @@ def cross_validate(
     if cv_path:
         shots, kind = merge_extra(shots, cv_path)
         models.append(f"xgboost_{kind}")
-    shots = select_families(shots, config)
+    shots = select_shots(shots, config)
     pool = shots.loc[shots["split"].isin(["train", "validation"])].assign(split="cv")
     pool["fold"] = date_folds(pool, folds)
     metadata = {
@@ -315,7 +320,7 @@ def evaluate_run(
         shots = shots.merge(
             cv[["shot_id", *names]], on="shot_id", how="left", validate="one_to_one"
         )
-    rows = select_families(shots, metadata["config"]).loc[lambda s: s["split"].eq(split)]
+    rows = select_shots(shots, metadata["config"]).loc[lambda s: s["split"].eq(split)]
     outputs = []
     for name in metadata["models"]:
         artifact = joblib.load(run_dir / f"{name}.joblib")
