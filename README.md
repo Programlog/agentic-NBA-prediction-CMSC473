@@ -200,9 +200,17 @@ It tests whether explicitly measuring disagreements among those
 specialized agents (mean, range, and standard deviation of their
 estimates) helps the prediction agent interpret conflicting evidence.
 
-This is **exploratory validation-only work**, separate from the frozen
-H2 test. Results will be reported only after the validation experiment
-and its comparisons are complete.
+A completed **4-shot validation pilot** reported a Brier score of
+**0.2657** for disagreement-aware aggregation versus **0.2767** for
+the original multi-agent aggregator (a 0.0110 absolute, 3.98% relative
+reduction), with all 16 predictions completing successfully. However,
+accuracy dropped from 50% to 25%, and four shots are far too few for
+a reliable performance conclusion. See the
+[4-shot pilot report](docs/experiments/adaptive_aggregation_pilot_4.md)
+for setup, all condition metrics, and limitations.
+
+A larger validation experiment is being evaluated separately. These
+exploratory runs do **not** change the frozen held-out H2 results.
 
 ## Checks
 
