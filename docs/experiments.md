@@ -217,3 +217,8 @@ supplied feature sets documented (the default tabular config excludes player his
 Keep test sets unused during development. Freeze configurations, features, prompts,
 model identity, and evaluation selection before explicitly running test evaluation
 with `--split test --final`. Save test results separately from validation findings.
+
+The frozen held-out LLM comparison (RQ2) is specified in
+[`experiments/llm_final_protocol.md`](experiments/llm_final_protocol.md) and run with
+`scripts/run_llm_final.sh`, which checks the freeze, smoke-tests on validation,
+runs the test split once with `--final`, and bundles the artifacts.
