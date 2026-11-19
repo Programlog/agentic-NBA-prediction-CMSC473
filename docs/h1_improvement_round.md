@@ -60,3 +60,17 @@ height (bh):
    the basket (from the ball's sideways flight), in bh.
 
 R1 = D0 + F1, R2 = last kept + F2, R3 = last kept + F3.
+
+## Round 2 results
+
+| Step | Box vs baseline, Brier | 95% interval | Gain over last kept | 1 SE | Kept |
+|---|---|---|---|---|---|
+| D0, current final | -0.00093 | -0.00169 to -0.00008 | | | |
+| R1 = D0 + F1 arm extension | -0.00100 | -0.00182 to -0.00017 | 0.00007 | 0.00017 | no |
+| R2 = D0 + F2 release vs jump peak | -0.00106 | -0.00183 to -0.00028 | 0.00014 | 0.00016 | no |
+| R3 = D0 + F3 lean | -0.00078 | -0.00155 to +0.00002 | -0.00015 | 0.00018 | no |
+
+No step was kept; D0 stays the final design. Scripts: `scripts/h1_round1_release_rules.py`,
+`scripts/h1_round1.py` and `scripts/h1_round2.py` (each takes a scratch directory for the cohorts
+and runs it builds); summaries in `reports/basketevent_h1_round1/` and `reports/basketevent_h1_round2/`.
+The full log of H1 experiments is in `h1_experiments.md`.
