@@ -209,8 +209,16 @@ a reliable performance conclusion. See the
 [4-shot pilot report](docs/experiments/adaptive_aggregation_pilot_4.md)
 for setup, all condition metrics, and limitations.
 
-A larger validation experiment is being evaluated separately. These
-exploratory runs do **not** change the frozen held-out H2 results.
+A follow-up **10-shot validation run is currently incomplete**: 28 of 40
+planned condition predictions were saved successfully, covering **7 matched
+shots from 4 games**. On those seven shots, the disagreement-aware
+aggregator achieved **0.196086 Brier** versus **0.209529** for the original
+aggregator (paired difference **−0.013443**, approximately **6.42% lower**).
+These are preliminary, unconfirmed findings from an incomplete run, not
+a final 10-shot comparison. See the
+[partial validation report](docs/experiments/adaptive_aggregation_validation_10_partial.md).
+
+These exploratory runs do **not** change the frozen held-out H2 results.
 
 ## Checks
 
