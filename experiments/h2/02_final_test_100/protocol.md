@@ -1,8 +1,14 @@
 # Final Held-Out Protocol — Multi-Agent vs. Single-Agent LLM (RQ2)
 
 **Status:** frozen on 2026-11-19, before any test-split LLM inference.
-**Runner:** [`scripts/run_llm_final.sh`](../../scripts/run_llm_final.sh)
-**Development evidence:** [30-shot validation pilot](llm_30shot_validation.md)
+**Runner:** [`run_llm_final.sh`](run_llm_final.sh) (was `scripts/run_llm_final.sh`)
+**Development evidence:** [30-shot validation pilot](../01_validation_pilot_30/README.md)
+
+> **Layout note (2026-11-20):** this folder was moved from `docs/experiments/`,
+> `scripts/` and `reports/llm_final_test_100/` into `experiments/h2/02_final_test_100/`.
+> The protocol text and `run_llm_final.sh` are unchanged, so the paths they mention
+> (`scripts/run_llm_final.sh`, `reports/llm_final_test_100/`) describe the layout at
+> commit `64ee854`, which is where the frozen run must be reproduced from.
 
 This document fixes every analysis decision before the test split is used. The
 test selection below is evaluated once. If any frozen setting must change, the

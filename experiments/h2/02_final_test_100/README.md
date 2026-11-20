@@ -1,7 +1,7 @@
 # Final Held-Out Results — Multi-Agent vs. Single-Agent LLM (RQ2)
 
-**Protocol:** [llm_final_protocol.md](llm_final_protocol.md) (frozen before the run)
-**Report:** [`reports/llm_final_test_100/report.md`](../../reports/llm_final_test_100/report.md)
+**Protocol:** [protocol.md](protocol.md) (frozen before the run)
+**Report:** [`report/report.md`](report/report.md)
 **Run:** 2026-11-19, 03:48–05:50 UTC, commit `aed2c6d`, one attempt, 300/300 predictions, 0 failures
 
 ## Answer
@@ -92,15 +92,15 @@ to start on newer commits by design.
 
 ## Figures
 
-Generated from this report by `uv run python scripts/make_h2_figures.py`.
+Generated from this report by `uv run python experiments/h2/02_final_test_100/make_figures.py`.
 
-![H2 design](../../reports/llm_final_test_100/figures/h2_0_design.png)
+![H2 design](report/figures/h2_0_design.png)
 
-![H2 effect with 95% intervals](../../reports/llm_final_test_100/figures/h2_2_effect_intervals.png)
+![H2 effect with 95% intervals](report/figures/h2_2_effect_intervals.png)
 
-![Brier score, all models](../../reports/llm_final_test_100/figures/h2_1_brier_all_models.png)
+![Brier score, all models](report/figures/h2_1_brier_all_models.png)
 
-![Average predicted make probability vs. actual](../../reports/llm_final_test_100/figures/h2_3_overconfidence.png)
+![Average predicted make probability vs. actual](report/figures/h2_3_overconfidence.png)
 
 The overconfidence figure is exploratory and was not part of the pre-registered analysis.
 

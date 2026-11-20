@@ -15,7 +15,7 @@ Conditions
                    controls fairly).
 
 Usage
-  uv run --frozen --all-extras python scripts/h2_brier_experiments.py \
+  uv run --frozen --all-extras python experiments/h2/04_brier_followup/run_experiments.py \
       --conditions multi multi_anchored multi_prior single_budget
 """
 

@@ -2,7 +2,7 @@
 
 **Status:** completed exploratory experiment on the **validation** split
 (Nov 19, 2026). It does **not** replace the pre-registered held-out H2 result
-in [llm_final_results.md](llm_final_results.md), which stands as reported.
+in [the final test results](../02_final_test_100/README.md), which stands as reported.
 
 ## Motivation
 
@@ -100,9 +100,9 @@ Confidence intervals are 95% paired bootstrap intervals over games
 | `single_budget` (frozen prompts) | 0.2794 | 0.7634 | 0.559 | 0.613 | +0.006 [−0.008, +0.021] |
 | `multi+pool` | 0.2827 | 0.7632 | 0.536 | 0.632 | +0.009 [−0.005, +0.022] |
 
-![Validation Brier score](../../reports/h2_brier_followup_validation_100/figures/h2b_1_validation_brier.png)
+![Validation Brier score](results/figures/h2b_1_validation_brier.png)
 
-![Average prediction vs. actual make rate](../../reports/h2_brier_followup_validation_100/figures/h2b_2_overconfidence.png)
+![Average prediction vs. actual make rate](results/figures/h2b_2_overconfidence.png)
 
 ### Test: frozen predictions recalibrated with validation-fitted maps
 
@@ -124,7 +124,7 @@ Confidence intervals are 95% paired bootstrap intervals over games
 | `llm_multi`+recal − logistic regression | +0.007 [−0.010, +0.023] |
 | `llm_multi`+recal − XGBoost | +0.021 [+0.006, +0.037] |
 
-![Test recalibration](../../reports/h2_brier_followup_validation_100/figures/h2b_3_test_recalibration.png)
+![Test recalibration](results/figures/h2b_3_test_recalibration.png)
 
 ## Findings
 
@@ -178,18 +178,18 @@ Confidence intervals are 95% paired bootstrap intervals over games
 ```bash
 uv sync --frozen --all-extras
 # ~4 h on an M2; resumes from artifacts/h2_brier_experiments/call_cache.jsonl
-uv run --frozen --all-extras python scripts/h2_brier_experiments.py \
+uv run --frozen --all-extras python experiments/h2/04_brier_followup/run_experiments.py \
   --conditions multi multi_anchored multi_prior single_budget
-uv run --frozen --all-extras python scripts/h2_brier_analysis.py \
-  --out reports/h2_brier_followup_validation_100
-uv run --frozen python scripts/make_h2_brier_figures.py
+uv run --frozen --all-extras python experiments/h2/04_brier_followup/analyze.py \
+  --out experiments/h2/04_brier_followup/results
+uv run --frozen python experiments/h2/04_brier_followup/make_figures.py
 ```
 
-`scripts/h2_brier_experiments.py` expects the day-1 prepared data and models
+`run_experiments.py` expects the day-1 prepared data and models
 in `artifacts/day1/` and the frozen test predictions in
-`reports/llm_final_test_100/predictions.csv`.
+`experiments/h2/02_final_test_100/report/predictions.csv`.
 
-### Committed outputs (`reports/h2_brier_followup_validation_100/`)
+### Committed outputs (`results/`)
 
 - `predictions.jsonl`: every validation prediction, including specialist opinions and rationales
 - `selection.csv`: the 100 validation shots, with the logistic-regression prior

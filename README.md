@@ -59,7 +59,7 @@ The tabular baseline, video-annotation and pose-extraction tools, and
 local Ollama/CrewAI agent pipeline have been implemented. The **final
 held-out H2 comparison is complete**: the multi-agent system improved on
 the budget-matched single-LLM baseline, but did not outperform XGBoost.
-See [final H2 results](docs/experiments/llm_final_results.md) and
+See [final H2 results](experiments/h2/02_final_test_100/README.md) and
 [initial baseline results](reports/day1.md).
 
 ## Quick start
@@ -126,6 +126,9 @@ No held-out H1 predictive comparison is complete.
 
 ## H2: Single-agent vs. multi-agent LLMs (completed)
 
+All H2 protocols, scripts, results and follow-ups are in
+[`experiments/h2/`](experiments/h2/README.md), one folder per experiment.
+
 **H2: Agents add value beyond the features themselves.** Specialized
 agents separately analyze the available shot features from different
 perspectives, including game context and shot mechanics/defense. A
@@ -139,7 +142,7 @@ For the final held-out H2 decision, the team selected the
 XGBoost was included as a reference rather than a criterion for
 supporting H2.
 
-The [pre-registered final protocol](docs/experiments/llm_final_protocol.md)
+The [pre-registered final protocol](experiments/h2/02_final_test_100/protocol.md)
 was frozen before test inference. The November 19, 2026 evaluation used
 **100 held-out Kaggle 2014–15 shots from 50 games** (two shots per game), a
 deterministic seed of 42, and local Ollama running `qwen3:4b-instruct`.
@@ -187,21 +190,21 @@ overconfidence accounts for much of the multi-agent improvement.
 The study used one small local model and only 100 held-out shots, so
 its effect size should not be generalized without further replication.
 
-The earlier [30-shot validation pilot](docs/experiments/llm_30shot_validation.md)
+The earlier [30-shot validation pilot](experiments/h2/01_validation_pilot_30/README.md)
 did **not** show the same benefit; the final held-out evaluation is the
 pre-registered H2 result. The model digest used in the validation pilot
 could not be verified against the final test model digest.
 
 ### Reproduce and inspect H2
 
-- [Frozen protocol and configuration](docs/experiments/llm_final_protocol.md)
-- [Detailed final results and limitations](docs/experiments/llm_final_results.md)
-- [Full generated report](reports/llm_final_test_100/report.md)
-- [Per-model evaluation metrics (CSV)](reports/llm_final_test_100/combined_metrics.csv)
-- [Paired bootstrap comparisons (JSON)](reports/llm_final_test_100/paired_comparisons.json)
-- [Per-shot predictions (CSV)](reports/llm_final_test_100/predictions.csv)
-- [Final execution script](scripts/run_llm_final.sh)
-- [Result figures](reports/llm_final_test_100/figures/) (regenerate with `scripts/make_h2_figures.py`)
+- [Frozen protocol and configuration](experiments/h2/02_final_test_100/protocol.md)
+- [Detailed final results and limitations](experiments/h2/02_final_test_100/README.md)
+- [Full generated report](experiments/h2/02_final_test_100/report/report.md)
+- [Per-model evaluation metrics (CSV)](experiments/h2/02_final_test_100/report/combined_metrics.csv)
+- [Paired bootstrap comparisons (JSON)](experiments/h2/02_final_test_100/report/paired_comparisons.json)
+- [Per-shot predictions (CSV)](experiments/h2/02_final_test_100/report/predictions.csv)
+- [Final execution script](experiments/h2/02_final_test_100/run_llm_final.sh)
+- [Result figures](experiments/h2/02_final_test_100/report/figures/) (regenerate with `experiments/h2/02_final_test_100/make_figures.py`)
 
 The final runner checks the frozen implementation and prepared-data
 configuration before using `--split test --final`. Its documented
@@ -211,7 +214,7 @@ a reproduction of the frozen run.
 
 The frozen run was re-executed on November 19, 2026 and reproduced all 600
 committed predictions exactly (see
-[Reproduction](docs/experiments/llm_final_results.md#reproduction)). Use commit
+[Reproduction](experiments/h2/02_final_test_100/README.md#reproduction)). Use commit
 `64ee854` to rerun it; later `agents.py` changes intentionally fail the runner's
 frozen-hash check.
 
@@ -230,7 +233,7 @@ the original multi-agent aggregator (a 0.0110 absolute, 3.98% relative
 reduction), with all 16 predictions completing successfully. However,
 accuracy dropped from 50% to 25%, and four shots are far too few for
 a reliable performance conclusion. See the
-[4-shot pilot report](docs/experiments/adaptive_aggregation_pilot_4.md)
+[4-shot pilot report](experiments/h2/03_disagreement_aggregation/pilot_4_shots.md)
 for setup, all condition metrics, and limitations.
 
 A follow-up **10-shot validation run is currently incomplete**: 28 of 40
@@ -240,7 +243,7 @@ aggregator achieved **0.196086 Brier** versus **0.209529** for the original
 aggregator (paired difference **−0.013443**, approximately **6.42% lower**).
 These are preliminary, unconfirmed findings from an incomplete run, not
 a final 10-shot comparison. See the
-[partial validation report](docs/experiments/adaptive_aggregation_validation_10_partial.md).
+[partial validation report](experiments/h2/03_disagreement_aggregation/validation_10_partial.md).
 
 ### Follow-up: fixing LLM overconfidence (Brier score)
 
@@ -262,7 +265,7 @@ seed and data) tested two fixes:
 
 Anchoring has not yet been applied to the single-agent control, so it
 cannot yet be credited to the multi-agent design. See the
-[follow-up report](docs/experiments/h2_brier_followup.md).
+[follow-up report](experiments/h2/04_brier_followup/README.md).
 
 These exploratory runs do **not** change the frozen held-out H2 results.
 
