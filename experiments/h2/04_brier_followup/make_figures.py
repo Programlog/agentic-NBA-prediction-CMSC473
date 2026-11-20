@@ -1,8 +1,8 @@
 """Figures for the H2 Brier follow-up (validation anchoring + test recalibration).
 
-Usage: uv run python scripts/make_h2_brier_figures.py [REPORT_DIR]
-Default REPORT_DIR: reports/h2_brier_followup_validation_100 (reads summary.json,
-writes REPORT_DIR/figures/*.png). Styling matches scripts/make_h2_figures.py.
+Usage: uv run python experiments/h2/04_brier_followup/make_figures.py [REPORT_DIR]
+Default REPORT_DIR: results/ next to this script (reads summary.json,
+writes REPORT_DIR/figures/*.png). Styling matches ../02_final_test_100/make_figures.py.
 """
 
 import json
@@ -14,9 +14,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-REPORT = (
-    Path(sys.argv[1]) if len(sys.argv) > 1 else Path("reports/h2_brier_followup_validation_100")
-)
+REPORT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / "results"
 OUT = REPORT / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 S = json.loads((REPORT / "summary.json").read_text())

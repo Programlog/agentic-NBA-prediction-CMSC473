@@ -89,5 +89,5 @@ test evaluation should use a new, explicitly frozen protocol rather than
 reusing the completed H2 test as development data.
 
 For the original H2 research question and final held-out result, see
-[Final H2 results](llm_final_results.md) and
-[Frozen H2 protocol](llm_final_protocol.md).
+[Final H2 results](../02_final_test_100/README.md) and
+[Frozen H2 protocol](../02_final_test_100/protocol.md).

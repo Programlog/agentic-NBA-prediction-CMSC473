@@ -1,7 +1,7 @@
 """Slide figures for the final H2 result (light theme, 16:9 PNG).
 
-Usage: uv run python scripts/make_h2_figures.py [REPORT_DIR] [OUTPUT_DIR]
-Defaults: reports/llm_final_test_100 and REPORT_DIR/figures.
+Usage: uv run python experiments/h2/02_final_test_100/make_figures.py [REPORT_DIR] [OUTPUT_DIR]
+Defaults: experiments/h2/02_final_test_100/report and REPORT_DIR/figures.
 """
 
 import json
@@ -14,7 +14,7 @@ import pandas as pd
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-REPORT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("reports/llm_final_test_100")
+REPORT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / "report"
 OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else REPORT / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -123,7 +123,7 @@ effects = [
     (lbl, p["brier_delta_candidate_minus_baseline"], *p["brier_delta_95pct_interval"], LLM)
     for lbl, p in rows
 ]
-# Validation pilot (30 shots / 10 games), from docs/experiments/llm_30shot_validation.md
+# Validation pilot (30 shots / 10 games), from experiments/h2/01_validation_pilot_30/README.md
 effects.append(
     ("Pilot: vs. single LLM, 3 calls\n(validation, 30 shots)", 0.01404, -0.00591, 0.03358, MUTED)
 )

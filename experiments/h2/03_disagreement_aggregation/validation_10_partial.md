@@ -99,7 +99,7 @@ establish that the disagreement-aware aggregator is better in general.
   Brier scores, completion counts, and game count; it did not establish
   partial-run log loss, accuracy, ROC-AUC, or a per-condition cost table.
 
-For context, an earlier [4-shot validation pilot](adaptive_aggregation_pilot_4.md)
+For context, an earlier [4-shot validation pilot](pilot_4_shots.md)
 also found a lower Brier score for disagreement-aware aggregation
 (0.2657 versus 0.2767). The samples should **not** be assumed independent
 or pooled without checking their saved shot IDs.
@@ -111,6 +111,6 @@ paired-shot comparison on the complete selection, and preserve the full
 prediction and usage artifacts for reproducibility. Any larger,
 confirmatory evaluation requires a separately frozen protocol.
 
-See [final frozen H2 results](llm_final_results.md) for the completed
+See [final frozen H2 results](../02_final_test_100/README.md) for the completed
 multi-agent-versus-single-agent experiment, which is distinct from
 this exploratory follow-up.

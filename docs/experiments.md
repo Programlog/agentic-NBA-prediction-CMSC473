@@ -219,6 +219,6 @@ model identity, and evaluation selection before explicitly running test evaluati
 with `--split test --final`. Save test results separately from validation findings.
 
 The frozen held-out LLM comparison (RQ2) is specified in
-[`experiments/llm_final_protocol.md`](experiments/llm_final_protocol.md) and run with
-`scripts/run_llm_final.sh`, which checks the freeze, smoke-tests on validation,
+[`experiments/h2/02_final_test_100/protocol.md`](../experiments/h2/02_final_test_100/protocol.md) and run with
+`experiments/h2/02_final_test_100/run_llm_final.sh` (at commit `64ee854`, where it was `scripts/run_llm_final.sh`), which checks the freeze, smoke-tests on validation,
 runs the test split once with `--final`, and bundles the artifacts.

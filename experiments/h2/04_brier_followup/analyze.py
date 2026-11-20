@@ -1,4 +1,4 @@
-"""Score scripts/h2_brier_experiments.py outputs and post-hoc calibration variants.
+"""Score run_experiments.py outputs and post-hoc calibration variants.
 
 Validation: raw conditions, specialist logit-mean pooling, and Platt
 recalibration evaluated with leave-one-game-out cross-validation (so no shot
@@ -77,7 +77,7 @@ def main():
     parser.add_argument(
         "--val-baselines", default="artifacts/day1/models/validation_predictions.csv"
     )
-    parser.add_argument("--test", default="reports/llm_final_test_100/predictions.csv")
+    parser.add_argument("--test", default="experiments/h2/02_final_test_100/report/predictions.csv")
     parser.add_argument("--out", help="where to write CSVs and summary.json (default: --run)")
     args = parser.parse_args()
     run = Path(args.run)
