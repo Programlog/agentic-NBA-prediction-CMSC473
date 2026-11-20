@@ -263,9 +263,21 @@ seed and data) tested two fixes:
   (+0.001 [−0.006, +0.010]), so the published H2 advantage appears to come
   mostly from lower overconfidence. Both still trail XGBoost (0.206).
 
-Anchoring has not yet been applied to the single-agent control, so it
-cannot yet be credited to the multi-agent design. See the
-[follow-up report](experiments/h2/04_brier_followup/README.md).
+See the [follow-up report](experiments/h2/04_brier_followup/README.md).
+
+### Follow-up: a stronger model (GPT-6 Luna)
+
+[Experiment 05](experiments/h2/05_stronger_model/README.md) re-ran the same
+conditions, plus an anchored single-LLM control, with OpenAI `gpt-6-luna` on the
+same validation and test shots. Its test protocol was frozen before any test call.
+
+- Luna beat qwen 4B by **0.032** Brier for multi-agent (CI [−0.055, −0.009]) and
+  **0.056** for the single LLM.
+- With Luna, **multi- and single-agent tie**: anchored −0.0004 [−0.002, +0.001],
+  unanchored −0.002 [−0.008, +0.006]. The multi-agent gain in 02 appears specific to
+  the small, overconfident model.
+- The best LLM (Luna, anchored single, 0.213) beat logistic regression (0.220) but
+  not XGBoost (0.206): +0.007 [−0.003, +0.017].
 
 These exploratory runs do **not** change the frozen held-out H2 results.
 
