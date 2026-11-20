@@ -225,6 +225,28 @@ These are preliminary, unconfirmed findings from an incomplete run, not
 a final 10-shot comparison. See the
 [partial validation report](docs/experiments/adaptive_aggregation_validation_10_partial.md).
 
+### Follow-up: fixing LLM overconfidence (Brier score)
+
+The LLM conditions' poor Brier scores come mainly from **overconfidence**:
+on test, `llm_multi` predicted an average make probability of 0.60 when 42%
+of shots were made, even though its ROC-AUC (0.687) matched logistic
+regression's. A validation-only follow-up (100 shots, 50 games, same model,
+seed and data) tested two fixes:
+
+- **Anchoring** each agent with training-split make rates for the shot's
+  distance and defender spacing lowered validation Brier from **0.273 to
+  0.238** (−0.035, 95% CI [−0.067, −0.004]). That beats logistic regression
+  (0.245) and the constant baseline (0.247), close to XGBoost (0.232).
+- **Recalibrating** the frozen test predictions with a map fitted only on
+  validation lowered `llm_multi` from **0.248 to 0.227**. With **both** arms
+  recalibrated, the multi-agent and budget-matched single LLM are **tied**
+  (+0.001 [−0.006, +0.010]), so the published H2 advantage appears to come
+  mostly from lower overconfidence. Both still trail XGBoost (0.206).
+
+Anchoring has not yet been applied to the single-agent control, so it
+cannot yet be credited to the multi-agent design. See the
+[follow-up report](docs/experiments/h2_brier_followup.md).
+
 These exploratory runs do **not** change the frozen held-out H2 results.
 
 ## Checks

@@ -1,0 +1,290 @@
+{
+  "validation": {
+    "constant": {
+      "n": 100.0,
+      "mean_p": 0.455,
+      "brier": 0.2466,
+      "log_loss": 0.6864,
+      "auc": 0.5
+    },
+    "logistic_regression": {
+      "n": 100.0,
+      "mean_p": 0.462,
+      "brier": 0.2446,
+      "log_loss": 0.6819,
+      "auc": 0.5463
+    },
+    "xgboost": {
+      "n": 100.0,
+      "mean_p": 0.461,
+      "brier": 0.2318,
+      "log_loss": 0.6531,
+      "auc": 0.5901
+    },
+    "multi": {
+      "n": 100.0,
+      "mean_p": 0.586,
+      "brier": 0.2734,
+      "log_loss": 0.7431,
+      "auc": 0.5432
+    },
+    "multi+pool": {
+      "n": 100.0,
+      "mean_p": 0.632,
+      "brier": 0.2827,
+      "log_loss": 0.7632,
+      "auc": 0.5363
+    },
+    "multi+platt_cv": {
+      "n": 100.0,
+      "mean_p": 0.44,
+      "brier": 0.253,
+      "log_loss": 0.6996,
+      "auc": 0.4464
+    },
+    "multi_anchored": {
+      "n": 100.0,
+      "mean_p": 0.461,
+      "brier": 0.2382,
+      "log_loss": 0.6689,
+      "auc": 0.555
+    },
+    "multi_anchored+pool": {
+      "n": 100.0,
+      "mean_p": 0.454,
+      "brier": 0.2426,
+      "log_loss": 0.6783,
+      "auc": 0.5266
+    },
+    "multi_anchored+platt_cv": {
+      "n": 100.0,
+      "mean_p": 0.439,
+      "brier": 0.2465,
+      "log_loss": 0.6865,
+      "auc": 0.4903
+    },
+    "multi_prior": {
+      "n": 100.0,
+      "mean_p": 0.464,
+      "brier": 0.2393,
+      "log_loss": 0.6709,
+      "auc": 0.5495
+    },
+    "multi_prior+pool": {
+      "n": 100.0,
+      "mean_p": 0.454,
+      "brier": 0.2426,
+      "log_loss": 0.6783,
+      "auc": 0.5266
+    },
+    "multi_prior+platt_cv": {
+      "n": 100.0,
+      "mean_p": 0.438,
+      "brier": 0.2474,
+      "log_loss": 0.6886,
+      "auc": 0.4988
+    },
+    "single_budget": {
+      "n": 100.0,
+      "mean_p": 0.613,
+      "brier": 0.2794,
+      "log_loss": 0.7634,
+      "auc": 0.5593
+    },
+    "single_budget+platt_cv": {
+      "n": 100.0,
+      "mean_p": 0.44,
+      "brier": 0.2511,
+      "log_loss": 0.6959,
+      "auc": 0.4811
+    }
+  },
+  "validation_vs_multi": {
+    "constant": [
+      -0.0267,
+      [
+        -0.0652,
+        0.0089
+      ]
+    ],
+    "logistic_regression": [
+      -0.0287,
+      [
+        -0.0612,
+        0.0022
+      ]
+    ],
+    "xgboost": [
+      -0.0415,
+      [
+        -0.0734,
+        -0.0099
+      ]
+    ],
+    "multi+pool": [
+      0.0093,
+      [
+        -0.0047,
+        0.0221
+      ]
+    ],
+    "multi+platt_cv": [
+      -0.0204,
+      [
+        -0.0556,
+        0.0131
+      ]
+    ],
+    "multi_anchored": [
+      -0.0352,
+      [
+        -0.0671,
+        -0.004
+      ]
+    ],
+    "multi_anchored+pool": [
+      -0.0307,
+      [
+        -0.0656,
+        0.0035
+      ]
+    ],
+    "multi_anchored+platt_cv": [
+      -0.0269,
+      [
+        -0.0631,
+        0.0086
+      ]
+    ],
+    "multi_prior": [
+      -0.034,
+      [
+        -0.0662,
+        -0.0028
+      ]
+    ],
+    "multi_prior+pool": [
+      -0.0307,
+      [
+        -0.0656,
+        0.0035
+      ]
+    ],
+    "multi_prior+platt_cv": [
+      -0.0259,
+      [
+        -0.0621,
+        0.0098
+      ]
+    ],
+    "single_budget": [
+      0.006,
+      [
+        -0.0079,
+        0.0211
+      ]
+    ],
+    "single_budget+platt_cv": [
+      -0.0223,
+      [
+        -0.0552,
+        0.0101
+      ]
+    ]
+  },
+  "test": {
+    "constant": {
+      "n": 100,
+      "mean_p": 0.455,
+      "brier": 0.2448,
+      "log_loss": 0.6827,
+      "auc": 0.5
+    },
+    "llm_multi": {
+      "n": 100,
+      "mean_p": 0.603,
+      "brier": 0.2483,
+      "log_loss": 0.6821,
+      "auc": 0.6874
+    },
+    "llm_single": {
+      "n": 100,
+      "mean_p": 0.67,
+      "brier": 0.2931,
+      "log_loss": 0.7915,
+      "auc": 0.6537
+    },
+    "llm_single_budget": {
+      "n": 100,
+      "mean_p": 0.645,
+      "brier": 0.2735,
+      "log_loss": 0.7451,
+      "auc": 0.6636
+    },
+    "logistic_regression": {
+      "n": 100,
+      "mean_p": 0.462,
+      "brier": 0.2198,
+      "log_loss": 0.6299,
+      "auc": 0.681
+    },
+    "xgboost": {
+      "n": 100,
+      "mean_p": 0.459,
+      "brier": 0.2056,
+      "log_loss": 0.599,
+      "auc": 0.7414
+    },
+    "llm_multi+platt": {
+      "n": 100,
+      "mean_p": 0.449,
+      "brier": 0.2268,
+      "log_loss": 0.6461,
+      "auc": 0.6874
+    },
+    "llm_single_budget+platt": {
+      "n": 100,
+      "mean_p": 0.458,
+      "brier": 0.2255,
+      "log_loss": 0.6428,
+      "auc": 0.6636
+    }
+  },
+  "test_paired": {
+    "llm_multi - llm_single_budget": [
+      -0.0252,
+      [
+        -0.0441,
+        -0.0073
+      ]
+    ],
+    "llm_multi+platt - llm_single_budget+platt": [
+      0.0013,
+      [
+        -0.0063,
+        0.0096
+      ]
+    ],
+    "llm_multi+platt - llm_multi": [
+      -0.0215,
+      [
+        -0.0495,
+        0.0068
+      ]
+    ],
+    "llm_multi+platt - logistic_regression": [
+      0.007,
+      [
+        -0.0097,
+        0.0227
+      ]
+    ],
+    "llm_multi+platt - xgboost": [
+      0.0213,
+      [
+        0.0057,
+        0.0366
+      ]
+    ]
+  }
+}
