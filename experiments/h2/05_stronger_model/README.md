@@ -1,6 +1,6 @@
 # Experiment 05: Does a Stronger Model Help? (GPT-6 Luna vs. qwen 4B)
 
-**Status:** complete for GPT-6 Luna; the local qwen anchored conditions on test are still running (see [Pending](#pending)).
+**Status:** complete.
 **Protocol:** [protocol.md](protocol.md), frozen and committed (`3c1f331`) after validation and **before any test call**.
 **Role:** exploratory. The pre-registered H2 answer is still [02](../02_final_test_100/README.md).
 
@@ -54,7 +54,12 @@ real difference is smaller than about 0.002 Brier.
    qwen's error a lot (0.248 → 0.227), but made Luna slightly *worse* (0.213 → 0.217).
    Luna is already reasonably calibrated, so a map fitted on 100 noisy validation
    shots mostly adds noise. After recalibration, qwen and Luna are close.
-5. **Reasoning effort barely matters.** At `low`, Luna used only about 18 reasoning
+5. **Anchoring closes most of the model gap.** Once anchored, the small local qwen
+   model's multi-agent system scores **0.2177** on test, the same as Luna's 0.2170
+   (Δ −0.0007 [−0.009, +0.007]). The large unanchored gap between the models was
+   mostly calibration. Only Luna `low` with the anchored single LLM beats anchored
+   qwen clearly (−0.009 [−0.017, −0.002]).
+6. **Reasoning effort barely matters.** At `low`, Luna used only about 18 reasoning
    tokens per call. `low` helped the anchored conditions slightly and hurt the
    unanchored multi-agent.
 
@@ -66,11 +71,11 @@ real difference is smaller than about 0.002 Brier.
 |---|---:|---:|---:|
 | Multi-agent | 0.2483 | 0.2160 | 0.2242 |
 | Single LLM (3 calls) | 0.2735 | 0.2175 | 0.2194 |
-| Multi-agent, anchored | *pending* | 0.2170 | 0.2143 |
-| Single LLM, anchored | *pending* | 0.2174 | **0.2127** |
+| Multi-agent, anchored | 0.2177 | 0.2170 | 0.2143 |
+| Single LLM, anchored | 0.2220 | 0.2174 | **0.2127** |
 
 References: XGBoost **0.2056**, logistic regression 0.2198, constant 0.2448.
-The qwen multi-agent and single LLM numbers are the frozen 02 predictions.
+The qwen multi-agent and single LLM numbers are the frozen 02 predictions; the anchored qwen numbers were run here.
 
 ![Test Brier](results/figures/h2c_2_test_brier.png)
 
@@ -86,6 +91,10 @@ The qwen multi-agent and single LLM numbers are the frozen 02 predictions.
 | Luna `none` multi − qwen multi | −0.0323 | [−0.0547, −0.0094] | Luna better |
 | Luna `none` single − qwen single | −0.0561 | [−0.0881, −0.0219] | Luna better |
 | Luna `low` multi − qwen multi | −0.0241 | [−0.0454, −0.0020] | Luna better |
+| qwen: anchored multi − anchored single | −0.0043 | [−0.0101, +0.0017] | no difference |
+| Luna `none` anchored multi − qwen anchored multi | −0.0007 | [−0.0086, +0.0070] | no difference |
+| Luna `none` anchored single − qwen anchored single | −0.0046 | [−0.0107, +0.0014] | no difference |
+| Luna `low` anchored single − qwen anchored single | −0.0093 | [−0.0174, −0.0019] | Luna better |
 | Best LLM (Luna `low`, anchored single) − XGBoost | +0.0071 | [−0.0033, +0.0168] | no difference (XGBoost ahead) |
 
 ![Test paired differences](results/figures/h2c_4_test_effects.png)
@@ -98,8 +107,8 @@ The qwen multi-agent and single LLM numbers are the frozen 02 predictions.
 |---|---:|---:|---:|
 | Multi-agent | 0.2268 | 0.2275 | 0.2324 |
 | Single LLM (3 calls) | 0.2255 | 0.2324 | 0.2332 |
-| Multi-agent, anchored | *pending* | 0.2225 | 0.2182 |
-| Single LLM, anchored | *pending* | 0.2249 | 0.2172 |
+| Multi-agent, anchored | 0.2204 | 0.2225 | 0.2182 |
+| Single LLM, anchored | 0.2259 | 0.2249 | 0.2172 |
 
 After recalibration, the best LLM is +0.012 behind XGBoost, CI [+0.001, +0.021].
 
@@ -122,13 +131,16 @@ anchoring, Luna and qwen were tied.
 
 The 02 result holds for its frozen setup: with qwen 4B, multi-agent orchestration
 improved Brier. This experiment shows the effect **does not carry over to a
-stronger model**, and it vanishes once the calibration problem is handled directly
-with anchoring. A fair summary for the report:
+stronger model**. With qwen, it also shrinks once calibration is handled directly
+with anchoring: anchored multi − anchored single is −0.004 [−0.010, +0.002], which
+can no longer be detected. A fair summary for the report:
 
 > Multi-agent orchestration helped a small, overconfident model mainly by moderating
 > its probabilities. With a stronger model, or with calibration anchors, a single LLM
-> given the same calls performs the same. Better models matter far more than
-> orchestration: GPT-6 Luna cut Brier by 0.03–0.06 and came within 0.007 of XGBoost.
+> given the same calls performs about the same. The unanchored model gap is large
+> (GPT-6 Luna cut Brier by 0.03–0.06), but it is mostly calibration: once anchored,
+> the 4B local model's multi-agent system (0.218) matches Luna's (0.217). The best
+> LLM comes within 0.007 of XGBoost but does not beat it.
 
 ## Limitations
 
@@ -142,12 +154,6 @@ with anchoring. A fair summary for the report:
 - **Deviation:** in the validation runs, the per-call cost and token fields were mislogged
   under parallel workers. Predictions were not affected, and this was fixed before the
   test run (see protocol). Validation costs come from the runner's live totals.
-
-## Pending
-
-The local qwen **anchored** conditions on the test split are still running (about 3 h on
-an M2). When they finish, re-run the analysis and figures. The qwen "pending" cells and
-the Luna-vs-qwen anchored comparisons will fill in automatically.
 
 ## Files
 
