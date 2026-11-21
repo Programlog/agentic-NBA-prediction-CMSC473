@@ -1,0 +1,12 @@
+{
+  "players": 135,
+  "llm_corr": 0.917,
+  "llm_mae": 0.0122,
+  "llm_within_1pt": 0.652,
+  "prior_rate_corr": 0.973,
+  "prior_rate_mae": 0.0086,
+  "confidence_counts": {
+    "high": 135
+  },
+  "new_call_cost_usd": 0.0024
+}

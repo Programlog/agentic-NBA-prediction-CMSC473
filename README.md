@@ -279,6 +279,20 @@ same validation and test shots. Its test protocol was frozen before any test cal
 - The best LLM (Luna, anchored single, 0.213) beat logistic regression (0.220) but
   not XGBoost (0.206): +0.007 [−0.003, +0.017].
 
+### Follow-up: shooter history
+
+[Experiment 06](experiments/h2/06_shooter_history/README.md) gave the agents each
+shooter's earlier-game make rates. One arm also gave the player's name. The baselines
+were retrained on the same features.
+
+- History improved the multi-agent system slightly: −0.004 [−0.009, −0.0003]. With a
+  dedicated history specialist, multi-agent then beat the single LLM: −0.004
+  [−0.008, −0.001]. Both effects are small and were not seen on validation.
+- Player names added nothing, and a probe showed GPT-6 Luna has memorized 2014–15
+  season FG% (r = 0.92), so named-player prompts carry contamination.
+- XGBoost (0.206) is still the best model. The best LLM (0.213) ties logistic
+  regression with history.
+
 These exploratory runs do **not** change the frozen held-out H2 results.
 
 ## Checks

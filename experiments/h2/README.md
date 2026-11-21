@@ -14,8 +14,9 @@ its committed results. Raw run caches stay in `artifacts/`, which Git ignores.
 | 03 | [Disagreement-aware aggregation](03_disagreement_aggregation/pilot_4_shots.md) | validation, 4 and 7 shots | exploratory, partial | Small Brier gains on very few shots; inconclusive |
 | 04 | [Fixing LLM overconfidence](04_brier_followup/README.md) | validation, 100 shots (+ test recalibration) | complete, exploratory | Anchoring to training make rates: Brier 0.273 → 0.238. Recalibrated multi- and single-agent tie on test |
 | 05 | [Stronger model: GPT-6 Luna](05_stronger_model/README.md) | validation + test, 100 shots each | complete for Luna (qwen anchored test pending), exploratory | Luna beats qwen by 0.03–0.06 Brier; multi- and single-agent tie (−0.0004 [−0.002, +0.001]); best LLM 0.213 vs. XGBoost 0.206 |
+| 06 | [Shooter history](06_shooter_history/README.md) | validation + test, 100 shots each | complete, exploratory | History helps multi-agent slightly (−0.004 [−0.009, −0.0003]); multi then beats single (−0.004 [−0.008, −0.001]); player names add nothing (model memorized season FG%); XGBoost still best |
 
-Only **02** is the pre-registered H2 decision. 01, 03, 04 and 05 are exploratory
+Only **02** is the pre-registered H2 decision. 01, 03, 04, 05 and 06 are exploratory
 and do not change it.
 
 ## Layout
@@ -38,14 +39,23 @@ experiments/h2/
 │   ├── analyze.py                metrics, recalibration, game bootstrap
 │   ├── make_figures.py
 │   └── results/                  predictions, summary.json, figures
-└── 05_stronger_model/
+├── 05_stronger_model/
+│   ├── README.md
+│   ├── protocol.md               frozen before test calls
+│   ├── openai_client.py          OpenAI client (cost cap, throttle)
+│   ├── run_experiments.py        Ollama or OpenAI, validation or test
+│   ├── analyze.py
+│   ├── make_figures.py
+│   └── results/                  per-run predictions, summary.json, figures
+└── 06_shooter_history/
     ├── README.md
     ├── protocol.md               frozen before test calls
-    ├── openai_client.py          OpenAI client (cost cap, throttle)
-    ├── run_experiments.py        Ollama or OpenAI, validation or test
+    ├── prepare.py                history features + baselines with history
+    ├── run_experiments.py
+    ├── contamination.py          does the model remember season FG%?
     ├── analyze.py
     ├── make_figures.py
-    └── results/                  per-run predictions, summary.json, figures
+    └── results/
 ```
 
 Shared agent code (prompts, conditions, sampling) is in `src/nba_shots/agents.py`;
@@ -55,5 +65,4 @@ run every script from the repository root.
 
 - Fill in the qwen anchored test cells in 05 when the local run finishes
 - `gpt-5.6-luna` as a third model once the API project has access
-- Give the agents features the tabular models lack (for example player history), since
-  calibration is now solved and ranking (ROC-AUC 0.70 vs. 0.74) is the remaining gap
+- Replicate 06's small multi-agent gain on a larger test sample before relying on it

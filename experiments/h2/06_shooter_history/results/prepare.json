@@ -1,0 +1,40 @@
+{
+  "shots_sha256": "e40b0edf5de8230bf380eccb15713c47a9850fc4e596b279d8ca1e4ce2e1a30b",
+  "source_shots_sha256": "4528a5be2a3bfca9349043a9e2c5331bb2096fdf568bcdd297e2e4f9efce69f1",
+  "history_features": [
+    "player_prior_attempts",
+    "player_prior_make_rate",
+    "player_band_attempts",
+    "player_band_rate"
+  ],
+  "band_shrink_k": 20,
+  "distance_bands": [
+    "0",
+    "3",
+    "6",
+    "10",
+    "16",
+    "22",
+    "24",
+    "28",
+    "inf"
+  ],
+  "features": [
+    "shot_distance",
+    "defender_distance",
+    "game_clock_seconds",
+    "shot_clock",
+    "period",
+    "dribbles",
+    "touch_time",
+    "shot_value",
+    "player_prior_attempts",
+    "player_prior_make_rate",
+    "player_band_attempts",
+    "player_band_rate",
+    "location"
+  ],
+  "checks": {
+    "day1_xgboost_max_abs_diff": 1.1102230246251565e-16
+  }
+}
