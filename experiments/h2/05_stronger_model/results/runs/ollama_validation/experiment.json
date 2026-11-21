@@ -1,0 +1,19 @@
+{
+  "backend": "ollama",
+  "model": "qwen3:4b-instruct",
+  "model_digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "reasoning_effort": null,
+  "sampling": {
+    "temperature": 0,
+    "seed": 42
+  },
+  "split": "validation",
+  "n_shots": 100,
+  "data_sha256": "4528a5be2a3bfca9349043a9e2c5331bb2096fdf568bcdd297e2e4f9efce69f1",
+  "git_commit": "3c1f33101ebd326e5bc8480d5fd73c9aa842be62",
+  "cached_calls_total": 1300,
+  "prompt_tokens_total": 397042,
+  "completion_tokens_total": 75497,
+  "reasoning_tokens_total": 0,
+  "cost_usd_total": 0
+}
