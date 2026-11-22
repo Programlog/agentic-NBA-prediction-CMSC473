@@ -87,6 +87,18 @@ def accept_experiment(
         if max(games.values()) - min(games.values()) > 1:
             raise ValidationError("Shots are not balanced across games")
 
+    # Every saved prediction must retain its selected game's identity.
+    selected_games = {row["shot_id"]: row["game_id"] for row in selection}
+
+    for row in predictions:
+        shot_id = row["shot_id"]
+        expected_game = selected_games.get(shot_id)
+
+        if expected_game is None or row.get("game_id") != expected_game:
+            raise ValidationError(
+                f"Prediction game identity differs from selection for shot {shot_id}"
+            )
+
     failures = [row for row in predictions if row["status"] != "ok"]
 
     if failures:

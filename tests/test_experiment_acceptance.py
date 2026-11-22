@@ -34,8 +34,20 @@ def experiment(tmp_path, monkeypatch):
         {"shot_id": "shot-2", "game_id": "game-2"},
     ]
 
+    game_by_shot = {
+        "shot-1": "game-1",
+        "shot-2": "game-2",
+    }
+
     predictions = [
-        {"shot_id": shot, "model": model, "status": "ok"} for shot in shots for model in CONDITIONS
+        {
+            "shot_id": shot,
+            "game_id": game_by_shot[shot],
+            "model": model,
+            "status": "ok",
+        }
+        for shot in shots
+        for model in CONDITIONS
     ]
 
     def write_rows(filename, rows):
@@ -168,20 +180,37 @@ def test_strict_validator_failure_is_propagated(experiment, monkeypatch):
 
 
 def test_accepts_core_three_condition_experiment(experiment):
-    run_dir, spec, _, _, write_rows = experiment
+    run_dir, spec, selection, _, write_rows = experiment
+
     core = {"llm_single": 1, "llm_single_budget": 4, "llm_multi": 4}
     spec["conditions"] = core
-    (run_dir / "experiment.json").write_text(json.dumps({"spec": spec}), encoding="utf-8")
+
+    (run_dir / "experiment.json").write_text(
+        json.dumps({"spec": spec}),
+        encoding="utf-8",
+    )
+
+    game_by_shot = {row["shot_id"]: row["game_id"] for row in selection}
+
     write_rows(
         "predictions.csv",
         [
-            {"shot_id": shot, "model": model, "status": "ok"}
+            {
+                "shot_id": shot,
+                "game_id": game_by_shot[shot],
+                "model": model,
+                "status": "ok",
+            }
             for shot in spec["shot_ids"]
             for model in core
         ],
     )
 
-    result = accept_experiment(run_dir, expected_shots=2, expected_games=2)
+    result = accept_experiment(
+        run_dir,
+        expected_shots=2,
+        expected_games=2,
+    )
 
     assert result["accepted"] is True
     assert result["conditions"] == 3
@@ -194,4 +223,32 @@ def test_rejects_unknown_registered_condition(experiment):
     (run_dir / "experiment.json").write_text(json.dumps({"spec": spec}), encoding="utf-8")
 
     with pytest.raises(ValidationError, match="unknown LLM conditions"):
+        accept_experiment(run_dir)
+
+
+def test_rejects_prediction_game_mismatch(experiment):
+    run_dir, _, _, predictions, write_rows = experiment
+
+    # A prediction claims that shot-1 belongs to the wrong game.
+    predictions[0]["game_id"] = "game-2"
+    write_rows("predictions.csv", predictions)
+
+    with pytest.raises(
+        ValidationError,
+        match="Prediction game identity differs from selection",
+    ):
+        accept_experiment(run_dir)
+
+
+def test_rejects_prediction_without_game_identity(experiment):
+    run_dir, _, _, predictions, write_rows = experiment
+
+    # An empty game identifier must not pass acceptance.
+    predictions[0]["game_id"] = ""
+    write_rows("predictions.csv", predictions)
+
+    with pytest.raises(
+        ValidationError,
+        match="Prediction game identity differs from selection",
+    ):
         accept_experiment(run_dir)
