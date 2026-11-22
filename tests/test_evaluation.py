@@ -125,3 +125,29 @@ def test_common_success_matches_strict_comparison_without_failures():
         == (strict["brier_delta_candidate_minus_baseline"])
     )
     assert common["brier_delta_95pct_interval"] == (strict["brier_delta_95pct_interval"])
+
+
+@pytest.mark.parametrize(
+    ("column", "invalid_value"),
+    [
+        ("shot_id", ""),
+        ("game_id", "   "),
+        ("cohort", ""),
+        ("split", "\t"),
+        ("model", " "),
+    ],
+)
+def test_rejects_blank_prediction_identity(column, invalid_value):
+    frame = predictions()
+    frame.loc[0, column] = invalid_value
+
+    with pytest.raises(ValueError, match=f"Prediction {column} must contain nonblank strings"):
+        validate_predictions(frame)
+
+
+def test_accepts_nonblank_prediction_identities():
+    frame = predictions()
+
+    validate_predictions(frame)
+
+    assert len(score_predictions(frame)) == 2

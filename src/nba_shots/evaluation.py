@@ -20,6 +20,11 @@ def validate_predictions(predictions: pd.DataFrame) -> None:
         raise ValueError("No predictions to evaluate")
     if predictions[["shot_id", "game_id", "cohort", "split", "model", "y_true"]].isna().any().any():
         raise ValueError("Prediction identity fields and labels cannot be missing")
+    identity_columns = ["shot_id", "game_id", "cohort", "split", "model"]
+    for column in identity_columns:
+        values = predictions[column]
+        if not values.map(lambda value: isinstance(value, str) and bool(value.strip())).all():
+            raise ValueError(f"Prediction {column} must contain nonblank strings")
     if predictions.duplicated(["cohort", "model", "shot_id"]).any():
         raise ValueError("Duplicate predictions for a model/shot")
     if not predictions["y_true"].isin([0, 1]).all():
