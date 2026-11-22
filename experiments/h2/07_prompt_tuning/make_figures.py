@@ -121,7 +121,7 @@ def effects(split="test"):
     ax.xaxis.grid(True, color=GRID)
     ax.set_axisbelow(True)
     ax.set_title(
-        f"Test: paired differences, 95% game-bootstrap intervals (★ = primary, n={S[split]['n']})",
+        f"Test (n={S[split]['n']}): paired differences, 95% game-bootstrap CIs (★ = primary)",
         loc="left",
         fontsize=14,
         pad=12,

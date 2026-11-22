@@ -295,6 +295,23 @@ were retrained on the same features.
 
 These exploratory runs do **not** change the frozen held-out H2 results.
 
+### Follow-up: better prompts and XGBoost as a tool
+
+[Experiment 07](experiments/h2/07_prompt_tuning/README.md) tuned the prompts on 500
+validation shots and tested once on **1,000** test shots.
+
+- Rewritten instructions with a make-rate table, plus the 50 most similar training
+  shots, beat the original prompt (−0.003 [−0.006, −0.0002]). They still trail XGBoost
+  (+0.005 [+0.001, +0.008]).
+- Giving the agents the XGBoost estimate as a "statistical model tool" closes the
+  gap. The multi-agent system **ties** XGBoost: 0.2298 vs. 0.2297, Δ +0.0001
+  [−0.002, +0.002]. It does this mostly by copying the tool, and its deviations
+  don't help.
+- Multi-agent and single-agent tie again (−0.0002 [−0.002, +0.002]).
+- The same results hold on the 900 test shots that no earlier experiment used.
+
+The ceiling is in the nine tabular features, not in the prompts.
+
 ## Checks
 
 ```bash
