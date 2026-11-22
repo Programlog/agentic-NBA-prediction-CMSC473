@@ -99,6 +99,20 @@ def accept_experiment(
                 f"Prediction game identity differs from selection for shot {shot_id}"
             )
 
+    # Predictions must preserve the selected cohort and split.
+    selected_metadata = {row["shot_id"]: row for row in selection}
+
+    for row in predictions:
+        shot_id = row["shot_id"]
+        selected = selected_metadata.get(shot_id)
+
+        if selected is None or any(
+            row.get(field) != selected[field] for field in ("cohort", "split")
+        ):
+            raise ValidationError(
+                f"Prediction cohort or split differs from selection for shot {shot_id}"
+            )
+
     failures = [row for row in predictions if row["status"] != "ok"]
 
     if failures:

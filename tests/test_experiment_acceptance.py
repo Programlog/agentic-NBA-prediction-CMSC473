@@ -30,8 +30,18 @@ def experiment(tmp_path, monkeypatch):
     )
 
     selection = [
-        {"shot_id": "shot-1", "game_id": "game-1"},
-        {"shot_id": "shot-2", "game_id": "game-2"},
+        {
+            "shot_id": "shot-1",
+            "game_id": "game-1",
+            "cohort": "test_cohort",
+            "split": "validation",
+        },
+        {
+            "shot_id": "shot-2",
+            "game_id": "game-2",
+            "cohort": "test_cohort",
+            "split": "validation",
+        },
     ]
 
     game_by_shot = {
@@ -43,6 +53,8 @@ def experiment(tmp_path, monkeypatch):
         {
             "shot_id": shot,
             "game_id": game_by_shot[shot],
+            "cohort": "test_cohort",
+            "split": "validation",
             "model": model,
             "status": "ok",
         }
@@ -198,6 +210,8 @@ def test_accepts_core_three_condition_experiment(experiment):
             {
                 "shot_id": shot,
                 "game_id": game_by_shot[shot],
+                "cohort": "test_cohort",
+                "split": "validation",
                 "model": model,
                 "status": "ok",
             }
@@ -250,5 +264,25 @@ def test_rejects_prediction_without_game_identity(experiment):
     with pytest.raises(
         ValidationError,
         match="Prediction game identity differs from selection",
+    ):
+        accept_experiment(run_dir)
+
+
+@pytest.mark.parametrize(
+    ("field", "incorrect_value"),
+    [
+        ("cohort", "wrong_cohort"),
+        ("split", "test"),
+    ],
+)
+def test_rejects_prediction_metadata_mismatch(experiment, field, incorrect_value):
+    run_dir, _, _, predictions, write_rows = experiment
+
+    predictions[0][field] = incorrect_value
+    write_rows("predictions.csv", predictions)
+
+    with pytest.raises(
+        ValidationError,
+        match="Prediction cohort or split differs from selection",
     ):
         accept_experiment(run_dir)
