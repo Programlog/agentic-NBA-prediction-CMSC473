@@ -153,6 +153,9 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
                 f"({len(calls)} calls; maximum {expected_arms[arm]})"
             )
 
+        if status == "ok" and not cached and not calls:
+            raise ValidationError(f"{shot}/{arm}: successful fresh prediction has no LLM calls")
+
         result = trace["result"]
 
         if result["status"] != status:

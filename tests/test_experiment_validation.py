@@ -365,3 +365,44 @@ def test_rejects_fresh_inference_exceeding_call_budget(tmp_path):
     # The only violation is exceeding the allowed budget.
     with pytest.raises(ValidationError, match="call budget exceeded"):
         validate_artifacts(tmp_path)
+
+
+def test_rejects_successful_fresh_prediction_without_calls(tmp_path):
+    make_run(tmp_path)
+
+    trace_path = tmp_path / "traces.jsonl"
+    trace = json.loads(trace_path.read_text(encoding="utf-8"))
+
+    trace["calls"] = []
+    trace["result"]["calls"] = 0
+    trace["result"]["prompt_tokens"] = 0
+    trace["result"]["completion_tokens"] = 0
+
+    trace_path.write_text(
+        json.dumps(trace) + "\n",
+        encoding="utf-8",
+    )
+
+    pred_path = tmp_path / "predictions.csv"
+    with pred_path.open(newline="", encoding="utf-8") as stream:
+        pred = next(csv.DictReader(stream))
+
+    pred["calls"] = "0"
+    pred["prompt_tokens"] = "0"
+    pred["completion_tokens"] = "0"
+    _write_csv(pred_path, [pred])
+
+    usage_path = tmp_path / "usage_by_condition.csv"
+    with usage_path.open(newline="", encoding="utf-8") as stream:
+        usage = next(csv.DictReader(stream))
+
+    usage["calls_this_run"] = "0"
+    usage["prompt_tokens_this_run"] = "0"
+    usage["completion_tokens_this_run"] = "0"
+    _write_csv(usage_path, [usage])
+
+    with pytest.raises(
+        ValidationError,
+        match="successful fresh prediction has no LLM calls",
+    ):
+        validate_artifacts(tmp_path)
