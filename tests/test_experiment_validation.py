@@ -314,3 +314,54 @@ def test_rejects_unknown_original_cost_with_fabricated_tokens(tmp_path):
         match="unknown original costs must be blank",
     ):
         validate_artifacts(tmp_path)
+
+
+def test_rejects_fresh_inference_exceeding_call_budget(tmp_path):
+    make_run(tmp_path)
+
+    # The single-agent condition permits only one call,
+    # but the recorded run contains two.
+    trace_path = tmp_path / "traces.jsonl"
+    trace = json.loads(trace_path.read_text(encoding="utf-8"))
+
+    trace["calls"].append(dict(trace["calls"][0]))
+    trace["result"]["calls"] = 2
+    trace["result"]["prompt_tokens"] = 200
+    trace["result"]["completion_tokens"] = 40
+    trace["result"]["runtime_seconds"] = 7.5
+
+    trace_path.write_text(
+        json.dumps(trace) + "\n",
+        encoding="utf-8",
+    )
+
+    # Keep the prediction CSV consistent with the trace.
+    pred_path = tmp_path / "predictions.csv"
+
+    with pred_path.open(newline="", encoding="utf-8") as stream:
+        pred = next(csv.DictReader(stream))
+
+    pred["calls"] = "2"
+    pred["prompt_tokens"] = "200"
+    pred["completion_tokens"] = "40"
+    pred["runtime_seconds"] = "7.5"
+
+    _write_csv(pred_path, [pred])
+
+    # Keep aggregate accounting correct as well.
+    usage_path = tmp_path / "usage_by_condition.csv"
+
+    with usage_path.open(newline="", encoding="utf-8") as stream:
+        usage = next(csv.DictReader(stream))
+
+    usage["calls_this_run"] = "2"
+    usage["prompt_tokens_this_run"] = "200"
+    usage["completion_tokens_this_run"] = "40"
+    usage["runtime_seconds_this_run"] = "7.5"
+
+    _write_csv(usage_path, [usage])
+
+    # Everything agrees about the number of calls.
+    # The only violation is exceeding the allowed budget.
+    with pytest.raises(ValidationError, match="call budget exceeded"):
+        validate_artifacts(tmp_path)

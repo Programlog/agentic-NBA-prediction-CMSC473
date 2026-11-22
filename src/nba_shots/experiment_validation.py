@@ -147,6 +147,12 @@ def validate_artifacts(folder: str | Path) -> dict[str, object]:
         if cached and calls:
             raise ValidationError(f"{shot}/{arm}: cached prediction contains new calls")
 
+        if len(calls) > expected_arms[arm]:
+            raise ValidationError(
+                f"{shot}/{arm}: call budget exceeded "
+                f"({len(calls)} calls; maximum {expected_arms[arm]})"
+            )
+
         result = trace["result"]
 
         if result["status"] != status:
