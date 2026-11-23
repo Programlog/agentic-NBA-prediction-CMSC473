@@ -16,3 +16,7 @@ __pycache__/
 *.egg-info/
 *.pt
 .matplotlib/
+
+# H1 per-shot prediction CSVs: large raw outputs, kept out of main.
+# Earlier copies are in the history of feature/basketevent-h1.
+/reports/basketevent_h1*/**/*predictions*.csv
