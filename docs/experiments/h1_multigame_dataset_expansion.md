@@ -1,6 +1,6 @@
 # H1 Experiment: BasketEvent Multi-Game Dataset Expansion
 
-**Status:** implementation ready; real multi-game run not yet executed. The counts below are *prior observations*, not outcomes from the new script.
+**Status:** NBA game-coverage filtering implemented for multi-game selection; a completed real-data multi-game run has not yet been verified. The counts below are prior observations, not outcomes from the updated script.
 
 ## Research question
 
@@ -15,14 +15,16 @@ Can we reproducibly identify and match BasketEvent shot-event clips to existing 
 
 ## Protocol before running
 
-- Select **5 game folders** by SHA-256 seeded ordering (seed 42) across available paired MP4/JSON paths.
-- Select up to **40 JSON annotation files** per selected game using a deterministic hash of dataset paths, independent of video outcomes.
-- Count shot-event annotations (`Made Shot` and `Missed Shot`), deduplicate exact repeated annotations within a clip, then match to NBA shot table by **game ID, period and exact game clock**.
-- **Never use the made/missed label to resolve an ambiguous NBA match.** After a *unique* match, check whether its outcome agrees with the annotation; disagreements become `outcome_mismatch` audit entries, not selected examples.
-- Deduplicate NBA shot IDs across clips; select up to **10 uniquely matched shots per game** by deterministic hash.
+- Identify BasketEvent game folders with paired MP4/JSON files and check which game IDs are also present in the supplied NBA shot table.
+- Select up to 5 game folders with NBA shot-data coverage using deterministic SHA-256 ordering (seed 42). Record the total number of BasketEvent games, how many overlap with the NBA shot table, and how many are excluded due to missing NBA game coverage. If no games overlap, stop with a clear error before downloading annotations.
+- Select up to 40 JSON annotation files per selected game using a deterministic hash of dataset paths, independent of video outcomes.
+- Count shot-event annotations (Made Shot and Missed Shot), deduplicate exact repeated annotations within a clip, then match to the NBA shot table by game ID, period, and exact game clock.
+- Never use the made/missed label to resolve an ambiguous NBA match. After a unique match, check whether its outcome agrees with the annotation; disagreements become outcome_mismatch audit entries, not selected examples.
+- Deduplicate NBA shot IDs across clips; select up to 10 uniquely matched shots per game by deterministic hash.
 - Keep failed JSON downloads, missing/ambiguous NBA matches, mismatched outcomes, duplicate matches, quota exclusions, and failed MP4 downloads in CSV reports.
-- **Stage 1:** JSON-only metadata audit; **Stage 2:** download selected videos only after reviewing candidate coverage and match quality.
-- **No automatic release-frame inference.** Manually review/annotate each selected clip before CoTracker3/YOLO extraction. Use only pre-release visual features, never the event outcome or post-release video.
+- Stage 1: JSON-only metadata audit; Stage 2: download selected videos only after reviewing candidate coverage and match quality.
+- No automatic release-frame inference. Manually review/annotate each selected clip before CoTracker3/YOLO extraction. Use only pre-release visual features, never the event outcome or post-release video.
+- Important limitation: Game-level coverage does not guarantee that individual BasketEvent clips match NBA shot records. Event-level matching and outcome consistency must still be verified before shots are accepted for the H1 experiment.
 
 ## Command: JSON-only dry pilot (no video downloads)
 
@@ -45,7 +47,7 @@ The script checks that the output directory does **not** already exist. Results:
 - `event_matching_report.csv`: every shot annotation, match status and selection decision
 - `manifest.csv`: candidate shots, source JSON, blank release/box annotations
 
-Inspect counts **before** deciding whether to download MP4s. If source NBA data doesn't cover the chosen games, note the no-match results and obtain the corresponding source shots rather than silently substituting outcomes or changing games.
+Inspect the matching results and coverage counts before deciding whether to download MP4s. The script now selects only BasketEvent games that appear in the supplied NBA shot table. However, game-level coverage does not guarantee valid shot-level matches. If no games overlap, the script stops before downloading annotations. If selected games produce few or no valid event matches, investigate the source data and matching rules rather than silently substituting outcomes or changing the registered selection.
 
 ## Command: separate video run (new output directory)
 
