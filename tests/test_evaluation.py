@@ -125,3 +125,93 @@ def test_common_success_matches_strict_comparison_without_failures():
         == (strict["brier_delta_candidate_minus_baseline"])
     )
     assert common["brier_delta_95pct_interval"] == (strict["brier_delta_95pct_interval"])
+
+
+@pytest.mark.parametrize(
+    ("column", "invalid_value"),
+    [
+        ("shot_id", ""),
+        ("game_id", "   "),
+        ("cohort", ""),
+        ("split", "\t"),
+        ("model", " "),
+    ],
+)
+def test_rejects_blank_prediction_identity(column, invalid_value):
+    frame = predictions()
+    frame.loc[0, column] = invalid_value
+
+    with pytest.raises(ValueError, match=f"Prediction {column} must contain nonblank strings"):
+        validate_predictions(frame)
+
+
+def test_accepts_nonblank_prediction_identities():
+    frame = predictions()
+
+    validate_predictions(frame)
+
+    assert len(score_predictions(frame)) == 2
+
+
+def test_game_bootstrap_weights_unequal_game_sizes():
+    rows = []
+
+    for model in ("base", "candidate"):
+        for i in range(10):
+            rows.append(
+                {
+                    "shot_id": f"shot-{i}",
+                    "game_id": "game-large" if i < 9 else "game-small",
+                    "cohort": "test",
+                    "split": "validation",
+                    "model": model,
+                    "y_true": 0,
+                    "p_make": (0.5 if model == "base" else (0.0 if i < 9 else 1.0)),
+                    "status": "ok",
+                }
+            )
+
+    frame = pd.DataFrame(rows)
+
+    result = paired_comparison(
+        frame,
+        "base",
+        "candidate",
+        repetitions=1000,
+        seed=42,
+    )
+
+    assert result["n_shots"] == 10
+    assert result["n_games"] == 2
+
+    # Nine improvements of -0.25 and one regression of +0.75.
+    # The correct shot-weighted mean is -0.15, not +0.25.
+    assert result["brier_delta_candidate_minus_baseline"] == pytest.approx(-0.15)
+
+    # Whole-game resampling must preserve the game clusters.
+    # Sampling only the large game gives -0.25.
+    # Sampling only the small game gives +0.75.
+    assert result["brier_delta_95pct_interval"] == pytest.approx([-0.25, 0.75])
+
+    # Repeated evaluation with the same seed must be reproducible.
+    repeated = paired_comparison(
+        frame,
+        "base",
+        "candidate",
+        repetitions=1000,
+        seed=42,
+    )
+
+    assert result == repeated
+
+
+def test_paired_bootstrap_rejects_single_game():
+    frame = predictions()
+
+    frame = frame.loc[frame["game_id"].eq("0")].copy()
+
+    with pytest.raises(
+        ValueError,
+        match="At least two held-out games",
+    ):
+        paired_comparison(frame, "base", "perfect")
