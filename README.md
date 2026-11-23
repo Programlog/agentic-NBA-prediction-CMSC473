@@ -325,6 +325,7 @@ Use `uv run --frozen --all-extras pytest -q` to include the CrewAI integration t
 ## Resources
 
 - [Baseline results](reports/day1.md)
+- [H1 results: box features and shot prediction](docs/h1_results.md)
 - [Demo notebook](notebooks/demo.ipynb)
 - [Team roadmap](docs/roadmap.md)
 - [Troubleshooting](docs/troubleshooting.md)
