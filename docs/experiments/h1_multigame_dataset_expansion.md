@@ -98,8 +98,28 @@ The revised whole-second matching rule was subsequently validated using the prod
 
 The result confirms that the revised implementation reproduces the exploratory clock-matching diagnostic on this cohort. It does not independently establish video-to-shot identity or prove that the rule generalizes to every BasketEvent game.
 
-Separate coverage limitation: One selected game (0022500001) yielded zero recognized shot events from its 40 sampled JSON files. That result remains unresolved and must not be silently excluded or replaced. The zero-yield game remains part of the selected-game audit denominator; the 40 selected shots come from four of the five selected games, not five independently contributing games.
+### Complete annotation-coverage audit for game `0022500001`
 
+The original five-game metadata experiment selected game `0022500001`, but its first 40 JSON files contained no recognized shot-event annotations.
+
+A subsequent exploratory investigation examined an additional 40 JSON files and again found no event fields. To determine whether the missing event metadata extended across the game's available annotations, a separate audit downloaded and inspected all 300 paired JSON files for game 0022500001 in the pinned BasketEvent revision, without downloading any MP4 videos.
+
+The complete audit produced:
+
+- 300 JSON files processed
+- 0 retrieval or parsing failures
+- 0 files containing an `event` field
+- 0 files containing non-null event metadata
+- 0 files containing recognized shot events
+- 0 recognized made/missed shot annotations
+
+The results are stored locally in `artifacts/h1_game0001_coverage_audit_v1`, including `annotation_coverage.csv` and `summary.json`.
+
+This establishes that none of the 300 examined JSON annotation files contains usable event metadata under the current schema. It does not establish whether the corresponding videos visually contain basketball shots.
+
+Game `0022500001` remains part of the original five-game sampling denominator and contributes zero metadata-matched shots. It must not be silently replaced, and NBA shot outcomes must not be used to fabricate missing BasketEvent annotations.
+
+This limitation demonstrates why NBA game-ID coverage and paired video availability are insufficient measures of actual shot-annotation coverage. Other games require separate coverage audits before conclusions are drawn about the entire BasketEvent dataset.
 
 ## Results and reproducibility
 
