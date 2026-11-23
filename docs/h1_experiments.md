@@ -337,6 +337,24 @@ validation games: -0.00053 (-0.00199 to +0.00105).
   of its size, so its interval (width 0.0033) is several times the effect. The fair summary is a
   small, consistent improvement, significant only when all 184 development games are used.
 
-## What is left
+## 25. What the box model learned (exploratory, after the test run)
+
+Not a test and not pre-registered: a description of the frozen models for presentation.
+`scripts/h1_explain.py` reads the six seed models from the test run (fit on training games) and the
+7,726 development shots only; no test-split data. Output: `reports/basketevent_h1_explain/`.
+
+- **Importance:** exact tree SHAP from XGBoost, averaged over seeds. Shot distance is first (mean
+  |SHAP| 0.16 log-odds), release height second (0.10), then home/away (0.08, a tabular feature
+  the baseline also has) and defender distance (0.07). Box features hold 43% of the total, more
+  than their 0.0009 Brier gain suggests, because SHAP measures reliance, not added accuracy.
+- **Release height:** the model mostly learned one step. Releases below about 0.9 body heights
+  (6% of shots) lower the log-odds by about 0.45; above 1.25 the effect is near zero or slightly
+  positive. Observed: 17% made below 0.9 vs 28% above, with the same share of threes (74% vs
+  74%). By fifths, the lowest goes in least for both 2s (31% vs 33 to 40%) and 3s (22% vs 23 to
+  27%); the upper four fifths do not differ clearly.
+- **Intuition:** a jump-shot release under one body height is physically unusual, so this group
+  likely mixes rushed, low releases with shots whose detected release frame is early (section
+  23). The boxes cannot separate the two.
+
 
 - Optional: recover the multi-shot clips with the leak audit, to tighten the interval.

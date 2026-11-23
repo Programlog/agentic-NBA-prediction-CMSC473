@@ -99,7 +99,24 @@ camera motion is removed). The ball-rise failure reflects the tracker: its ball 
 while the box ball rose a median 66 px, so ball rise remains unverified. Neither feature drives the
 gain.
 
-## How the comparison was kept fair
+## What the model learned
+
+Exploratory, after the test run: SHAP values from the six frozen box models, on the 7,726
+development shots (no test data). Script: `scripts/h1_explain.py`.
+
+![Feature importance](../reports/basketevent_h1_explain/feature_importance.png)
+
+Shot distance matters most, release height second. Box features account for 43% of the model's
+total reliance, though they add only a small amount of accuracy beyond the tabular features.
+
+![Release height](../reports/basketevent_h1_explain/release_height.png)
+
+The model mostly learned one rule: **releases below about 0.9 shooter body heights go in much less
+often.** These are 6% of jump shots and are made 17% of the time, against 28% for the rest, with
+the same share of threes in both groups (74%). Above that, release height changes predictions
+little. A jump-shot release this low is physically unusual, so the group likely mixes rushed, low
+releases with shots whose detected release frame is early (see the measurement check above).
+
 
 - **Release-time inputs only:** boxes up to release plus a few frames of ball flight; no outcome
   and nothing after the shot.
