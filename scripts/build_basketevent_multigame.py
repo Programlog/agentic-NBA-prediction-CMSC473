@@ -100,10 +100,17 @@ def nba_matches(event: dict, game: str, nba: pd.DataFrame) -> tuple[str, dict | 
         period = int(event["event_period"])
     except (ValueError, TypeError) as exc:
         return f"invalid_event_time: {exc}", None
+
+    # BasketEvent preserves fractional seconds, while the NBA shot source
+    # records whole seconds. Match on the integer-second portion of the
+    # event clock, not a broad nearest-neighbor time tolerance.
+    # Any multiple NBA candidates remain ambiguous.
+    whole_seconds = int(seconds)
+
     frame = nba.loc[
         nba["game_id"].eq(game)
         & nba["period"].eq(period)
-        & (nba["game_clock_seconds"] - seconds).abs().lt(0.01)
+        & nba["game_clock_seconds"].eq(whole_seconds)
     ]
     if len(frame) == 0:
         return "no_nba_match", None

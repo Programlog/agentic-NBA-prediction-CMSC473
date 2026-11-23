@@ -237,3 +237,55 @@ def test_build_selects_only_games_covered_by_nba(tmp_path, monkeypatch):
     manifest = pd.read_csv(output / "manifest.csv", dtype=str)
     assert manifest["game_id"].tolist() == ["0022500003"]
     assert manifest["shot_id"].tolist() == ["nba:0022500003:10"]
+
+
+def test_fractional_clock_matches_integer_nba_second():
+    event = {
+        "event_clock": "PT07M00.90S",
+        "event_period": 2,
+        "event_type": "made shot",
+    }
+
+    status, result = module.nba_matches(event, "0022500003", sample_shots())
+
+    assert status == "matched"
+    assert result["shot_id"] == "nba:0022500003:2"
+
+
+def test_fractional_clock_does_not_resolve_ambiguity():
+    nba = pd.concat(
+        [
+            sample_shots(),
+            sample_shots()
+            .iloc[[1]]
+            .assign(
+                shot_id="nba:0022500003:another",
+                game_event_id="another",
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    event = {
+        "event_clock": "PT07M00.90S",
+        "event_period": 2,
+        "event_type": "made shot",
+    }
+
+    status, result = module.nba_matches(event, "0022500003", nba)
+
+    assert status == "ambiguous_nba_match"
+    assert result is None
+
+
+def test_fractional_clock_still_checks_outcome():
+    event = {
+        "event_clock": "PT07M00.90S",
+        "event_period": 2,
+        "event_type": "missed shot",
+    }
+
+    status, result = module.nba_matches(event, "0022500003", sample_shots())
+
+    assert status == "outcome_mismatch"
+    assert result is None
