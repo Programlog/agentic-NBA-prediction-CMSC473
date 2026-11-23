@@ -4,16 +4,17 @@ No shot outcome or later video frames are supplied to CV features. BasketEvent
 video/trajectory contents must be inspected before establishing release frames.
 All output files are new; this script refuses to overwrite an existing run.
 """
+
 from __future__ import annotations
 
 import argparse
-from collections import Counter, defaultdict
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
+from collections import Counter, defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 
@@ -39,9 +40,13 @@ def indexed_paths(files: list[str]) -> dict[str, list[str]]:
     games = defaultdict(list)
     for name in files:
         parts = name.split("/")
-        if (len(parts) == 3 and parts[0] in {"train", "valid", "test"}
-                and parts[1].isdigit() and name.lower().endswith(".json")
-                and name[:-5] + ".mp4" in known):
+        if (
+            len(parts) == 3
+            and parts[0] in {"train", "valid", "test"}
+            and parts[1].isdigit()
+            and name.lower().endswith(".json")
+            and name[:-5] + ".mp4" in known
+        ):
             games[parts[1]].append(name)
     return {game: sorted(paths) for game, paths in games.items()}
 
@@ -61,23 +66,30 @@ def extract_events(data: object, json_path: str) -> list[dict]:
         label = str(event.get("actionType", "")).strip().lower()
         if label not in SHOT_LABELS:
             continue
-        signature = (str(event.get("clock")), str(event.get("period")),
-                     str(event.get("playerName")), str(event.get("description")), label)
+        signature = (
+            str(event.get("clock")),
+            str(event.get("period")),
+            str(event.get("playerName")),
+            str(event.get("description")),
+            label,
+        )
         if signature in seen:
             continue
         seen.add(signature)
-        records.append({
-            "json_path": json_path,
-            "video_path": json_path[:-5] + ".mp4",
-            "source_role": role,
-            "event_action": event.get("actionType"),
-            "event_clock": event.get("clock"),
-            "event_period": event.get("period"),
-            "event_player": event.get("playerName"),
-            "event_description": event.get("description"),
-            "event_team": event.get("teamTricode"),
-            "event_type": label,
-        })
+        records.append(
+            {
+                "json_path": json_path,
+                "video_path": json_path[:-5] + ".mp4",
+                "source_role": role,
+                "event_action": event.get("actionType"),
+                "event_clock": event.get("clock"),
+                "event_period": event.get("period"),
+                "event_player": event.get("playerName"),
+                "event_description": event.get("description"),
+                "event_team": event.get("teamTricode"),
+                "event_type": label,
+            }
+        )
     return records
 
 
@@ -88,10 +100,17 @@ def nba_matches(event: dict, game: str, nba: pd.DataFrame) -> tuple[str, dict | 
         period = int(event["event_period"])
     except (ValueError, TypeError) as exc:
         return f"invalid_event_time: {exc}", None
+
+    # BasketEvent preserves fractional seconds, while the NBA shot source
+    # records whole seconds. Match on the integer-second portion of the
+    # event clock, not a broad nearest-neighbor time tolerance.
+    # Any multiple NBA candidates remain ambiguous.
+    whole_seconds = int(seconds)
+
     frame = nba.loc[
         nba["game_id"].eq(game)
         & nba["period"].eq(period)
-        & (nba["game_clock_seconds"] - seconds).abs().lt(0.01)
+        & nba["game_clock_seconds"].eq(whole_seconds)
     ]
     if len(frame) == 0:
         return "no_nba_match", None
@@ -115,9 +134,25 @@ def choose_games(groups: dict[str, list[str]], games: int, seed: int) -> list[st
     return sorted(groups, key=lambda game: stable_order(seed, game))[:games]
 
 
-def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10,
-          max_json_per_game: int = 40, seed: int = 42, download_videos: bool = False,
-          repo: str = REPO) -> dict:
+def filter_games_with_nba_coverage(
+    groups: dict[str, list[str]],
+    nba_game_ids: set[str],
+) -> dict[str, list[str]]:
+    """Keep only BasketEvent games present in the NBA shot source."""
+    return {game: paths for game, paths in groups.items() if game in nba_game_ids}
+
+
+def build(
+    *,
+    shots: Path,
+    output: Path,
+    games: int = 5,
+    shots_per_game: int = 10,
+    max_json_per_game: int = 40,
+    seed: int = 42,
+    download_videos: bool = False,
+    repo: str = REPO,
+) -> dict:
     from huggingface_hub import HfApi, hf_hub_download
 
     shots, output = Path(shots), Path(output)
@@ -145,7 +180,17 @@ def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10
     grouped = indexed_paths(all_paths)
     if not grouped:
         raise ValueError("No paired JSON+MP4 game files found")
-    chosen = choose_games(grouped, games, seed)
+
+    nba_game_ids = set(nba["game_id"])
+    covered_groups = filter_games_with_nba_coverage(grouped, nba_game_ids)
+
+    if not covered_groups:
+        raise ValueError(
+            "No BasketEvent game folders overlap with the NBA shot table. "
+            "Check the source season and game IDs before downloading JSONs."
+        )
+
+    chosen = choose_games(covered_groups, games, seed)
     output.mkdir(parents=True)
     json_audit = []
     events = []
@@ -153,10 +198,21 @@ def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10
     for game in chosen:
         candidates = sorted(grouped[game], key=lambda p: stable_order(seed, p))[:max_json_per_game]
         for index, name in enumerate(candidates, 1):
-            row = {"game_id": game, "json_path": name, "status": "error", "error": "", "shot_event_count": 0}
+            row = {
+                "game_id": game,
+                "json_path": name,
+                "status": "error",
+                "error": "",
+                "shot_event_count": 0,
+            }
             try:
-                local = hf_hub_download(repo_id=repo, repo_type="dataset", filename=name,
-                                        revision=revision, local_dir=local_root)
+                local = hf_hub_download(
+                    repo_id=repo,
+                    repo_type="dataset",
+                    filename=name,
+                    revision=revision,
+                    local_dir=local_root,
+                )
                 data = json.loads(Path(local).read_text(encoding="utf-8"))
                 found = extract_events(data, name)
                 for item in found:
@@ -166,7 +222,11 @@ def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10
             except Exception as exc:
                 row["error"] = str(exc)
             json_audit.append(row)
-            print(f"[{game} {index}/{len(candidates)}] {row['status']} | shot annotations={row['shot_event_count']}", flush=True)
+            print(
+                f"[{game} {index}/{len(candidates)}] {row['status']} | "
+                f"shot annotations={row['shot_event_count']}",
+                flush=True,
+            )
     # Record EVERY extracted candidate event, including unmatched and duplicates.
     event_report = []
     seen_shots = set()
@@ -174,8 +234,15 @@ def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10
     for event in events:
         status, nba_shot = nba_matches(event, event["game_id"], nba)
         record = dict(event)
-        record.update({"match_status": status, "shot_id": "", "game_event_id": "",
-                       "selection_status": "not_eligible", "download_status": "not_requested"})
+        record.update(
+            {
+                "match_status": status,
+                "shot_id": "",
+                "game_event_id": "",
+                "selection_status": "not_eligible",
+                "download_status": "not_requested",
+            }
+        )
         if nba_shot is not None:
             record.update(nba_shot)
             if nba_shot["shot_id"] in seen_shots:
@@ -187,16 +254,21 @@ def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10
     for game in chosen:
         entries = sorted(eligible[game], key=lambda r: stable_order(seed, r["shot_id"]))
         for index, record in enumerate(entries):
-            record["selection_status"] = ("selected" if index < shots_per_game
-                                          else "not_selected_quota")
+            record["selection_status"] = (
+                "selected" if index < shots_per_game else "not_selected_quota"
+            )
     selected = [r for r in event_report if r["selection_status"] == "selected"]
     for record in selected:
         if not download_videos:
             continue
         try:
-            video = hf_hub_download(repo_id=repo, repo_type="dataset",
-                                    filename=record["video_path"], revision=revision,
-                                    local_dir=local_root)
+            video = hf_hub_download(
+                repo_id=repo,
+                repo_type="dataset",
+                filename=record["video_path"],
+                revision=revision,
+                local_dir=local_root,
+            )
             record["download_status"] = "ok"
             record["local_clip"] = os.path.relpath(Path(video).resolve(), output.resolve())
         except Exception as exc:
@@ -204,33 +276,73 @@ def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10
             record["download_error"] = str(exc)
     manifest = []
     for record in selected:
-        manifest.append({
-            "shot_id": record["shot_id"], "game_id": record["game_id"],
-            "game_event_id": record["game_event_id"],
-            "clip_path": record.get("local_clip", ""),
-            "release_frame": "", "shooter_box": "", "defender_box": "",
-            "shooting_side": "", "source_json": record["json_path"],
-            "download_status": record["download_status"],
-            "annotation_status": "pending_manual_review",
-        })
-    manifest_cols = ["shot_id", "game_id", "game_event_id", "clip_path", "release_frame",
-                     "shooter_box", "defender_box", "shooting_side", "source_json",
-                     "download_status", "annotation_status"]
+        manifest.append(
+            {
+                "shot_id": record["shot_id"],
+                "game_id": record["game_id"],
+                "game_event_id": record["game_event_id"],
+                "clip_path": record.get("local_clip", ""),
+                "release_frame": "",
+                "shooter_box": "",
+                "defender_box": "",
+                "shooting_side": "",
+                "source_json": record["json_path"],
+                "download_status": record["download_status"],
+                "annotation_status": "pending_manual_review",
+            }
+        )
+    manifest_cols = [
+        "shot_id",
+        "game_id",
+        "game_event_id",
+        "clip_path",
+        "release_frame",
+        "shooter_box",
+        "defender_box",
+        "shooting_side",
+        "source_json",
+        "download_status",
+        "annotation_status",
+    ]
     pd.DataFrame(json_audit).to_csv(output / "json_audit.csv", index=False)
-    pd.DataFrame(event_report, columns=[
-        "game_id", "json_path", "video_path", "source_role", "event_action",
-        "event_clock", "event_period", "event_player", "event_description",
-        "event_team", "event_type", "match_status", "shot_id", "game_event_id",
-        "selection_status", "download_status", "download_error", "local_clip",
-    ]).to_csv(output / "event_matching_report.csv", index=False)
+    pd.DataFrame(
+        event_report,
+        columns=[
+            "game_id",
+            "json_path",
+            "video_path",
+            "source_role",
+            "event_action",
+            "event_clock",
+            "event_period",
+            "event_player",
+            "event_description",
+            "event_team",
+            "event_type",
+            "match_status",
+            "shot_id",
+            "game_event_id",
+            "selection_status",
+            "download_status",
+            "download_error",
+            "local_clip",
+        ],
+    ).to_csv(output / "event_matching_report.csv", index=False)
     pd.DataFrame(manifest, columns=manifest_cols).to_csv(output / "manifest.csv", index=False)
     summary = {
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "repository": repo, "dataset_revision": revision,
+        "repository": repo,
+        "dataset_revision": revision,
+        "basket_event_games_with_paired_files": len(grouped),
+        "games_with_nba_coverage": len(covered_groups),
+        "games_excluded_no_nba_coverage": len(grouped) - len(covered_groups),
         "nba_source": str(shots),
         "nba_source_sha256": hashlib.sha256(shots.read_bytes()).hexdigest(),
-        "seed": seed, "games_requested": games, "games_selected": chosen,
-        "max_json_per_game": max_json_per_game, "shots_per_game": shots_per_game,
+        "seed": seed,
+        "games_requested": games,
+        "games_selected": chosen,
+        "max_json_per_game": max_json_per_game,
+        "shots_per_game": shots_per_game,
         "json_attempted": len(json_audit),
         "json_failed": sum(r["status"] != "ok" for r in json_audit),
         "shot_event_annotations": len(events),
@@ -239,9 +351,12 @@ def build(*, shots: Path, output: Path, games: int = 5, shots_per_game: int = 10
         "video_downloads_requested": bool(download_videos),
         "video_download_succeeded": sum(r["download_status"] == "ok" for r in selected),
         "video_download_failed": sum(r["download_status"] == "error" for r in selected),
-        "note": "Shots are selected by deterministic hash, never made/missed status. "
-                "Event outcomes are checked only after an unambiguous ID match. "
-                "No release frames or player xyxy boxes are inferred from BasketEvent trajectories.",
+        "note": (
+            "Shots are selected by deterministic hash, never made/missed status. "
+            "Event outcomes are checked only after an unambiguous ID match. "
+            "No release frames or player xyxy boxes are inferred from "
+            "BasketEvent trajectories."
+        ),
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary
@@ -255,8 +370,11 @@ def main() -> None:
     parser.add_argument("--shots-per-game", type=int, default=10)
     parser.add_argument("--max-json-per-game", type=int, default=40)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--download-videos", action="store_true",
-                        help="Download MP4s for selected matched shots (off by default)")
+    parser.add_argument(
+        "--download-videos",
+        action="store_true",
+        help="Download MP4s for selected matched shots (off by default)",
+    )
     args = parser.parse_args()
     print(json.dumps(build(**vars(args)), indent=2))
 
