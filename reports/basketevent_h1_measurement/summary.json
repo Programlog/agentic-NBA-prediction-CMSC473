@@ -1,0 +1,110 @@
+{
+  "all_video_shots": {
+    "shots": 1492,
+    "status": {
+      "ok": 1492
+    },
+    "pose_status": {
+      "ok": 1181,
+      "no_matching_person": 277,
+      "no_wrist": 19,
+      "no_ankle": 15
+    },
+    "release_height": {
+      "measured": 1181,
+      "rho": 0.5117989207740112,
+      "ci": [
+        0.4614738544841499,
+        0.5576540364738015
+      ],
+      "verdict": "pass"
+    },
+    "ball_at_hands": {
+      "measured": 1196,
+      "share_within_1_torso": 0.5468227424749164,
+      "verdict": "fail"
+    },
+    "jump": {
+      "measured": 359,
+      "rho": 0.5973150563981545,
+      "ci": [
+        0.511656180771458,
+        0.6696500945574106
+      ],
+      "verdict": "pass"
+    },
+    "jump_camera_corrected_descriptive": {
+      "measured": 359,
+      "rho": 0.43409852283685807,
+      "ci": [
+        0.34083895440847856,
+        0.5222740590822108
+      ],
+      "verdict": "fail"
+    },
+    "camera_jump_px_median_abs": 7.351226806640625,
+    "ball_rise": {
+      "measured": 423,
+      "rho": 0.09383365715581034,
+      "ci": [
+        0.001388633463455598,
+        0.18184144033918057
+      ],
+      "verdict": "fail"
+    }
+  },
+  "d0_unblocked_jump": {
+    "shots": 911,
+    "status": {
+      "ok": 911
+    },
+    "pose_status": {
+      "ok": 774,
+      "no_matching_person": 123,
+      "no_ankle": 8,
+      "no_wrist": 6
+    },
+    "release_height": {
+      "measured": 774,
+      "rho": 0.3167330968567041,
+      "ci": [
+        0.24731252770951112,
+        0.3856599156549789
+      ],
+      "verdict": "fail"
+    },
+    "ball_at_hands": {
+      "measured": 782,
+      "share_within_1_torso": 0.49104859335038364,
+      "verdict": "fail"
+    },
+    "jump": {
+      "measured": 359,
+      "rho": 0.5973150563981545,
+      "ci": [
+        0.511656180771458,
+        0.6696500945574106
+      ],
+      "verdict": "pass"
+    },
+    "jump_camera_corrected_descriptive": {
+      "measured": 359,
+      "rho": 0.43409852283685807,
+      "ci": [
+        0.34083895440847856,
+        0.5222740590822108
+      ],
+      "verdict": "fail"
+    },
+    "camera_jump_px_median_abs": 7.351226806640625,
+    "ball_rise": {
+      "measured": 423,
+      "rho": 0.09383365715581034,
+      "ci": [
+        0.001388633463455598,
+        0.18184144033918057
+      ],
+      "verdict": "fail"
+    }
+  }
+}

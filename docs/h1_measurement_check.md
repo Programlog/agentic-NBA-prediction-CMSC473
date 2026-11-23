@@ -97,7 +97,7 @@ tracks pose only loosely within jump shots", not as a clean measure of release p
 test-split run tests prediction, which this check does not overturn, and goes ahead under the
 protocol in `h1_test_protocol.md`, reporting this limitation alongside it.
 
-The CoTracker3 pass (jump, ball rise) has not been run.
+The CoTracker3 pass (jump, ball rise) is reported below, after the amendment that fixed its sample.
 
 ## Amendment before the CoTracker3 pass (2026-11-23)
 
@@ -112,3 +112,33 @@ Written before any tracking measurement beyond the 3-clip mechanical pilot. CoTr
   are in `reports/basketevent_h1_measurement/track_sample.txt`.
 - **Unchanged:** the measurements, pass rules (rho >= 0.5 with interval lower end > 0.3), the
   100-shot minimum, and reporting of every failure. Results are reported for this sample only.
+
+## Results (CoTracker3 pass, 2026-11-24)
+
+All 500 sampled shots (22 games) were downloaded and tracked without errors. A value counts only
+where CoTracker marks the point visible at both ends of the difference. Jump was measured on 359
+shots: 140 had no shooter point visible at both ends, and 2 had no box value. Ball rise was measured
+on 423: 76 had the ball not visible at both ends, and 6 had no box value (some shots had both
+problems). Raw rows: `artifacts/h1_measurement_check/track.jsonl`; summary (both passes):
+`reports/basketevent_h1_measurement/summary.json`.
+
+| Check | Measured | Spearman rho (95% interval) | Verdict |
+|---|---|---|---|
+| Jump: box vs raw track | 359 | 0.60 (0.51 to 0.67) | pass |
+| Ball rise: box vs track | 423 | 0.09 (0.00 to 0.18) | fail |
+| Jump: box vs camera-corrected track (descriptive) | 359 | 0.43 (0.34 to 0.52) | not a check |
+
+The camera's median absolute vertical motion over the jump window is 7.4 px, against a median box
+jump of 12.5 px. Part of what both the box jump and the raw track jump pick up is the camera moving,
+which is why agreement drops once camera motion is removed.
+
+Exploratory, not planned: the ball-rise failure looks like the tracker, not the boxes. Over the 4
+frames after release the box ball centre rises a median 66.5 px, but the tracked ball point moves a
+median -5.5 px (|9.3| px), so it mostly stays on the hands or background instead of following the
+ball. This matches the 25-clip pilot (`h1_experiments.md` section 17), where CoTracker3 kept losing
+the ball. The pre-registered verdict stays fail; this check cannot say whether box ball rise is
+accurate.
+
+**Reading:** box jump is supported as a jump measurement, with camera motion mixed in. Box ball
+rise is unverified. Neither gates the test split, and D0's gain comes mainly from release height
+(section 14 of the log), so the H1 result and its release-height caveat are unchanged.

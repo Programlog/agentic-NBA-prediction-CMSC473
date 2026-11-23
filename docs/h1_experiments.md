@@ -18,6 +18,8 @@ cross-validation.
 - **Measurement check** (section 23): release height, the main source of the gain, agrees with an
   independent YOLO pose estimate across all shots (rho 0.51) but only weakly within jump shots
   (rho 0.32). Read it as a box-derived height near release, not a clean measure of posture.
+  CoTracker3 on 500 jump shots confirms box jump (rho 0.60) but could not track the ball to check
+  ball rise.
 
 Brier differences below are box model minus baseline; negative favours the boxes. Intervals are
 95% paired bootstraps over whole games (1,000 resamples). "Significant" means the interval
@@ -304,8 +306,16 @@ dunk 0.53, floater 0.44, hook 0.33, jump 0.32.
 
 - **Intuition:** the pooled agreement mostly reflects shot families differing in release height.
   Within jump shots the box measurement is noisy, and the release frame is often a little off
-  (consistent with the blind review in 4). The CoTracker3 checks of jump and ball rise were not
-  run.
+  (consistent with the blind review in 4).
+
+CoTracker3 on a fixed random sample of 500 D0 jump shots (sample fixed before running): box jump
+agrees with tracked lower-body motion at rho 0.60 (0.51 to 0.67, 359 shots, pass), or 0.43 after
+removing camera motion (descriptive). Box ball rise agrees at 0.09 (0.00 to 0.18, 423 shots,
+fail), but the tracked ball point barely moves (median -5.5 px vs the box's +66.5 px over 4
+frames), so the tracker lost the ball, as in the pilot (section 17).
+
+- **Intuition:** jump from the boxes is real motion, partly camera. Ball rise could not be checked
+  with a point tracker. Neither drives D0's gain.
 
 ## 24. Test split (scored once)
 
@@ -329,5 +339,4 @@ validation games: -0.00053 (-0.00199 to +0.00105).
 
 ## What is left
 
-- Optional: the CoTracker3 pass of `h1_measurement_check.md` (jump, ball rise), ~6-7 hours on CPU.
 - Optional: recover the multi-shot clips with the leak audit, to tighten the interval.

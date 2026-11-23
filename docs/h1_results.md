@@ -14,6 +14,7 @@ split alone is too small to confirm it.
 | Cross-validation, 184 games, 7,726 shots | **−0.0009** | −0.0017 to −0.0001 | significant |
 | Test split, 34 unseen games, 1,546 shots (scored once) | **−0.0007** | −0.0024 to +0.0010 | not significant alone |
 | Release height vs. YOLO pose, jump shots | Spearman **ρ 0.32** (all shot types 0.51) | 0.25 to 0.39 | weak agreement |
+| Box jump vs. CoTracker3, 500 jump shots | Spearman **ρ 0.60** | 0.51 to 0.67 | agrees |
 
 Negative Brier change means the box features helped. Intervals are paired bootstraps over whole
 games (1,000 resamples).
@@ -85,6 +86,19 @@ release frames the ball sat within a torso length of the higher wrist only 49% o
 (threshold 70%), so the detected release frame is often slightly off. We therefore describe the
 feature as a box-derived height near release, not a clean measure of shooting posture.
 
+We also checked two motion features with CoTracker3 point tracking on a fixed random sample of 500
+of these jump shots:
+
+| Feature | Shots measured | Agreement with tracking (Spearman ρ) | Verdict |
+|---|---|---|---|
+| Jump | 359 | 0.60 (0.51 to 0.67) | pass (threshold 0.5) |
+| Ball rise | 423 | 0.09 (0.00 to 0.18) | fail |
+
+Box jump tracks real lower-body motion, though part of it is camera movement (agreement 0.43 once
+camera motion is removed). The ball-rise failure reflects the tracker: its ball point barely moved
+while the box ball rose a median 66 px, so ball rise remains unverified. Neither feature drives the
+gain.
+
 ## How the comparison was kept fair
 
 - **Release-time inputs only:** boxes up to release plus a few frames of ball flight; no outcome
@@ -107,7 +121,8 @@ feature as a box-derived height near release, not a clean measure of shooting po
   cross-validation.
 - The test split agrees in direction and size, with every seed negative, but 34 games cannot detect
   an effect this small (interval width 0.0033 against an effect of 0.0007).
-- The main feature tracks pose only loosely within jump shots.
+- The main feature tracks pose only loosely within jump shots; box jump agrees with point
+  tracking, and ball rise could not be checked.
 - Results describe BasketEvent's clips, which over-represent misses (27% of cohort jump shots made
   vs 45% of all jump shots in the same games).
 
@@ -126,6 +141,9 @@ uv run --frozen --all-extras nba-shots cross-validate \
   --config configs/basketevent_h1_final.json --output artifacts/h1_cv_d0
 # Measurement check and the one-time test run
 python scripts/h1_measurement_check.py measure COHORT COLLECTION OUT --stage pose
+python scripts/h1_measurement_check.py measure COHORT COLLECTION OUT --stage track \
+  --sample reports/basketevent_h1_measurement/track_sample.txt
+python scripts/h1_measurement_check.py summarize COHORT OUT
 python scripts/h1_test_run.py data/processed/basketevent_cohort_rebuild artifacts/h1_test_run
 ```
 
