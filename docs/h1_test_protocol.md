@@ -40,8 +40,6 @@ entirely below zero.
 
 `reports/basketevent_h1_test/`: the seed-averaged predictions, `summary.json`, and a results
 section appended to this file. Per-seed runs and fitted models stay in `artifacts/h1_test_run/`.
-(The seed-averaged prediction CSVs were later kept off `main` for size; they are in commit
-`8955c98` on `feature/h1-integrated-cotracker`.)
 
 ## Results (run once, 2026-11-23, code at commit `15f6eea`)
 

@@ -138,7 +138,3 @@ Collection needs a Hugging Face login (`hf auth login`); downloads are rate-limi
 - `h1_test_protocol.md` and `h1_measurement_check.md`: the pre-registered plans and their results.
 - `reports/basketevent_h1_test/summary.json`: test-split numbers;
   `reports/basketevent_h1_cv_final/`: the original cross-validated run.
-- Per-shot prediction CSVs (about 86 MB) are not on `main`. The cross-validation ones are in the
-  `feature/basketevent-h1` branch; all of them, including the test split's, are in the history of
-  `feature/h1-integrated-cotracker` (commit `8955c98`), and every run can be regenerated with the
-  commands above.
