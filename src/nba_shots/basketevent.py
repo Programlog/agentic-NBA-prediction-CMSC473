@@ -347,7 +347,8 @@ def collect_basketevent(output: str | Path, limit: int | None = None) -> dict:
                 local_dir=workdir,
             )
             clips = {
-                str(p.relative_to(workdir)): json.loads(p.read_text())
+                # as_posix and utf-8 keep clip keys and names identical on Windows
+                p.relative_to(workdir).as_posix(): json.loads(p.read_text(encoding="utf-8"))
                 for p in sorted((workdir / split / game).glob("*.json"))
             }
             clips = {path: clip for path, clip in clips.items() if _has_shot(clip)}
