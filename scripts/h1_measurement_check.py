@@ -238,7 +238,13 @@ def _cotracker(track_model, clip, frames, r, r_idx, shooter, ball) -> dict:
 
 
 def measure(
-    cohort: Path, collection: Path, out: Path, stage: str, limit: int | None, clips: Path | None
+    cohort: Path,
+    collection: Path,
+    out: Path,
+    stage: str,
+    limit: int | None,
+    clips: Path | None,
+    sample: Path | None = None,
 ):
     import torch
     from huggingface_hub import hf_hub_download
@@ -263,6 +269,11 @@ def measure(
     ].sort_values("shot_id")
     if clips is not None:  # pilot on local videos only
         rows = rows.loc[rows["clip"].map(lambda c: (clips / c.replace(".json", ".mp4")).exists())]
+    if sample is not None:  # a pre-drawn list of shot IDs, one per line
+        wanted = set(sample.read_text().split())
+        if not wanted <= set(rows.shot_id):
+            raise ValueError("Sample contains shots that are not cohort video shots")
+        rows = rows.loc[rows.shot_id.isin(wanted)]
     rows = rows.loc[~rows.shot_id.isin(done)].head(limit)
     pose_model = track_model = None
     if stage == "pose":
@@ -386,12 +397,15 @@ def main():
     m.add_argument("--stage", choices=["pose", "track"], required=True)
     m.add_argument("--limit", type=int)
     m.add_argument("--clips", type=Path)
+    m.add_argument("--sample", type=Path, help="File of shot IDs to measure, one per line")
     s = sub.add_parser("summarize")
     s.add_argument("cohort", type=Path)
     s.add_argument("out", type=Path)
     args = parser.parse_args()
     if args.command == "measure":
-        measure(args.cohort, args.collection, args.out, args.stage, args.limit, args.clips)
+        measure(
+            args.cohort, args.collection, args.out, args.stage, args.limit, args.clips, args.sample
+        )
     else:
         print(json.dumps(summarize(args.cohort, args.out), indent=2, default=float))
 

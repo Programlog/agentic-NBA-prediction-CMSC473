@@ -98,3 +98,17 @@ test-split run tests prediction, which this check does not overturn, and goes ah
 protocol in `h1_test_protocol.md`, reporting this limitation alongside it.
 
 The CoTracker3 pass (jump, ball rise) has not been run.
+
+## Amendment before the CoTracker3 pass (2026-11-23)
+
+Written before any tracking measurement beyond the 3-clip mechanical pilot. CoTracker3 takes about
+30 s per shot on this CPU, so all 1,492 video shots would take about 12 hours. The tracking checks
+(measurements 3 and 4) therefore run on a fixed random sample:
+
+- **Population:** D0's unblocked jump shots with video (911 shots, 22 games, all in the training
+  split), the shots H1's gain comes from and where release height agreed weakly with pose.
+- **Sample:** 500 of them, drawn uniformly with `numpy.random.default_rng(42)` from the pool
+  sorted by shot ID, without reading outcomes or any measurement. It covers all 22 games. The IDs
+  are in `reports/basketevent_h1_measurement/track_sample.txt`.
+- **Unchanged:** the measurements, pass rules (rho >= 0.5 with interval lower end > 0.3), the
+  100-shot minimum, and reporting of every failure. Results are reported for this sample only.
