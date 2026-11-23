@@ -18,6 +18,7 @@ from xgboost import XGBClassifier
 
 from .common import (
     ALLOWED_FEATURES,
+    BOX_FEATURES,
     EXTRA_FEATURES,
     HISTORY_FEATURES,
     SHOT_CHART_FEATURES,
@@ -41,7 +42,7 @@ def feature_columns(config: dict, extra: str | None = None) -> tuple[list[str], 
             raise ValueError(f"extra_features must come from the {extra} set")
         numeric += sorted(chosen)
     features = numeric + categorical
-    allowed = ALLOWED_FEATURES | SHOT_CHART_FEATURES
+    allowed = ALLOWED_FEATURES | SHOT_CHART_FEATURES | BOX_FEATURES
     if not features or len(set(features)) != len(features) or set(features) - allowed:
         raise ValueError("Features must be unique members of the pre-release allowlist")
     return numeric, categorical

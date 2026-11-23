@@ -914,7 +914,9 @@ class AnnotationRequestHandler(BaseHTTPRequestHandler):
                 ):
                     raise ValueError("Release frame must be an integer within this clip")
                 # Extraction resolves paths relative to the manifest, independent of cwd.
-                stored_path = os.path.relpath(clip, self.manifest_path.parent.resolve())
+                stored_path = Path(
+    os.path.relpath(clip, self.manifest_path.parent.resolve())
+).as_posix()
                 update_manifest_row(
                     self.manifest_path,
                     shot_id=body["shot_id"],

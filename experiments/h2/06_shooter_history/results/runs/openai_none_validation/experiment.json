@@ -1,0 +1,16 @@
+{
+  "model": "gpt-6-luna",
+  "reasoning_effort": "none",
+  "sampling": {
+    "temperature": 0,
+    "seed": 42
+  },
+  "split": "validation",
+  "n_shots": 100,
+  "shots_sha256": "e40b0edf5de8230bf380eccb15713c47a9850fc4e596b279d8ca1e4ce2e1a30b",
+  "git_commit": "91fa9ea99e3f6a4fd56545c67b9863fb0ea2cd8e",
+  "cached_calls_total": 1400,
+  "prompt_tokens_total": 1742668,
+  "completion_tokens_total": 121437,
+  "cost_usd_total": 0.2344
+}

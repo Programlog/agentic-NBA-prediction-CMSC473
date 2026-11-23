@@ -72,7 +72,10 @@ BOX_FEATURES = frozenset(
     }
 )
 EXTRA_FEATURES = {"cv": CV_FEATURES, "boxes": BOX_FEATURES}
-ALLOWED_FEATURES = TABULAR_FEATURES | HISTORY_FEATURES | CV_FEATURES | BOX_FEATURES
+# Features the LLM agents may see; every one needs a definition in agents.FEATURE_DEFINITIONS,
+# which is embedded in every prompt. Box features, like shot chart features, are model inputs
+# only, so adding them does not change the H2 prompts.
+ALLOWED_FEATURES = TABULAR_FEATURES | HISTORY_FEATURES | CV_FEATURES
 PREDICTION_COLUMNS = ["shot_id", "game_id", "cohort", "split", "model", "y_true", "p_make"]
 
 

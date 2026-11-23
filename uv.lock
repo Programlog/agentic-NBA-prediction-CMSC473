@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'win32'",
@@ -1731,6 +1731,7 @@ name = "nba-shots"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "filelock" },
     { name = "joblib" },
     { name = "matplotlib" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -1764,6 +1765,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "crewai", extras = ["litellm"], marker = "extra == 'agents'", specifier = ">=1.0,<2" },
+    { name = "filelock", specifier = ">=4,<5" },
     { name = "huggingface-hub", marker = "extra == 'vision'", specifier = ">=1.0,<3" },
     { name = "joblib", specifier = ">=1.4,<2" },
     { name = "matplotlib", specifier = ">=3.9,<4" },

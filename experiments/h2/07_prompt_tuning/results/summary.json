@@ -1,0 +1,562 @@
+{
+  "winner": "V4",
+  "nomodel": "V2",
+  "validation": {
+    "n": 500,
+    "games": 125,
+    "make_rate": 0.45,
+    "metrics": {
+      "xgboost": {
+        "n": 500,
+        "mean_p": 0.459,
+        "brier": 0.2284,
+        "log_loss": 0.6462,
+        "auc": 0.6329,
+        "copies_xgb": 1.0,
+        "corr_xgb": 1.0
+      },
+      "logistic_regression": {
+        "n": 500,
+        "mean_p": 0.453,
+        "brier": 0.2386,
+        "log_loss": 0.6699,
+        "auc": 0.6017,
+        "copies_xgb": 0.068,
+        "corr_xgb": 0.844
+      },
+      "knn50": {
+        "n": 500,
+        "mean_p": 0.464,
+        "brier": 0.2356,
+        "log_loss": 0.661,
+        "auc": 0.6103,
+        "copies_xgb": 0.044,
+        "corr_xgb": 0.863
+      },
+      "constant": {
+        "n": 500,
+        "mean_p": 0.455,
+        "brier": 0.2475,
+        "log_loss": 0.6882,
+        "auc": 0.5,
+        "copies_xgb": 0.04,
+        "corr_xgb": null
+      },
+      "V0": {
+        "n": 500,
+        "mean_p": 0.44,
+        "brier": 0.2343,
+        "log_loss": 0.6608,
+        "auc": 0.6035,
+        "copies_xgb": 0.104,
+        "corr_xgb": 0.875
+      },
+      "V1": {
+        "n": 500,
+        "mean_p": 0.452,
+        "brier": 0.2363,
+        "log_loss": 0.6651,
+        "auc": 0.5978,
+        "copies_xgb": 0.086,
+        "corr_xgb": 0.857
+      },
+      "V2": {
+        "n": 500,
+        "mean_p": 0.451,
+        "brier": 0.2358,
+        "log_loss": 0.6641,
+        "auc": 0.6048,
+        "copies_xgb": 0.09,
+        "corr_xgb": 0.871
+      },
+      "V3": {
+        "n": 500,
+        "mean_p": 0.455,
+        "brier": 0.2335,
+        "log_loss": 0.6586,
+        "auc": 0.6245,
+        "copies_xgb": 0.61,
+        "corr_xgb": 0.912
+      },
+      "V4": {
+        "n": 500,
+        "mean_p": 0.458,
+        "brier": 0.2292,
+        "log_loss": 0.6482,
+        "auc": 0.6292,
+        "copies_xgb": 0.934,
+        "corr_xgb": 0.993
+      },
+      "multi:V4": {
+        "n": 500,
+        "mean_p": 0.455,
+        "brier": 0.2306,
+        "log_loss": 0.6515,
+        "auc": 0.6262,
+        "copies_xgb": 0.768,
+        "corr_xgb": 0.976
+      },
+      "single_budget:V4": {
+        "n": 500,
+        "mean_p": 0.459,
+        "brier": 0.2289,
+        "log_loss": 0.6476,
+        "auc": 0.6295,
+        "copies_xgb": 0.97,
+        "corr_xgb": 0.996
+      }
+    },
+    "comparisons": [
+      {
+        "role": "primary",
+        "a": "multi:V4",
+        "b": "xgboost",
+        "delta_brier": 0.0022,
+        "ci95": [
+          -0.0001,
+          0.0046
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "single_budget:V4",
+        "b": "xgboost",
+        "delta_brier": 0.0005,
+        "ci95": [
+          -0.0,
+          0.0013
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "multi:V4",
+        "b": "single_budget:V4",
+        "delta_brier": 0.0016,
+        "ci95": [
+          -0.0009,
+          0.0041
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V4",
+        "b": "V0",
+        "delta_brier": -0.0051,
+        "ci95": [
+          -0.01,
+          0.0001
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V4",
+        "b": "xgboost",
+        "delta_brier": 0.0009,
+        "ci95": [
+          -0.0002,
+          0.0022
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V2",
+        "b": "xgboost",
+        "delta_brier": 0.0074,
+        "ci95": [
+          0.0027,
+          0.012
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V2",
+        "b": "V0",
+        "delta_brier": 0.0015,
+        "ci95": [
+          -0.0019,
+          0.0045
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V0",
+        "b": "xgboost",
+        "delta_brier": 0.0059,
+        "ci95": [
+          0.0006,
+          0.0108
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "knn50",
+        "b": "xgboost",
+        "delta_brier": 0.0072,
+        "ci95": [
+          0.0012,
+          0.0131
+        ]
+      }
+    ]
+  },
+  "test": {
+    "n": 1000,
+    "games": 125,
+    "make_rate": 0.46,
+    "metrics": {
+      "xgboost": {
+        "n": 1000,
+        "mean_p": 0.46,
+        "brier": 0.2297,
+        "log_loss": 0.6494,
+        "auc": 0.6373,
+        "copies_xgb": 1.0,
+        "corr_xgb": 1.0
+      },
+      "logistic_regression": {
+        "n": 1000,
+        "mean_p": 0.464,
+        "brier": 0.2372,
+        "log_loss": 0.6669,
+        "auc": 0.6184,
+        "copies_xgb": 0.046,
+        "corr_xgb": 0.823
+      },
+      "knn50": {
+        "n": 1000,
+        "mean_p": 0.463,
+        "brier": 0.232,
+        "log_loss": 0.6544,
+        "auc": 0.627,
+        "copies_xgb": 0.053,
+        "corr_xgb": 0.868
+      },
+      "constant": {
+        "n": 1000,
+        "mean_p": 0.455,
+        "brier": 0.2484,
+        "log_loss": 0.69,
+        "auc": 0.5,
+        "copies_xgb": 0.029,
+        "corr_xgb": null
+      },
+      "V0": {
+        "n": 1000,
+        "mean_p": 0.448,
+        "brier": 0.2374,
+        "log_loss": 0.6675,
+        "auc": 0.6153,
+        "copies_xgb": 0.097,
+        "corr_xgb": 0.847
+      },
+      "V2": {
+        "n": 1000,
+        "mean_p": 0.458,
+        "brier": 0.2343,
+        "log_loss": 0.661,
+        "auc": 0.6242,
+        "copies_xgb": 0.081,
+        "corr_xgb": 0.853
+      },
+      "V4": {
+        "n": 1000,
+        "mean_p": 0.46,
+        "brier": 0.2301,
+        "log_loss": 0.6506,
+        "auc": 0.6349,
+        "copies_xgb": 0.919,
+        "corr_xgb": 0.985
+      },
+      "multi:V4": {
+        "n": 1000,
+        "mean_p": 0.459,
+        "brier": 0.2298,
+        "log_loss": 0.6497,
+        "auc": 0.6347,
+        "copies_xgb": 0.794,
+        "corr_xgb": 0.971
+      },
+      "single_budget:V4": {
+        "n": 1000,
+        "mean_p": 0.46,
+        "brier": 0.23,
+        "log_loss": 0.6503,
+        "auc": 0.6357,
+        "copies_xgb": 0.959,
+        "corr_xgb": 0.989
+      }
+    },
+    "comparisons": [
+      {
+        "role": "primary",
+        "a": "multi:V4",
+        "b": "xgboost",
+        "delta_brier": 0.0001,
+        "ci95": [
+          -0.0019,
+          0.002
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "single_budget:V4",
+        "b": "xgboost",
+        "delta_brier": 0.0003,
+        "ci95": [
+          -0.0006,
+          0.0012
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "multi:V4",
+        "b": "single_budget:V4",
+        "delta_brier": -0.0002,
+        "ci95": [
+          -0.0023,
+          0.0018
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V4",
+        "b": "V0",
+        "delta_brier": -0.0073,
+        "ci95": [
+          -0.011,
+          -0.0035
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V4",
+        "b": "xgboost",
+        "delta_brier": 0.0004,
+        "ci95": [
+          -0.0008,
+          0.0015
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V2",
+        "b": "xgboost",
+        "delta_brier": 0.0046,
+        "ci95": [
+          0.0008,
+          0.0084
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V2",
+        "b": "V0",
+        "delta_brier": -0.003,
+        "ci95": [
+          -0.0058,
+          -0.0002
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V0",
+        "b": "xgboost",
+        "delta_brier": 0.0077,
+        "ci95": [
+          0.0035,
+          0.0116
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "knn50",
+        "b": "xgboost",
+        "delta_brier": 0.0023,
+        "ci95": [
+          -0.0019,
+          0.0067
+        ]
+      }
+    ]
+  },
+  "test_fresh": {
+    "n": 900,
+    "games": 125,
+    "make_rate": 0.464,
+    "metrics": {
+      "xgboost": {
+        "n": 900,
+        "mean_p": 0.46,
+        "brier": 0.2324,
+        "log_loss": 0.655,
+        "auc": 0.6258,
+        "copies_xgb": 1.0,
+        "corr_xgb": 1.0
+      },
+      "logistic_regression": {
+        "n": 900,
+        "mean_p": 0.464,
+        "brier": 0.2392,
+        "log_loss": 0.671,
+        "auc": 0.6109,
+        "copies_xgb": 0.044,
+        "corr_xgb": 0.819
+      },
+      "knn50": {
+        "n": 900,
+        "mean_p": 0.462,
+        "brier": 0.2337,
+        "log_loss": 0.6582,
+        "auc": 0.6211,
+        "copies_xgb": 0.053,
+        "corr_xgb": 0.866
+      },
+      "constant": {
+        "n": 900,
+        "mean_p": 0.455,
+        "brier": 0.2488,
+        "log_loss": 0.6908,
+        "auc": 0.5,
+        "copies_xgb": 0.027,
+        "corr_xgb": 0.0
+      },
+      "V0": {
+        "n": 900,
+        "mean_p": 0.448,
+        "brier": 0.2396,
+        "log_loss": 0.6722,
+        "auc": 0.6062,
+        "copies_xgb": 0.097,
+        "corr_xgb": 0.852
+      },
+      "V2": {
+        "n": 900,
+        "mean_p": 0.457,
+        "brier": 0.237,
+        "log_loss": 0.6664,
+        "auc": 0.6143,
+        "copies_xgb": 0.079,
+        "corr_xgb": 0.855
+      },
+      "V4": {
+        "n": 900,
+        "mean_p": 0.46,
+        "brier": 0.2326,
+        "log_loss": 0.6558,
+        "auc": 0.6244,
+        "copies_xgb": 0.92,
+        "corr_xgb": 0.985
+      },
+      "multi:V4": {
+        "n": 900,
+        "mean_p": 0.46,
+        "brier": 0.2326,
+        "log_loss": 0.6556,
+        "auc": 0.6227,
+        "copies_xgb": 0.793,
+        "corr_xgb": 0.97
+      },
+      "single_budget:V4": {
+        "n": 900,
+        "mean_p": 0.46,
+        "brier": 0.2325,
+        "log_loss": 0.6556,
+        "auc": 0.6254,
+        "copies_xgb": 0.96,
+        "corr_xgb": 0.989
+      }
+    },
+    "comparisons": [
+      {
+        "role": "primary",
+        "a": "multi:V4",
+        "b": "xgboost",
+        "delta_brier": 0.0002,
+        "ci95": [
+          -0.0018,
+          0.0022
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "single_budget:V4",
+        "b": "xgboost",
+        "delta_brier": 0.0001,
+        "ci95": [
+          -0.0008,
+          0.0011
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "multi:V4",
+        "b": "single_budget:V4",
+        "delta_brier": 0.0001,
+        "ci95": [
+          -0.0019,
+          0.0021
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V4",
+        "b": "V0",
+        "delta_brier": -0.0071,
+        "ci95": [
+          -0.0109,
+          -0.0033
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V4",
+        "b": "xgboost",
+        "delta_brier": 0.0002,
+        "ci95": [
+          -0.0011,
+          0.0014
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V2",
+        "b": "xgboost",
+        "delta_brier": 0.0046,
+        "ci95": [
+          0.0006,
+          0.0086
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V2",
+        "b": "V0",
+        "delta_brier": -0.0027,
+        "ci95": [
+          -0.0054,
+          0.0004
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "V0",
+        "b": "xgboost",
+        "delta_brier": 0.0073,
+        "ci95": [
+          0.0032,
+          0.0116
+        ]
+      },
+      {
+        "role": "secondary",
+        "a": "knn50",
+        "b": "xgboost",
+        "delta_brier": 0.0013,
+        "ci95": [
+          -0.0029,
+          0.006
+        ]
+      }
+    ]
+  }
+}

@@ -117,6 +117,20 @@ def main(argv=None):
         default=None,
         help="Balance sampled shots across this many games",
     )
+    agents.add_argument(
+        "--conditions",
+        nargs="+",
+        choices=[
+            "llm_single",
+            "llm_single_budget",
+            "llm_single_decomposed",
+            "llm_single_ensemble",
+            "llm_multi",
+            "llm_multi_disagreement",
+        ],
+        default=None,
+        help="Run only these conditions (default: all five); the core three are required",
+    )
     agents.add_argument("--num-predict", type=int, default=512)
     agents.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     report = sub.add_parser("report", help="Combine scores and predictions without retraining")
@@ -240,6 +254,7 @@ def execute(args):
             args.num_predict,
             args.ollama_url,
             args.games,
+            args.conditions,
         )
     raise ValueError(f"Unknown command: {args.command}")
 
