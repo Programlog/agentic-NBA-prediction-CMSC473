@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -242,12 +243,18 @@ def measure(
     import torch
     from huggingface_hub import hf_hub_download
 
-    torch.set_num_threads(8)
+    torch.set_num_threads(int(os.environ.get("H1_CHECK_THREADS", "4")))
     out.mkdir(parents=True, exist_ok=True)
     log = out / f"{stage}.jsonl"
     done = set()
     if log.exists():
-        done = {json.loads(line)["shot_id"] for line in log.read_text().splitlines() if line}
+        # Errors (e.g. a failed download) are retried; measured shots are not redone.
+        latest = {}
+        for line in log.read_text().splitlines():
+            if line:
+                record = json.loads(line)
+                latest[record["shot_id"]] = record["status"]
+        done = {shot for shot, status in latest.items() if status != "error"}
     revision = json.loads((collection / "source.json").read_text())["revision"]
     features = pd.read_parquet(cohort / "box_features.parquet")
     shots = set(pd.read_parquet(cohort / "shots.parquet", columns=["shot_id"]).shot_id)
@@ -309,6 +316,8 @@ def spearman_ci(a: np.ndarray, b: np.ndarray, reps=1000, seed=42):
 
 
 def agreement(table: pd.DataFrame, box: str, other: str) -> dict:
+    if box not in table or other not in table:
+        return {"measured": 0, "verdict": "not run"}
     pair = table[[box, other]].dropna()
     result = {"measured": len(pair)}
     if len(pair) < 100:

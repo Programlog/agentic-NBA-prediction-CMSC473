@@ -69,6 +69,32 @@ inconclusive rather than passed or failed.
 - The camera-corrected jump is descriptive only; it shows how much camera motion the box jump
   carries.
 
-## Results
+## Results (pose pass, 2026-11-23)
 
-Not yet run.
+Cohort rebuilt on Windows from BasketEvent revision `c8629460`; its D0 population is identical to
+cohort v5 (same 7,726 shot IDs in 184 games, same labels). The dataset now publishes more videos
+than when v5 was built, so 1,492 cohort shots have video (v5: 778). All 1,492 were downloaded and
+processed; YOLO pose matched the shooter (IoU >= 0.5) on 1,196 and gave a full release height on
+1,181 (no matching person 277, no wrist 19, no ankle 15). Raw rows:
+`artifacts/h1_measurement_check/pose.jsonl`; summary: `.../summary.json`.
+
+| Check | Population | Measured | Result | Verdict |
+|---|---|---|---|---|
+| Release height | all video shots | 1,181 | rho 0.51 (0.46 to 0.56) | pass |
+| Release height | unblocked jump shots (D0) | 774 | rho 0.32 (0.25 to 0.39) | fail |
+| Ball at the hands | all video shots | 1,196 | 55% within 1 torso | fail |
+| Ball at the hands | unblocked jump shots (D0) | 782 | 49% within 1 torso | fail |
+
+The plan named both populations but not which one gates. Exploratory, not planned: agreement
+within each shot family is layup 0.56 (216 shots), dunk 0.53 (38), floater 0.44 (101), hook 0.33
+(42), jump 0.32 (784). The pooled pass mostly reflects release height differing between shot
+families; within jump shots, where D0's gain lives, box and pose release height agree only
+weakly, and the detected release frame often has the ball more than a torso length from the
+higher wrist.
+
+**Decision (with the team):** read release height as "a box-derived height near release that
+tracks pose only loosely within jump shots", not as a clean measure of release posture. The
+test-split run tests prediction, which this check does not overturn, and goes ahead under the
+protocol in `h1_test_protocol.md`, reporting this limitation alongside it.
+
+The CoTracker3 pass (jump, ball rise) has not been run.
