@@ -3,12 +3,21 @@
 **H1:** adding box-tracking features (shooter and defender measurements from BasketEvent's
 per-frame player and ball boxes) improves shot-make prediction beyond tabular shot data.
 
-**Current result (frozen design D0, `configs/basketevent_h1_final.json`, cohort v5):** on 7,726
-unblocked jump shots from 184 train and validation games, 5 date-blocked folds, the box features
-lower Brier by **0.0009** (95% game-bootstrap interval 0.0001 to 0.0017): Brier 0.1963 to 0.1954,
-AUC 0.572 to 0.583. That is about a third of what all the tabular features add over the constant
-prediction (0.1992 to 0.1963). The gain comes mainly from the shooter's release height. The test
-split has not been scored.
+**Final result (frozen design D0, `configs/basketevent_h1_final.json`):** the box features give a
+small improvement that is consistent everywhere it was measured but confirmed only in
+cross-validation.
+
+- **Cross-validation** (7,726 unblocked jump shots, 184 train and validation games, 5 date-blocked
+  folds): Brier lower by **0.0009** (95% game-bootstrap interval 0.0001 to 0.0017), Brier 0.1963
+  to 0.1954, AUC 0.572 to 0.583; about a third of what all tabular features add over the constant
+  prediction. Across six XGBoost seeds on a second machine: -0.0007 to -0.0010, five of six
+  significant (section 22).
+- **Test split, scored once** (1,546 shots, 34 later games; six seeds averaged, section 24): Brier
+  lower by **0.0007** (-0.0024 to +0.0010), 0.2010 to 0.2003, AUC 0.605 to 0.609. Same direction
+  and size, every seed negative, but 34 games cannot confirm an effect this small on their own.
+- **Measurement check** (section 23): release height, the main source of the gain, agrees with an
+  independent YOLO pose estimate across all shots (rho 0.51) but only weakly within jump shots
+  (rho 0.32). Read it as a box-derived height near release, not a clean measure of posture.
 
 Brier differences below are box model minus baseline; negative favours the boxes. Intervals are
 95% paired bootstraps over whole games (1,000 resamples). "Significant" means the interval
@@ -272,8 +281,53 @@ Same rule, fixed before running. Summary: `reports/basketevent_h1_round2/summary
   shots and its direction on jump shots.
 - Results describe BasketEvent's miss-heavy shots.
 
+## 22. Rebuilt cohort and seed sensitivity
+
+- **Why:** the test run needed the cohort on a second machine (Windows), and a single-seed result
+  should not decide significance.
+- **What happened:** the rebuild from BasketEvent revision `c8629460` gave the same 7,726 D0
+  shots, games and labels as v5 (after fixing two Windows bugs in `collect-basketevent`: text
+  encoding and clip-path separators). Constant and logistic regression reproduced exactly;
+  XGBoost differed slightly because its row sampling is platform-dependent. D0 on this machine:
+  seed 42 -0.00073 (-0.00153 to +0.00008, not significant); seeds 1-5 -0.00086 to -0.00098, all
+  significant. Runs: `artifacts/h1_rebuild_cv_d0*` (local).
+- **Intuition:** the effect is stable at about -0.0009; its interval sits so close to zero that
+  one seed can tip it. Hence six seeds averaged for the test run.
+
+## 23. Measurement check against video
+
+Fixed before running: `h1_measurement_check.md`. YOLO pose on the release frame of all 1,492
+cohort shots with video: release height agrees with pose (Spearman) 0.51 across all shots (pass)
+but 0.32 within D0's unblocked jump shots (fail); the ball is within a torso length of the higher
+wrist at the detected release in only 55% of shots (49% for D0). Within families: layup 0.56,
+dunk 0.53, floater 0.44, hook 0.33, jump 0.32.
+
+- **Intuition:** the pooled agreement mostly reflects shot families differing in release height.
+  Within jump shots the box measurement is noisy, and the release frame is often a little off
+  (consistent with the blind review in 4). The CoTracker3 checks of jump and ball rise were not
+  run.
+
+## 24. Test split (scored once)
+
+Fixed before running: `h1_test_protocol.md`. Fit on 152 training games, scored on 34 test games,
+six seeds averaged. Summary: `reports/basketevent_h1_test/summary.json`.
+
+| Model (test, 1,546 shots) | Brier | Log loss | AUC |
+|---|---|---|---|
+| Constant | 0.2075 | 0.6056 | 0.500 |
+| Logistic regression | 0.2009 | 0.5903 | 0.610 |
+| XGBoost baseline | 0.2010 | 0.5904 | 0.605 |
+| XGBoost + boxes | 0.2003 | 0.5888 | 0.609 |
+
+H1 (boxes minus baseline): -0.00067 (-0.00237 to +0.00096). Per seed: 42 -0.00066, 1 -0.00038,
+2 -0.00077, 3 -0.00080, 4 -0.00088, 5 -0.00029; none significant alone. The same fits on
+validation games: -0.00053 (-0.00199 to +0.00105).
+
+- **Intuition:** the test split agrees with cross-validation in sign and size but is about a fifth
+  of its size, so its interval (width 0.0033) is several times the effect. The fair summary is a
+  small, consistent improvement, significant only when all 184 development games are used.
+
 ## What is left
 
-- The one-time test-split confirmation of D0, only when the user says so.
+- Optional: the CoTracker3 pass of `h1_measurement_check.md` (jump, ball rise), ~6-7 hours on CPU.
 - Optional: recover the multi-shot clips with the leak audit, to tighten the interval.
-- Optional: validate box release height against YOLO pose on the 778 video shots.

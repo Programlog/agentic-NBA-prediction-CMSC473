@@ -38,5 +38,12 @@ entirely below zero.
 
 ## Output
 
-`reports/basketevent_h1_test/`: per-seed runs' metrics and predictions, the seed-averaged
-predictions, `summary.json`, and a results section appended to this file.
+`reports/basketevent_h1_test/`: the seed-averaged predictions, `summary.json`, and a results
+section appended to this file. Per-seed runs and fitted models stay in `artifacts/h1_test_run/`.
+
+## Results (run once, 2026-11-23, code at commit `15f6eea`)
+
+H1 primary, six seeds averaged, 1,546 test shots in 34 games: Brier **-0.00067** (95% interval
+-0.00237 to +0.00096). Not supported at 95% on the test split alone; same direction and size as
+the cross-validated result (-0.0009), with every seed negative (-0.00029 to -0.00088). Baseline
+Brier 0.2010, box model 0.2003; AUC 0.605 to 0.609. Full tables in `h1_experiments.md` section 24.

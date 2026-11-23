@@ -1,0 +1,189 @@
+{
+  "protocol": "docs/h1_test_protocol.md",
+  "seeds": [
+    42,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "validation": {
+    "h1_seed_mean": {
+      "baseline": "xgboost",
+      "candidate": "xgboost_boxes",
+      "n_shots": 1284,
+      "n_games": 32,
+      "brier_delta_candidate_minus_baseline": -0.0005334941336426628,
+      "brier_delta_95pct_interval": [
+        -0.001986185650566934,
+        0.001047933131219903
+      ],
+      "method": "paired bootstrap of whole games; negative delta favors candidate",
+      "repetitions": 1000,
+      "seed": 42
+    },
+    "scores_seed_mean": {
+      "constant": {
+        "brier": 0.19793853510036946,
+        "log_loss": 0.5850744703534138,
+        "roc_auc": 0.5,
+        "shots": 1284,
+        "games": 32
+      },
+      "logistic_regression": {
+        "brier": 0.1960732683787448,
+        "log_loss": 0.5808312400956986,
+        "roc_auc": 0.557121186583516,
+        "shots": 1284,
+        "games": 32
+      },
+      "xgboost": {
+        "brier": 0.19531086541905668,
+        "log_loss": 0.5789717042895292,
+        "roc_auc": 0.5680799227740068,
+        "shots": 1284,
+        "games": 32
+      },
+      "xgboost_boxes": {
+        "brier": 0.194777371285414,
+        "log_loss": 0.5772859334775468,
+        "roc_auc": 0.5832738305012029,
+        "shots": 1284,
+        "games": 32
+      }
+    }
+  },
+  "test": {
+    "h1_seed_mean": {
+      "baseline": "xgboost",
+      "candidate": "xgboost_boxes",
+      "n_shots": 1546,
+      "n_games": 34,
+      "brier_delta_candidate_minus_baseline": -0.0006657607085343196,
+      "brier_delta_95pct_interval": [
+        -0.0023702128169761395,
+        0.0009634817414243546
+      ],
+      "method": "paired bootstrap of whole games; negative delta favors candidate",
+      "repetitions": 1000,
+      "seed": 42
+    },
+    "scores_seed_mean": {
+      "constant": {
+        "brier": 0.20747889176678566,
+        "log_loss": 0.605625483388975,
+        "roc_auc": 0.5,
+        "shots": 1546,
+        "games": 34
+      },
+      "logistic_regression": {
+        "brier": 0.20091175469526532,
+        "log_loss": 0.5902593932876806,
+        "roc_auc": 0.6099763899912952,
+        "shots": 1546,
+        "games": 34
+      },
+      "xgboost": {
+        "brier": 0.20101061708240997,
+        "log_loss": 0.5903752222317643,
+        "roc_auc": 0.6048060202492684,
+        "shots": 1546,
+        "games": 34
+      },
+      "xgboost_boxes": {
+        "brier": 0.20034485637387567,
+        "log_loss": 0.5887739141675205,
+        "roc_auc": 0.6088837454481559,
+        "shots": 1546,
+        "games": 34
+      }
+    },
+    "h1_per_seed": {
+      "42": {
+        "baseline": "xgboost",
+        "candidate": "xgboost_boxes",
+        "n_shots": 1546,
+        "n_games": 34,
+        "brier_delta_candidate_minus_baseline": -0.0006567697178270215,
+        "brier_delta_95pct_interval": [
+          -0.0024149392781766654,
+          0.0010717562054865422
+        ],
+        "method": "paired bootstrap of whole games; negative delta favors candidate",
+        "repetitions": 1000,
+        "seed": 42
+      },
+      "1": {
+        "baseline": "xgboost",
+        "candidate": "xgboost_boxes",
+        "n_shots": 1546,
+        "n_games": 34,
+        "brier_delta_candidate_minus_baseline": -0.00038099073390244435,
+        "brier_delta_95pct_interval": [
+          -0.002069700649363504,
+          0.0011811651237019615
+        ],
+        "method": "paired bootstrap of whole games; negative delta favors candidate",
+        "repetitions": 1000,
+        "seed": 42
+      },
+      "2": {
+        "baseline": "xgboost",
+        "candidate": "xgboost_boxes",
+        "n_shots": 1546,
+        "n_games": 34,
+        "brier_delta_candidate_minus_baseline": -0.0007682469293699893,
+        "brier_delta_95pct_interval": [
+          -0.002539341689196675,
+          0.000901413968074904
+        ],
+        "method": "paired bootstrap of whole games; negative delta favors candidate",
+        "repetitions": 1000,
+        "seed": 42
+      },
+      "3": {
+        "baseline": "xgboost",
+        "candidate": "xgboost_boxes",
+        "n_shots": 1546,
+        "n_games": 34,
+        "brier_delta_candidate_minus_baseline": -0.0008044895924699284,
+        "brier_delta_95pct_interval": [
+          -0.0025826928508450872,
+          0.0008241867881287455
+        ],
+        "method": "paired bootstrap of whole games; negative delta favors candidate",
+        "repetitions": 1000,
+        "seed": 42
+      },
+      "4": {
+        "baseline": "xgboost",
+        "candidate": "xgboost_boxes",
+        "n_shots": 1546,
+        "n_games": 34,
+        "brier_delta_candidate_minus_baseline": -0.0008826555742163447,
+        "brier_delta_95pct_interval": [
+          -0.0027049446132585463,
+          0.0009869872758043173
+        ],
+        "method": "paired bootstrap of whole games; negative delta favors candidate",
+        "repetitions": 1000,
+        "seed": 42
+      },
+      "5": {
+        "baseline": "xgboost",
+        "candidate": "xgboost_boxes",
+        "n_shots": 1546,
+        "n_games": 34,
+        "brier_delta_candidate_minus_baseline": -0.0002883100150403793,
+        "brier_delta_95pct_interval": [
+          -0.001949681695995432,
+          0.0013484356795227508
+        ],
+        "method": "paired bootstrap of whole games; negative delta favors candidate",
+        "repetitions": 1000,
+        "seed": 42
+      }
+    }
+  }
+}
