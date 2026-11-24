@@ -117,6 +117,33 @@ the same share of threes in both groups (74%). Above that, release height change
 little. A jump-shot release this low is physically unusual, so the group likely mixes rushed, low
 releases with shots whose detected release frame is early (see the measurement check above).
 
+## Shots the model got completely wrong
+
+Exploratory failure-case analysis (definitions fixed before looking; `h1_failure_cases.md`).
+
+- **On the test split, wrong shots look like right ones.** Made shots the model gave its lowest
+  chances, and misses it gave its highest, match the shots it got right on distance, release
+  height, defender distance and shot type. What remains is mostly shot-to-shot chance.
+- **The gain is concentrated.** The 10% of test shots whose prediction the boxes changed most
+  account for all of the test improvement, and 28% of them are low releases (4.5% overall).
+- **Video review of the 12 worst cross-validated predictions** (no test shot has video):
+
+| | Measurement error | Features right | Unclear |
+|---|---|---|---|
+| Surprising makes (6) | 4: two wrong release frames, a duplicate defender box, a scale error | 1 contested make | 1 |
+| Surprising misses (6) | 3: merged box in traffic, inflated release height, contest under-measured | 3 contested short shots | 0 |
+
+![A surprising make: wrong release frame](../reports/basketevent_h1_failure_cases/review/01_surprising_make.jpg)
+
+*Example: the model gave this made three 13%. At the detected "release" (middle) there is no shot;
+the shot clock had already reset, so the real shot happened earlier. Blue: shooter; orange:
+nearest defender; yellow: ball.*
+
+Two failure sources stand out: release frames detected at moments with no shot (which create the
+low releases the model distrusts) and close contests on short shots, which a distance in body
+heights does not capture.
+
+## How the comparison was kept fair
 
 - **Release-time inputs only:** boxes up to release plus a few frames of ball flight; no outcome
   and nothing after the shot.

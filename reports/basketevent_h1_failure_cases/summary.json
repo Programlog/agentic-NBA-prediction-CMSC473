@@ -1,0 +1,496 @@
+{
+  "plan": "docs/h1_failure_cases.md",
+  "test": {
+    "shots": 1546,
+    "calibration": [
+      {
+        "decile": 1,
+        "shots": 155,
+        "p_box": 0.17607886110262197,
+        "p_base": 0.2133313988485643,
+        "made": 0.15483870967741936
+      },
+      {
+        "decile": 2,
+        "shots": 155,
+        "p_box": 0.2063586659328911,
+        "p_base": 0.22124828348557152,
+        "made": 0.2645161290322581
+      },
+      {
+        "decile": 3,
+        "shots": 154,
+        "p_box": 0.22528279759796138,
+        "p_base": 0.2341142752856919,
+        "made": 0.22727272727272727
+      },
+      {
+        "decile": 4,
+        "shots": 155,
+        "p_box": 0.24127298625566618,
+        "p_base": 0.2442722176351854,
+        "made": 0.25161290322580643
+      },
+      {
+        "decile": 5,
+        "shots": 154,
+        "p_box": 0.25650608128347946,
+        "p_base": 0.2513540783389048,
+        "made": 0.23376623376623376
+      },
+      {
+        "decile": 6,
+        "shots": 155,
+        "p_box": 0.27236038167630466,
+        "p_base": 0.2579560235142707,
+        "made": 0.32903225806451614
+      },
+      {
+        "decile": 7,
+        "shots": 154,
+        "p_box": 0.2896553360538565,
+        "p_base": 0.2731575125836448,
+        "made": 0.2792207792207792
+      },
+      {
+        "decile": 8,
+        "shots": 155,
+        "p_box": 0.3138727595408757,
+        "p_base": 0.28620329859756655,
+        "made": 0.32903225806451614
+      },
+      {
+        "decile": 9,
+        "shots": 154,
+        "p_box": 0.3508891053013987,
+        "p_base": 0.3291321614862004,
+        "made": 0.35064935064935066
+      },
+      {
+        "decile": 10,
+        "shots": 155,
+        "p_box": 0.42205299231954796,
+        "p_base": 0.40365755727855107,
+        "made": 0.5096774193548387
+      }
+    ],
+    "profiles": {
+      "surprising_makes": {
+        "shots": 65,
+        "p_box_mean": 0.19503384924087763,
+        "shot_distance_ft": 25.646153846153847,
+        "three_share": 0.9846153846153847,
+        "release_height_bh": 1.429348273485811,
+        "low_release_share": 0.1076923076923077,
+        "defender_distance_bh": 0.7657611060437294,
+        "box_missing_share": 0.06153846153846154,
+        "prior_make_rate": 0.3544227663702697,
+        "top_shot_types": {
+          "Jump Shot": 0.662,
+          "Pullup Jump shot": 0.123,
+          "Step Back Jump shot": 0.108
+        }
+      },
+      "expected_misses_same_fifth": {
+        "shots": 245,
+        "p_box_mean": 0.19020659791774483,
+        "shot_distance_ft": 25.46530612244898,
+        "three_share": 0.9755102040816327,
+        "release_height_bh": 1.3696436834253976,
+        "low_release_share": 0.16326530612244897,
+        "defender_distance_bh": 0.8009279920122536,
+        "box_missing_share": 0.04081632653061224,
+        "prior_make_rate": 0.3459025100847378,
+        "top_shot_types": {
+          "Jump Shot": 0.596,
+          "Pullup Jump shot": 0.208,
+          "Step Back Jump shot": 0.106
+        }
+      },
+      "surprising_misses": {
+        "shots": 176,
+        "p_box_mean": 0.3801470247915748,
+        "shot_distance_ft": 14.522727272727273,
+        "three_share": 0.22727272727272727,
+        "release_height_bh": 1.658291730885273,
+        "low_release_share": 0.005681818181818182,
+        "defender_distance_bh": 0.8105392669482664,
+        "box_missing_share": 0.03409090909090909,
+        "prior_make_rate": 0.3824415216023053,
+        "top_shot_types": {
+          "Pullup Jump shot": 0.301,
+          "Jump Shot": 0.244,
+          "Fadeaway Jump Shot": 0.102
+        }
+      },
+      "expected_makes_same_fifth": {
+        "shots": 133,
+        "p_box_mean": 0.39510721550848243,
+        "shot_distance_ft": 12.61654135338346,
+        "three_share": 0.12030075187969924,
+        "release_height_bh": 1.6025801842283247,
+        "low_release_share": 0.015037593984962405,
+        "defender_distance_bh": 0.867284501319265,
+        "box_missing_share": 0.007518796992481203,
+        "prior_make_rate": 0.3975034030480647,
+        "top_shot_types": {
+          "Pullup Jump shot": 0.383,
+          "Jump Shot": 0.203,
+          "Fadeaway Jump Shot": 0.135
+        }
+      },
+      "all_test_shots": {
+        "shots": 1546,
+        "p_box_mean": 0.2754196711350433,
+        "shot_distance_ft": 22.03880983182406,
+        "three_share": 0.741267787839586,
+        "release_height_bh": 1.5334246556748174,
+        "low_release_share": 0.04463130659767141,
+        "defender_distance_bh": 0.9590374205842368,
+        "box_missing_share": 0.023932729624838292,
+        "prior_make_rate": 0.36786950409336444,
+        "top_shot_types": {
+          "Jump Shot": 0.537,
+          "Pullup Jump shot": 0.215,
+          "Step Back Jump shot": 0.103
+        }
+      }
+    },
+    "changed_by_boxes": {
+      "shots": 155,
+      "p_box_mean": 0.2975320782472368,
+      "shot_distance_ft": 20.38064516129032,
+      "three_share": 0.6580645161290323,
+      "release_height_bh": 1.3434986357648933,
+      "low_release_share": 0.2838709677419355,
+      "defender_distance_bh": 1.2511866653463988,
+      "box_missing_share": 0.05161290322580645,
+      "prior_make_rate": 0.36886445530498835,
+      "top_shot_types": {
+        "Jump Shot": 0.523,
+        "Pullup Jump shot": 0.213,
+        "Step Back Jump shot": 0.084
+      },
+      "mean_abs_change": 0.08872561253687389,
+      "share_moved_toward_outcome": 0.5225806451612903,
+      "brier_box_minus_base": -0.008886328591520137,
+      "moved_down_share": 0.3870967741935484
+    },
+    "slices": [
+      {
+        "slice": "2 vs 3",
+        "level": "2-pointer",
+        "shots": 400,
+        "games": 33,
+        "made": 0.41,
+        "brier_box_minus_base": -0.0007900041324597995,
+        "ci95": [
+          -0.004314346498973301,
+          0.0028096197775229477
+        ]
+      },
+      {
+        "slice": "2 vs 3",
+        "level": "3-pointer",
+        "shots": 1146,
+        "games": 34,
+        "made": 0.25218150087260033,
+        "brier_box_minus_base": -0.0006223947665009938,
+        "ci95": [
+          -0.0025021531971482925,
+          0.0010817198895061292
+        ]
+      },
+      {
+        "slice": "distance",
+        "level": "10-16 ft",
+        "shots": 180,
+        "games": 33,
+        "made": 0.3888888888888889,
+        "brier_box_minus_base": -0.001407779576481934,
+        "ci95": [
+          -0.007797000695850917,
+          0.004908186584055625
+        ]
+      },
+      {
+        "slice": "distance",
+        "level": "16 ft to the line",
+        "shots": 133,
+        "games": 32,
+        "made": 0.3684210526315789,
+        "brier_box_minus_base": 0.002931395239518392,
+        "ci95": [
+          -0.0031042421591638155,
+          0.008386197312071707
+        ]
+      },
+      {
+        "slice": "distance",
+        "level": "3-pointer",
+        "shots": 1146,
+        "games": 34,
+        "made": 0.25218150087260033,
+        "brier_box_minus_base": -0.0006223947665009938,
+        "ci95": [
+          -0.0025021531971482925,
+          0.0010817198895061292
+        ]
+      },
+      {
+        "slice": "distance",
+        "level": "under 10 ft",
+        "shots": 87,
+        "games": 30,
+        "made": 0.5172413793103449,
+        "brier_box_minus_base": -0.005200883862909397,
+        "ci95": [
+          -0.014606331805139925,
+          0.004168157456333211
+        ]
+      },
+      {
+        "slice": "release height",
+        "level": "0.9 bh or higher",
+        "shots": 1477,
+        "games": 34,
+        "made": 0.2979011509817197,
+        "brier_box_minus_base": -0.00031617261842004335,
+        "ci95": [
+          -0.001957218403347871,
+          0.001229074645793142
+        ]
+      },
+      {
+        "slice": "release height",
+        "level": "below 0.9 bh",
+        "shots": 69,
+        "games": 28,
+        "made": 0.18840579710144928,
+        "brier_box_minus_base": -0.008148972434603696,
+        "ci95": [
+          -0.0247177132116655,
+          0.007191259013821541
+        ]
+      },
+      {
+        "slice": "box features",
+        "level": "all present",
+        "shots": 1509,
+        "games": 34,
+        "made": 0.2922465208747515,
+        "brier_box_minus_base": -0.000773267053476154,
+        "ci95": [
+          -0.0025617821613929488,
+          0.0009505119257839564
+        ]
+      },
+      {
+        "slice": "box features",
+        "level": "some missing",
+        "shots": 37,
+        "games": 21,
+        "made": 0.32432432432432434,
+        "brier_box_minus_base": 0.0037187548189583125,
+        "ci95": [
+          -0.014548468336419483,
+          0.018976874325843395
+        ]
+      },
+      {
+        "slice": "shot type",
+        "level": "Jump Shot",
+        "shots": 830,
+        "games": 34,
+        "made": 0.28313253012048195,
+        "brier_box_minus_base": -0.0004721282477538897,
+        "ci95": [
+          -0.0025210748391862885,
+          0.001435683965207871
+        ]
+      },
+      {
+        "slice": "shot type",
+        "level": "Pullup",
+        "shots": 333,
+        "games": 34,
+        "made": 0.2972972972972973,
+        "brier_box_minus_base": -0.0002524985454890197,
+        "ci95": [
+          -0.0036314741164008455,
+          0.002983110991984685
+        ]
+      },
+      {
+        "slice": "shot type",
+        "level": "Step Back",
+        "shots": 163,
+        "games": 33,
+        "made": 0.3006134969325153,
+        "brier_box_minus_base": 0.00175488366578034,
+        "ci95": [
+          -0.004092779777744774,
+          0.007690447723075751
+        ]
+      },
+      {
+        "slice": "shot type",
+        "level": "other",
+        "shots": 220,
+        "games": 33,
+        "made": 0.3181818181818182,
+        "brier_box_minus_base": -0.0038152892346940107,
+        "ci95": [
+          -0.009400294567386726,
+          0.0016686645539823858
+        ]
+      }
+    ]
+  },
+  "video_review": [
+    {
+      "image": "review/01_surprising_make.jpg",
+      "kind": "surprising make",
+      "shot_id": "nba:0022500025:523",
+      "made": 1,
+      "p_box": 0.132,
+      "p_base": 0.249,
+      "action_type": "Jump Shot",
+      "shot_distance_ft": 25,
+      "release_height_bh": 0.83,
+      "defender_distance_bh": 0.28
+    },
+    {
+      "image": "review/02_surprising_make.jpg",
+      "kind": "surprising make",
+      "shot_id": "nba:0022500031:608",
+      "made": 1,
+      "p_box": 0.156,
+      "p_base": 0.203,
+      "action_type": "Jump Shot",
+      "shot_distance_ft": 24,
+      "release_height_bh": 1.5,
+      "defender_distance_bh": 0.49
+    },
+    {
+      "image": "review/03_surprising_make.jpg",
+      "kind": "surprising make",
+      "shot_id": "nba:0022500006:507",
+      "made": 1,
+      "p_box": 0.165,
+      "p_base": 0.176,
+      "action_type": "Jump Shot",
+      "shot_distance_ft": 27,
+      "release_height_bh": 1.22,
+      "defender_distance_bh": 0.25
+    },
+    {
+      "image": "review/04_surprising_make.jpg",
+      "kind": "surprising make",
+      "shot_id": "nba:0022500029:108",
+      "made": 1,
+      "p_box": 0.166,
+      "p_base": 0.249,
+      "action_type": "Jump Shot",
+      "shot_distance_ft": 27,
+      "release_height_bh": 0.86,
+      "defender_distance_bh": 2.38
+    },
+    {
+      "image": "review/05_surprising_make.jpg",
+      "kind": "surprising make",
+      "shot_id": "nba:0022500004:489",
+      "made": 1,
+      "p_box": 0.167,
+      "p_base": 0.193,
+      "action_type": "Jump Shot",
+      "shot_distance_ft": 26,
+      "release_height_bh": 1.59,
+      "defender_distance_bh": 0.43
+    },
+    {
+      "image": "review/06_surprising_make.jpg",
+      "kind": "surprising make",
+      "shot_id": "nba:0022500034:577",
+      "made": 1,
+      "p_box": 0.173,
+      "p_base": 0.266,
+      "action_type": "Jump Shot",
+      "shot_distance_ft": 22,
+      "release_height_bh": 0.85,
+      "defender_distance_bh": 0.63
+    },
+    {
+      "image": "review/07_surprising_miss.jpg",
+      "kind": "surprising miss",
+      "shot_id": "nba:0022500006:600",
+      "made": 0,
+      "p_box": 0.569,
+      "p_base": 0.402,
+      "action_type": "Turnaround Bank shot",
+      "shot_distance_ft": 10,
+      "release_height_bh": 1.87,
+      "defender_distance_bh": 1.01
+    },
+    {
+      "image": "review/08_surprising_miss.jpg",
+      "kind": "surprising miss",
+      "shot_id": "nba:0022500032:375",
+      "made": 0,
+      "p_box": 0.511,
+      "p_base": 0.452,
+      "action_type": "Turnaround Jump Shot",
+      "shot_distance_ft": 9,
+      "release_height_bh": 1.64,
+      "defender_distance_bh": 0.63
+    },
+    {
+      "image": "review/09_surprising_miss.jpg",
+      "kind": "surprising miss",
+      "shot_id": "nba:0022500024:147",
+      "made": 0,
+      "p_box": 0.503,
+      "p_base": 0.454,
+      "action_type": "Step Back Jump shot",
+      "shot_distance_ft": 15,
+      "release_height_bh": 1.87,
+      "defender_distance_bh": 0.42
+    },
+    {
+      "image": "review/10_surprising_miss.jpg",
+      "kind": "surprising miss",
+      "shot_id": "nba:0022500004:39",
+      "made": 0,
+      "p_box": 0.498,
+      "p_base": 0.461,
+      "action_type": "Turnaround Jump Shot",
+      "shot_distance_ft": 6,
+      "release_height_bh": 1.37,
+      "defender_distance_bh": 0.55
+    },
+    {
+      "image": "review/11_surprising_miss.jpg",
+      "kind": "surprising miss",
+      "shot_id": "nba:0022500033:152",
+      "made": 0,
+      "p_box": 0.492,
+      "p_base": 0.529,
+      "action_type": "Turnaround Fadeaway shot",
+      "shot_distance_ft": 10,
+      "release_height_bh": 1.67,
+      "defender_distance_bh": 0.63
+    },
+    {
+      "image": "review/12_surprising_miss.jpg",
+      "kind": "surprising miss",
+      "shot_id": "nba:0022500004:104",
+      "made": 0,
+      "p_box": 0.484,
+      "p_base": 0.461,
+      "action_type": "Pullup Jump shot",
+      "shot_distance_ft": 12,
+      "release_height_bh": 2.36,
+      "defender_distance_bh": 0.62
+    }
+  ]
+}

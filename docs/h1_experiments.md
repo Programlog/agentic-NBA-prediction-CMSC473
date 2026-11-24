@@ -369,6 +369,19 @@ angle 47.1 degrees with 95% within 20 to 75 (pass), split-half rho 0.75 (pass).
   viewpoint. Usable as an approximate feature in a separate CV round; not a physical release
   angle.
 
+## 27. Failure cases (exploratory, after the test run)
+
+Definitions fixed before looking: `h1_failure_cases.md`. Test split: the shots the model was most
+confident about and got wrong (made shots in the lowest predicted fifth, misses in the highest)
+look the same on every feature as the ones it got right. The 10% of shots whose prediction the
+boxes changed most carry the whole test gain (Brier -0.0089 there) and are 28% low releases.
+Video review of 12 cross-validated training shots: 4 of 6 surprising makes are box errors (two
+wrong release frames, a duplicate defender box, a scale error), where the boxes made the
+prediction worse; 3 of 6 surprising misses are correctly measured contested short shots.
+
+- **Intuition:** the remaining error is mostly chance plus two fixable things: release frames
+  detected at moments with no shot, and contests that a body-height distance does not capture.
+
 ## What is left
 
 - Optional: recover the multi-shot clips with the leak audit, to tighten the interval.
