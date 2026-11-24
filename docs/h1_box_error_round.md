@@ -47,3 +47,41 @@ improvement exceeds one bootstrap standard error (95% interval width / 3.92). A 
 kept is dropped and the next step builds on the last kept design. Every step's H1 comparison
 (boxes vs baseline) is reported, kept or not. The headline H1 result stays D0's, cross-validated
 and test-scored; a kept step is reported as an exploratory improvement.
+
+## Results
+
+Script: `scripts/h1_box_error_round.py` (takes a scratch directory for the cohorts it builds).
+Summary: `reports/basketevent_h1_box_error_round/`. The rebuilt D0 cohort matched v5 exactly.
+
+**Measurement check.** G1 marked the 24 hand-marked releases exactly as the current rule does (10
+within 1 frame, 21 within 3), so it was run.
+
+| Step | Shots | Box vs baseline, Brier | 95% interval | Gain over last kept | 1 SE | Kept |
+|---|---|---|---|---|---|---|
+| D0, current final | 7,726 | -0.00093 | -0.00169 to -0.00008 | | | |
+| G1 = D0 + release clears the head | 7,660 | -0.00040 | -0.00115 to +0.00041 | -0.00038 | 0.00020 | no |
+| G2 = D0 + duplicate defender boxes | 7,726 | -0.00076 | -0.00152 to +0.00004 | -0.00017 | 0.00011 | no |
+| G3 = D0 + scale check | 7,726 | **-0.00118** | -0.00199 to -0.00040 | 0.00025 | 0.00022 | yes |
+
+What each step touched (all 15,800 cohort shots, every family and split; no outcomes):
+
+- **G1** removed 286 shots (no release clears the head) and moved the release of 586 more. It did
+  not change review items 1 and 6, the two it was written for: in both, the ball after the false
+  "release" does go above the shooter's box. The model got worse on the shots it does change.
+- **G2** changed the defender features of 533 shots and did not catch item 2 (that duplicate box
+  overlaps the shooter by less than 0.5). Also worse.
+- **G3** blanked the box features of 1,635 shots (7.4% of unblocked jump shots). It caught item 12
+  (release height 2.36 from a thin stance box) but not item 4 (the far-side shooter's standing box
+  is over 50 px and steady). It is kept by the rule, narrowly: the gain (0.00025) is just over one
+  standard error (0.00022), and its own 95% interval (-0.00017 to +0.00070) includes zero.
+
+**Final design of this round: D0 + G3.** Box features lower cross-validated Brier by 0.00118
+(-0.00199 to -0.00040) against D0's 0.00093. Exploratory: chosen after the test split was scored,
+so it cannot be confirmed on it, and the step's gain is about the size of the seed-to-seed spread
+seen for D0 (section 22 of `h1_experiments.md`). The headline H1 result stays D0's.
+
+**Reading.** Leaving shots with an implausible body-height unit blank helps a little; trying to
+correct release frames or defender boxes with simple geometric rules does not. Neither G1 nor G2
+fixed the specific errors they were written for, so the video-reviewed errors are not the common
+case these rules caught, and the shots they did change were apparently measured well enough
+before. That G1 hurt also suggests some "low releases" it rejected carried real signal.
