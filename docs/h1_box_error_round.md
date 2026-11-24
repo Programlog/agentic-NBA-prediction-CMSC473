@@ -85,3 +85,16 @@ correct release frames or defender boxes with simple geometric rules does not. N
 fixed the specific errors they were written for, so the video-reviewed errors are not the common
 case these rules caught, and the shots they did change were apparently measured well enough
 before. That G1 hurt also suggests some "low releases" it rejected carried real signal.
+
+## Seed check for G3 (fixed before running)
+
+Added after the results above, because G3's gain (0.00025) is close to the seed-to-seed spread
+seen for D0. Same cohorts, folds and decision rule; only the XGBoost seed changes.
+
+- Run D0 and D0 + G3 cross-validation for seeds 1 to 5 (seed 42 is above).
+- For each seed: G3's gain over D0 and its H1 comparison (boxes vs baseline).
+- Seed-averaged: average each shot's probability over the six seeds for each design, then the same
+  paired game bootstrap.
+- **G3 counts as robust** if the seed-averaged gain over D0 exceeds one bootstrap standard error
+  **and** the gain is positive for at least 5 of the 6 seeds. Otherwise the round's final design
+  reverts to D0. Either way it stays exploratory.
