@@ -1,0 +1,43 @@
+{
+  "plan": "docs/h1_release_angle_pilot.md",
+  "shots": 7726,
+  "games": 184,
+  "release_frame_matches": 7726,
+  "status": {
+    "ok": 4779,
+    "toward_or_away_from_camera": 2736,
+    "too_close": 175,
+    "no_camera_reference": 19,
+    "ball_missing": 17
+  },
+  "gravity": {
+    "measured": 7577,
+    "median_ms2": 11.77721361207596,
+    "iqr_ms2": [
+      10.125136057971838,
+      13.686534704233821
+    ],
+    "verdict": "pass"
+  },
+  "plausible_range": {
+    "measured": 4779,
+    "median_deg": 47.11677323545834,
+    "iqr_deg": [
+      40.94280234963707,
+      55.658590979415465
+    ],
+    "share_20_to_75": 0.9472693032015066,
+    "verdict": "pass"
+  },
+  "reliability": {
+    "measured": 4734,
+    "rho": 0.7527149341338284,
+    "ci": [
+      0.734793206929288,
+      0.7700494011683721
+    ],
+    "median_early_deg": 49.44194277081641,
+    "median_late_deg": 44.02720340075598,
+    "verdict": "pass"
+  }
+}

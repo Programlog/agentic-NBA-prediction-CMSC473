@@ -62,3 +62,41 @@ shots is inconclusive.
   broadcast boxes in this way") and stop.
 
 Script: `scripts/h1_release_angle_pilot.py`. Output: `reports/basketevent_h1_release_angle/`.
+
+## Results (run once, 2026-11-24, plan at commit `c81caa4`)
+
+7,726 development shots in 184 games; the recomputed release frame matched the cohort's on all of
+them. Angle measured on 4,779 (62%): not measured because aimed toward or away from the camera
+2,736, closer than 8 ft 175, no camera reference 19, ball missing 17. Output:
+`reports/basketevent_h1_release_angle/` (`angles.csv`, `summary.json`, `release_angle.png`).
+
+| Check | Measured | Result | Verdict |
+|---|---|---|---|
+| Gravity | 7,577 | median 11.8 m/s^2 (IQR 10.1 to 13.7) | pass |
+| Plausible range | 4,779 | median 47.1 degrees (IQR 40.9 to 55.7); 95% within 20 to 75 | pass |
+| Reliability (split-half) | 4,734 | rho 0.75 (0.73 to 0.77); early half 49.4, late half 44.0 degrees | pass |
+
+The ball decelerates downward at about gravity once scaled by the shooter's box (11.8 against
+9.8; a 2.0 m body is a rough scale, and a box nearer 1.7 m would match exactly), the angles centre
+where published NBA release angles do (mid-40s to low 50s), and the angle drops from the first
+half of the window to the second, as an arc should.
+
+**Exploratory, not planned (checks on the reliability check):**
+
+- Both halves are divided by the same shot-direction factor, which could make them agree on its
+  own. It does not drive the result: without the direction correction the split-half rho is 0.77;
+  with the direction factor's rank removed from both halves, 0.74; on shots aimed almost straight
+  along the court (`cos_phi > 0.95`, 1,706 shots), 0.60.
+- **The spread is too wide to be only the physical angle.** The angle varies across shots with a
+  standard deviation of 12.7 degrees, roughly three times the few degrees published release
+  angles vary among NBA jump shots. The split-half difference suggests about 9 degrees of noise
+  per half-window angle. Part of what stays consistent between the halves is therefore likely
+  viewpoint, not physics: the uncorrected depth part of the flight and camera tilt, which differ
+  by shot location and arena and are the same for both halves. The angle still correlates with
+  the direction factor (rho -0.25), which a true release angle should barely do.
+
+**Reading:** all three pre-registered checks pass, so by the plan the angle is usable as an
+approximate box feature. It is an image-based launch angle that behaves like a ball arc (gravity,
+plausible centre, consistent within a shot), not a calibrated physical release angle, and it is
+missing for 38% of shots by design. Adding it to the model would be a separate, written-down
+cross-validation round, labelled exploratory; the test split is not scored again.
