@@ -356,5 +356,20 @@ Not a test and not pre-registered: a description of the frozen models for presen
   likely mixes rushed, low releases with shots whose detected release frame is early (section
   23). The boxes cannot separate the two.
 
+## 26. Release-angle pilot (exploratory, after the test run)
+
+Fixed before running: `h1_release_angle_pilot.md`. An image-based launch angle from the ball box
+over `r .. r+4`, camera-corrected with the other players' feet and corrected for shot direction
+with the NBA shot location; development shots only, no outcomes. Measured on 4,779 of 7,726 shots
+(2,736 aimed too much toward or away from the camera). Gravity check 11.8 m/s^2 (pass), median
+angle 47.1 degrees with 95% within 20 to 75 (pass), split-half rho 0.75 (pass).
+
+- **Intuition:** the boxes do capture the ball's arc, and the angle is not just noise. But it
+  spreads about three times wider than real release angles, so much of it is likely camera
+  viewpoint. Usable as an approximate feature in a separate CV round; not a physical release
+  angle.
+
+## What is left
 
 - Optional: recover the multi-shot clips with the leak audit, to tighten the interval.
+- Optional: a written-down CV round adding the approximate release angle (section 26).
