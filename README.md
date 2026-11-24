@@ -67,6 +67,7 @@ The following index covers the numbered experiments in the [full H1 log](docs/h1
 | 24 | [Test split (scored once)](docs/h1_experiments.md#24-test-split-scored-once) | Frozen test |
 | 25 | [What the box model learned (exploratory, after the test run)](docs/h1_experiments.md#25-what-the-box-model-learned-exploratory-after-the-test-run) | Exploratory follow-up |
 | 26 | [Release-angle pilot (exploratory, after the test run)](docs/h1_experiments.md#26-release-angle-pilot-exploratory-after-the-test-run) | Exploratory follow-up |
+| 27 | [Failure cases (exploratory, after the test run)](docs/h1_experiments.md#27-failure-cases-exploratory-after-the-test-run) | Exploratory follow-up |
 
 ### H1 video pipeline and supporting studies
 
@@ -84,6 +85,7 @@ These separate reports document early feasibility work, annotation, and feature-
 | Feature engineering rounds | [Protocols and results](docs/h1_improvement_round.md) |
 | Independent YOLO / CoTracker3 measurement checks | [Protocol and results](docs/h1_measurement_check.md) |
 | Release-angle measurement pilot (November 24) | [Report](docs/h1_release_angle_pilot.md) |
+| Failure-case analysis (November 24) | [Report](docs/h1_failure_cases.md) · [Video review](reports/basketevent_h1_failure_cases/review.csv) |
 
 The release-angle pilot measured 4,779 of 7,726 development shots and passed its three planned measurement checks (median image-based angle 47.1°, split-half Spearman 0.75). It is not a calibrated physical angle and has not been added to the frozen predictive model.
 
