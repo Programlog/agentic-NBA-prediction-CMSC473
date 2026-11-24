@@ -75,7 +75,7 @@ What each step touched (all 15,800 cohort shots, every family and split; no outc
   is over 50 px and steady). It is kept by the rule, narrowly: the gain (0.00025) is just over one
   standard error (0.00022), and its own 95% interval (-0.00017 to +0.00070) includes zero.
 
-**Final design of this round: D0 + G3.** Box features lower cross-validated Brier by 0.00118
+**Design kept by the rule: D0 + G3 (reverted to D0 by the seed check below).** Box features lower cross-validated Brier by 0.00118
 (-0.00199 to -0.00040) against D0's 0.00093. Exploratory: chosen after the test split was scored,
 so it cannot be confirmed on it, and the step's gain is about the size of the seed-to-seed spread
 seen for D0 (section 22 of `h1_experiments.md`). The headline H1 result stays D0's.
@@ -98,3 +98,27 @@ seen for D0. Same cohorts, folds and decision rule; only the XGBoost seed change
 - **G3 counts as robust** if the seed-averaged gain over D0 exceeds one bootstrap standard error
   **and** the gain is positive for at least 5 of the 6 seeds. Otherwise the round's final design
   reverts to D0. Either way it stays exploratory.
+
+## Seed check results
+
+Script: `scripts/h1_box_error_seeds.py`. Table: `reports/basketevent_h1_box_error_round/seeds.csv`.
+
+| Seed | G3 gain over D0 | 1 SE | D0: box vs baseline | G3: box vs baseline |
+|---|---|---|---|---|
+| 42 | +0.00025 | 0.00022 | -0.00093 | -0.00118 |
+| 1 | +0.00004 | 0.00021 | -0.00075 | -0.00079 |
+| 2 | +0.00030 | 0.00021 | -0.00074 | -0.00104 |
+| 3 | -0.00001 | 0.00023 | -0.00087 | -0.00086 |
+| 4 | -0.00004 | 0.00022 | -0.00110 | -0.00106 |
+| 5 | +0.00013 | 0.00021 | -0.00090 | -0.00103 |
+| **Mean of 6** | **+0.00011** (-0.00025 to +0.00049) | 0.00019 | **-0.00091** (-0.00166 to -0.00013) | -0.00102 (-0.00181 to -0.00023) |
+
+**G3 is not robust:** its gain is positive for 4 of 6 seeds (needed 5) and the seed-averaged gain
+(0.00011) is under one standard error (0.00019). Seed 42, the one the round ran on, happened to
+give G3 its second-largest gain. **The round's final design reverts to D0.**
+
+**Reading.** None of the three box-error fixes is a reliable improvement. Blanking implausible
+body-height units may help slightly (G3 is ahead on average), but by less than the noise from the
+XGBoost seed. A useful by-product: D0 averaged over six seeds in cross-validation lowers Brier by
+0.00091 (-0.00166 to -0.00013), the same as the single-seed headline and significant, which backs
+up the frozen H1 result.
