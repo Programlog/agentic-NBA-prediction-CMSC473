@@ -1,318 +1,164 @@
-# NBA Shot Prediction
+# NBA Shot Prediction with Computer Vision and Agentic AI
 
-## NBA Shot Prediction with Agentic AI and Computer Vision
+CMSC473 research project investigating whether video-derived features and multi-agent LLMs improve NBA shot-make probability estimates.
 
-### Problem
+## Research questions and results
 
-NBA shot success depends on a variety of factors, such as shot location,
-defender proximity, game context, and player history or statistics. These
-factors are often captured in traditional NBA shot data. However, useful
-information may still be missed, including shooting mechanics, release
-angle, defender positioning, and contest height, which can be investigated
-by analyzing video clips.
+| Hypothesis | Comparison | Main finding |
+| --- | --- | --- |
+| **H1 — Computer vision** | XGBoost with vs. without video-derived features | Small improvement across development and held-out games; held-out confidence interval includes zero. |
+| **H2 — Agentic AI** | Multi-agent vs. single-agent LLMs with matched inputs and call budgets; XGBoost reference | Frozen small-model test supports H2 against the budget-matched LLM, but not against XGBoost. Later stronger-model and calibration experiments limit the generality of the advantage. |
 
-Since individual shot outcomes are random by nature, our goal is **not to
-perfectly predict whether every shot goes in**. Instead, we aim to
-**estimate shot quality and shot-success probability at the instant of
-release**.
+Both primary held-out evaluations are complete. Follow-up experiments are reported separately from frozen results.
 
-We analyze the Computer Vision and Agentic AI systems separately to
-determine whether improvements come from additional computer-vision
-features, the architecture of the agentic system, or both.
+## H1 — Computer vision
 
-### Research Questions
+**Dataset:** BasketEvent 2025–26, matched to NBA shot records. The frozen cohort contains unblocked jump shots with detected releases: 7,726 development shots across 184 games and 1,546 test shots across 34 later games.
 
-- **H1 — Computer Vision:** Do shot-mechanic and defender features derived
-  from computer vision improve NBA shot-success predictions beyond
-  traditional NBA statistics?
-- **H2 — Agentic AI:** When utilizing the same features, does a multi-agent
-  LLM pipeline improve NBA shot-success predictions compared with
-  conventional supervised-learning models such as XGBoost and a single
-  LLM using the same available inputs?
+**Models:** Identical constrained XGBoost designs using traditional shot features (including earlier-date player history), with or without nine box-derived measurements: release height, jump, ball rise, shooter speed, defender distance, nearby defender count, closing speed, defender position relative to basket, and arms-up proxy.
 
-### Approach
+### Held-out results (November 23, 2026)
 
-- **Data:** Link shot logs, player statistics, tracking data, and video
-  clips by game ID, event number, and game clock where data is available.
-- **Baseline models:** Use logistic regression and XGBoost on traditional
-  shot-log features such as shot distance, defender distance, shot clock,
-  and game clock.
-- **Computer Vision:** Use YOLO detection and YOLO-Pose to investigate
-  additional shooting-mechanics and defender-contest features from video
-  frames around the release. Extracted image measurements are proxies,
-  not automatically verified physical release angles or heights.
-- **Agentic system:** Specialized agents analyze the available features
-  from different perspectives, including game context, player history,
-  and shot mechanics/defense. Their outputs feed into a prediction agent,
-  which produces the final shot-success probability. Agents with missing
-  inputs are skipped.
-- **Evaluation:** Compare models on held-out games using Brier score,
-  log loss, accuracy, and ROC-AUC, with emphasis on probability
-  calibration and analyzing failure cases.
+| Model | Brier ↓ | Log loss ↓ | ROC-AUC ↑ |
+| --- | ---: | ---: | ---: |
+| Constant | 0.2075 | 0.6056 | 0.5000 |
+| Logistic regression | 0.2009 | 0.5903 | **0.6100** |
+| XGBoost | 0.2010 | 0.5904 | 0.6048 |
+| XGBoost + CV boxes | **0.2003** | **0.5888** | 0.6089 |
 
-These describe the project's overall approach, **not a claim that every
-planned data source, video feature, or H1 experiment has been completed**.
+| Evaluation | Brier difference (CV − baseline) | 95% game-bootstrap CI |
+| --- | ---: | --- |
+| Development cross-validation | −0.00093 | [−0.00169, −0.00008] |
+| Frozen held-out test (six seeds averaged) | −0.00067 | [−0.00237, +0.00096] |
 
-### Current Status
+The improvement is consistent in direction but not statistically significant on the held-out test alone. Release height drives much of the gain, yet agrees only weakly with independent pose measurements within jump shots (Spearman 0.32). The cohort over-represents misses. Box features are image-based proxies, not calibrated physical measurements.
 
-The tabular baseline, video-annotation and pose-extraction tools, and
-local Ollama/CrewAI agent pipeline have been implemented. The **final
-held-out H2 comparison is complete**: the multi-agent system improved on
-the budget-matched single-LLM baseline, but did not outperform XGBoost.
-See [final H2 results](experiments/h2/02_final_test_100/README.md) and
-[initial baseline results](reports/day1.md).
+[Full H1 results](docs/h1_results.md) · [Frozen protocol](docs/h1_test_protocol.md) · [Test metrics](reports/basketevent_h1_test/summary.json) · [Predictions](reports/basketevent_h1_test/test_predictions_seed_mean.csv) · [Effect estimates](reports/basketevent_h1_test/h1_effect_estimates.png)
 
-## Quick start
+### H1 experiment index
 
-Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.11.
-On macOS, install XGBoost's runtime with `brew install libomp`.
+The following index covers the numbered experiments in the [full H1 log](docs/h1_experiments.md), including unsuccessful approaches.
+
+| # | Experiment | Stage |
+| --- | --- | --- |
+| 01 | [Original comparison on one validation split (runs 1 and 2)](docs/h1_experiments.md#1-original-comparison-on-one-validation-split-runs-1-and-2) | Development / measurement |
+| 02 | [Dropping shots with no detected release (commit 40cd4fd)](docs/h1_experiments.md#2-dropping-shots-with-no-detected-release-commit-40cd4fd) | Development / measurement |
+| 03 | [Camera perspective and two more defender features (commit a682b75)](docs/h1_experiments.md#3-camera-perspective-and-two-more-defender-features-commit-a682b75) | Development / measurement |
+| 04 | [Blind review of the labels (25 clips)](docs/h1_experiments.md#4-blind-review-of-the-labels-25-clips) | Development / measurement |
+| 05 | [Checking which baseline features are filled](docs/h1_experiments.md#5-checking-which-baseline-features-are-filled) | Development / measurement |
+| 06 | [Box features alone](docs/h1_experiments.md#6-box-features-alone) | Development / measurement |
+| 07 | [Dataset composition](docs/h1_experiments.md#7-dataset-composition) | Development / measurement |
+| 08 | [Stronger tabular baseline (run 3)](docs/h1_experiments.md#8-stronger-tabular-baseline-run-3) | Development / measurement |
+| 09 | [Jump shots only (run 3)](docs/h1_experiments.md#9-jump-shots-only-run-3) | Development / measurement |
+| 10 | [Open-shot validity check](docs/h1_experiments.md#10-open-shot-validity-check) | Development / measurement |
+| 11 | [Glitch filter for player boxes (cohort v4, run 4)](docs/h1_experiments.md#11-glitch-filter-for-player-boxes-cohort-v4-run-4) | Development / measurement |
+| 12 | [Date-blocked cross-validation and a constrained model (primary test)](docs/h1_experiments.md#12-date-blocked-cross-validation-and-a-constrained-model-primary-test) | Development / measurement |
+| 13 | [Defender features only](docs/h1_experiments.md#13-defender-features-only) | Development / measurement |
+| 14 | [Feature ablation](docs/h1_experiments.md#14-feature-ablation) | Development / measurement |
+| 15 | [Robustness checks](docs/h1_experiments.md#15-robustness-checks) | Development / measurement |
+| 16 | [Blocked shots](docs/h1_experiments.md#16-blocked-shots) | Development / measurement |
+| 17 | [CoTracker3 point tracking (pilot, 25 reviewed clips)](docs/h1_experiments.md#17-cotracker3-point-tracking-pilot-25-reviewed-clips) | Development / measurement |
+| 18 | [YOLO pose wrists (pilot, 25 reviewed clips)](docs/h1_experiments.md#18-yolo-pose-wrists-pilot-25-reviewed-clips) | Development / measurement |
+| 19 | [Looking for more data](docs/h1_experiments.md#19-looking-for-more-data) | Development / measurement |
+| 20 | [Improvement round 1: measuring release height better](docs/h1_experiments.md#20-improvement-round-1-measuring-release-height-better) | Development / measurement |
+| 21 | [Improvement round 2: more posture from the boxes](docs/h1_experiments.md#21-improvement-round-2-more-posture-from-the-boxes) | Development / measurement |
+| 22 | [Rebuilt cohort and seed sensitivity](docs/h1_experiments.md#22-rebuilt-cohort-and-seed-sensitivity) | Development / measurement |
+| 23 | [Measurement check against video](docs/h1_experiments.md#23-measurement-check-against-video) | Development / measurement |
+| 24 | [Test split (scored once)](docs/h1_experiments.md#24-test-split-scored-once) | Frozen test |
+| 25 | [What the box model learned (exploratory, after the test run)](docs/h1_experiments.md#25-what-the-box-model-learned-exploratory-after-the-test-run) | Exploratory follow-up |
+| 26 | [Release-angle pilot (exploratory, after the test run)](docs/h1_experiments.md#26-release-angle-pilot-exploratory-after-the-test-run) | Exploratory follow-up |
+
+### H1 video pipeline and supporting studies
+
+These separate reports document early feasibility work, annotation, and feature-quality checks; they are not additional confirmatory predictive tests.
+
+| Study | Report |
+| --- | --- |
+| NBA video retrieval, BasketEvent pilot, YOLO11m/11x, CoTracker3 and visual audits | [Early experiment timeline (including failures)](docs/experiments/H1_EXPERIMENT_LOG.md) |
+| Assisted annotation | [Guide](docs/experiments/h1_assisted_annotation_guide.md) |
+| Automatic annotation iterations | [V1](docs/experiments/h1_auto_annotation_v1.md) · [V2](docs/experiments/h1_auto_annotation_v2.md) · [V3](docs/experiments/h1_auto_annotation_v3.md) · [Visual review](docs/experiments/h1_auto_annotation_visual_review_v1.md) |
+| Manual event and video verification | [Workflow](docs/h1_manual_event_review_workflow.md) · [Feasibility audit](docs/h1_manual_video_feasibility_audit.md) · [Quality gate](docs/h1_video_verification_quality_gate.md) |
+| Multi-game data expansion | [Report](docs/experiments/h1_multigame_dataset_expansion.md) |
+| Point tracking and frame-by-frame audit | [Tracking guide](docs/experiments/h1_motion_tracking_guide.md) · [Visual audit V2](docs/experiments/h1_tracking_visual_audit_v2.md) |
+| Camera-motion compensation (2- and 10-shot pilots) | [Pilot](docs/experiments/h1_camera_motion_pilot.md) · [Results](docs/experiments/h1_camera_motion_results.md) |
+| Feature engineering rounds | [Protocols and results](docs/h1_improvement_round.md) |
+| Independent YOLO / CoTracker3 measurement checks | [Protocol and results](docs/h1_measurement_check.md) |
+| Release-angle measurement pilot (November 24) | [Report](docs/h1_release_angle_pilot.md) |
+
+The release-angle pilot measured 4,779 of 7,726 development shots and passed its three planned measurement checks (median image-based angle 47.1°, split-half Spearman 0.75). It is not a calibrated physical angle and has not been added to the frozen predictive model.
+
+## H2 — Agentic AI
+
+**Dataset:** Kaggle 2014–15 NBA shot logs. The frozen November 19, 2026 test used 100 held-out shots from 50 games, identical inputs for all models, and local Ollama `qwen3:4b-instruct`. Neither CV nor player-history features were included in this primary test.
+
+### Held-out results
+
+| Model | Brier ↓ | Log loss ↓ | ROC-AUC ↑ | Accuracy ↑ |
+| --- | ---: | ---: | ---: | ---: |
+| XGBoost | **0.2056** | **0.5990** | **0.7414** | **0.740** |
+| Logistic regression | 0.2198 | 0.6299 | 0.6810 | 0.670 |
+| Constant | 0.2448 | 0.6827 | 0.5000 | 0.580 |
+| Multi-agent LLM | 0.2483 | 0.6821 | 0.6874 | 0.510 |
+| Budget-matched single LLM | 0.2735 | 0.7451 | 0.6636 | 0.530 |
+| One-call single LLM | 0.2931 | 0.7915 | 0.6537 | 0.440 |
+
+Primary paired Brier difference (multi − budget-matched single): **−0.0252**, 95% game-bootstrap CI **[−0.0441, −0.0073]**. Both used three calls per shot. This supports the frozen H2 decision against the matched LLM control, but no LLM beat XGBoost. Later exploratory results suggest the benefit is largely model- and calibration-dependent.
+
+[Full H2 results](experiments/h2/02_final_test_100/README.md) · [Frozen protocol](experiments/h2/02_final_test_100/protocol.md) · [Metrics](experiments/h2/02_final_test_100/report/combined_metrics.csv) · [Predictions](experiments/h2/02_final_test_100/report/predictions.csv) · [Figures](experiments/h2/02_final_test_100/report/figures/)
+
+### H2 experiment index
+
+| # | Experiment | Status / finding |
+| --- | --- | --- |
+| 01 | [30-shot validation pilot](experiments/h2/01_validation_pilot_30/README.md) | Complete; no multi-agent advantage |
+| 02 | [100-shot held-out test](experiments/h2/02_final_test_100/README.md) | Frozen primary test; multi-agent beats matched single LLM |
+| 03 | Disagreement-aware aggregation: [4-shot pilot](experiments/h2/03_disagreement_aggregation/pilot_4_shots.md), [partial 10-shot run](experiments/h2/03_disagreement_aggregation/validation_10_partial.md) | Pilot complete; follow-up partial (7 matched shots); inconclusive |
+| 04 | [Overconfidence: anchoring and recalibration](experiments/h2/04_brier_followup/README.md) | Complete, exploratory; calibration removes most multi-agent advantage |
+| 05 | [Stronger model: GPT-6 Luna](experiments/h2/05_stronger_model/README.md) | Complete, exploratory; multi and single tie |
+| 06 | [Shooter history and player-name contamination](experiments/h2/06_shooter_history/README.md) | Complete, exploratory; small history benefit, XGBoost remains best |
+| 07 | [Prompt tuning, similar shots, and XGBoost as a tool](experiments/h2/07_prompt_tuning/README.md) | Complete, exploratory; 1,000 test shots, tool-assisted LLM ties XGBoost largely by copying it |
+
+[Complete H2 experiment directory and reproduction index](experiments/h2/README.md). Only experiment 02 determines the frozen H2 decision.
+
+## Repository structure
+
+| Path | Contents |
+| --- | --- |
+| [src/nba_shots/](src/nba_shots/) | Data processing, supervised models, vision, annotation, agents and evaluation |
+| [configs/](configs/) | Dataset, feature and model configurations |
+| [scripts/](scripts/) | Dataset collection, audits and H1 experiment runners |
+| [docs/](docs/) | Research protocols, H1 reports and technical documentation |
+| [reports/](reports/) | Baseline and H1 metrics, predictions, figures and experiment outputs |
+| [experiments/h2/](experiments/h2/) | H2 protocols, scripts and results |
+| [notebooks/](notebooks/) | Demo notebook |
+| [tests/](tests/) | Automated tests |
+
+## Setup and reproduction
+
+Requires Python 3.11 and [uv](https://docs.astral.sh/uv/getting-started/installation/). On macOS, install XGBoost's runtime with `brew install libomp`.
 
 ```bash
 uv sync --frozen
 uv run --frozen nba-shots baseline --output artifacts/baseline
 ```
 
-Downloads the [Kaggle shot logs](https://www.kaggle.com/datasets/dansbecker/nba-shot-logs),
-cleans the data, creates chronological game splits, and trains constant, logistic
-regression, and XGBoost models. Evaluates validation data only.
+The baseline command downloads the Kaggle shot logs and evaluates validation data only. Use a new output directory per run; add `--input /path/to/shot_logs.csv` for a local CSV.
 
-Use a new output directory for each run. To supply a downloaded CSV, add
-`--input /path/to/shot_logs.csv`. Runs save prepared data, splits, models, predictions,
-metrics, and calibration plots. Data and generated artifacts are ignored by Git.
-
-## Experiments
-
-Configure features and training in `configs/default.json`. Splits keep whole games
-and dates together; preprocessing uses training data only and excludes outcome fields.
-Reserve test evaluation (`--split test --final`) until configurations and prompts are frozen.
-
-Install optional CV and agent dependencies:
+For optional vision and agent dependencies:
 
 ```bash
 uv sync --frozen --all-extras
-.venv/bin/nba-shots --help
+uv run --frozen nba-shots --help
 ```
 
-### Video Annotation Tool
+- [H1 reproduction instructions](docs/h1_results.md#reproduce) (BasketEvent collection requires Hugging Face authentication).
+- [H2 reproduction instructions](experiments/h2/02_final_test_100/README.md#reproduction) (frozen H2 runner uses commit `64ee854`; later agent changes are not equivalent).
+- [General experiment instructions](docs/experiments.md), including the video annotation tool.
+- [Initial tabular baseline results](reports/day1.md) and [demo notebook](notebooks/demo.ipynb).
 
-Use the browser tool to inspect exact decoded frames, set release frames (`R`),
-run YOLO detection, and tag the shooter and contest defender. Prepare the manifest
-using the [experiment instructions](docs/experiments.md) first:
+Keep whole games and dates together, fit preprocessing on training data only, and reserve test evaluation for frozen configurations. Raw data and many generated artifacts are ignored by Git; early pilot reports may rely on local outputs. H1 and H2 use different cohorts, so their absolute metrics should not be directly compared.
 
-```bash
-uv run nba-shots annotate --manifest data/video/manifest.csv --videos data/video/clips
-```
-
-See [experiment instructions](docs/experiments.md) for video collection, release
-annotations, pose extraction, local LLMs, and comparisons on matching shots.
-
-
-### H1: Computer-vision experiments (ongoing)
-
-The exploratory H1 pipeline has tested BasketEvent clip matching, YOLO pose
-extraction, CoTracker3 point tracking, frame-by-frame visual audits, and
-translation-only camera-motion compensation. Results include incomplete/failed
-pose and video-retrieval attempts as well as successful tracking runs.
-
-On a **10-shot, single-game** camera-motion pilot, **10/10 clips processed** and
-all camera estimates passed the algorithm's internal validity checks. Mean
-shooter displacement changed from **0.02473 to 0.02814** after correction;
-mean defender displacement changed from **0.04035 to 0.04395** across six
-annotated defenders. These changes **do not demonstrate improved accuracy**.
-No held-out H1 predictive comparison is complete.
-
-- [Chronological H1 experiment log (including failures)](docs/experiments/H1_EXPERIMENT_LOG.md)
-- [Detailed camera-motion pilot and 10-shot results](docs/experiments/h1_camera_motion_results.md)
-
-## H2: Single-agent vs. multi-agent LLMs (completed)
-
-All H2 protocols, scripts, results and follow-ups are in
-[`experiments/h2/`](experiments/h2/README.md), one folder per experiment.
-
-**H2: Agents add value beyond the features themselves.** Specialized
-agents separately analyze the available shot features from different
-perspectives, including game context and shot mechanics/defense. A
-prediction agent takes the outputs from these specialized agents to
-produce a final shot-success probability.
-
-The proposal calls for comparing the multi-agent system against both
-XGBoost on the same features and a single LLM using the same inputs.
-For the final held-out H2 decision, the team selected the
-**call-budget-matched single-LLM comparison** as the primary test;
-XGBoost was included as a reference rather than a criterion for
-supporting H2.
-
-The [pre-registered final protocol](experiments/h2/02_final_test_100/protocol.md)
-was frozen before test inference. The November 19, 2026 evaluation used
-**100 held-out Kaggle 2014–15 shots from 50 games** (two shots per game), a
-deterministic seed of 42, and local Ollama running `qwen3:4b-instruct`.
-Player-history and computer-vision features were not included in this
-test. The three LLM conditions completed **300/300 predictions with zero
-failures**.
-
-### Held-out model results
-
-All models were scored on the **same 100 shots**. Lower Brier score and log
-loss are better; higher ROC-AUC and accuracy are better.
-
-| Model | Brier score ↓ | Log loss ↓ | ROC-AUC ↑ | Accuracy ↑ |
-| --- | ---: | ---: | ---: | ---: |
-| XGBoost (reference) | **0.2056** | **0.5990** | **0.7414** | **0.740** |
-| Logistic regression (reference) | 0.2198 | 0.6299 | 0.6810 | 0.670 |
-| Constant-probability baseline | 0.2448 | 0.6827 | 0.5000 | 0.580 |
-| **Multi-agent LLM** (`llm_multi`) | **0.2483** | **0.6821** | **0.6874** | **0.510** |
-| Budget-matched single agent (`llm_single_budget`) | 0.2735 | 0.7451 | 0.6636 | 0.530 |
-| One-call single agent (`llm_single`) | 0.2931 | 0.7915 | 0.6537 | 0.440 |
-
-### Primary hypothesis test
-
-The primary H2 comparison is multi-agent versus the **budget-matched**
-single agent, not multi-agent versus XGBoost. Both primary conditions used
-**300 LLM calls** across the 100 shots (three calls per shot in this
-configuration).
-
-| Paired comparison | Brier difference (multi − control) | 95% game-bootstrap CI | Conclusion |
-| --- | ---: | --- | --- |
-| Multi-agent vs. budget-matched single agent (**primary**) | **−0.0252** | **[−0.0441, −0.0073]** | Supports H2 |
-| Multi-agent vs. one-call single agent (secondary) | −0.0448 | [−0.0699, −0.0212] | Descriptive improvement |
-
-Intervals use **1,000 paired bootstrap resamples of games** with seed 42.
-A negative Brier difference favors multi-agent. Because the primary
-interval excludes zero, the result meets the protocol's decision rule
-for H2.
-
-**Interpretation and limitations:** Specializing and aggregating agents
-helped relative to the LLM controls, but **none of the LLMs outperformed
-XGBoost or logistic regression** on this dataset. The multi-agent LLM also
-had a slightly worse Brier score than the constant baseline. All LLM
-conditions overpredicted the probability of a made shot; reduced
-overconfidence accounts for much of the multi-agent improvement.
-The study used one small local model and only 100 held-out shots, so
-its effect size should not be generalized without further replication.
-
-The earlier [30-shot validation pilot](experiments/h2/01_validation_pilot_30/README.md)
-did **not** show the same benefit; the final held-out evaluation is the
-pre-registered H2 result. The model digest used in the validation pilot
-could not be verified against the final test model digest.
-
-### Reproduce and inspect H2
-
-- [Frozen protocol and configuration](experiments/h2/02_final_test_100/protocol.md)
-- [Detailed final results and limitations](experiments/h2/02_final_test_100/README.md)
-- [Full generated report](experiments/h2/02_final_test_100/report/report.md)
-- [Per-model evaluation metrics (CSV)](experiments/h2/02_final_test_100/report/combined_metrics.csv)
-- [Paired bootstrap comparisons (JSON)](experiments/h2/02_final_test_100/report/paired_comparisons.json)
-- [Per-shot predictions (CSV)](experiments/h2/02_final_test_100/report/predictions.csv)
-- [Final execution script](experiments/h2/02_final_test_100/run_llm_final.sh)
-- [Result figures](experiments/h2/02_final_test_100/report/figures/) (regenerate with `experiments/h2/02_final_test_100/make_figures.py`)
-
-The final runner checks the frozen implementation and prepared-data
-configuration before using `--split test --final`. Its documented
-setup expects the recorded model digest and prepared data artifacts;
-running it with different inputs or code is a **new experiment**, not
-a reproduction of the frozen run.
-
-The frozen run was re-executed on November 19, 2026 and reproduced all 600
-committed predictions exactly (see
-[Reproduction](experiments/h2/02_final_test_100/README.md#reproduction)). Use commit
-`64ee854` to rerun it; later `agents.py` changes intentionally fail the runner's
-frozen-hash check.
-
-### Follow-up: disagreement-aware aggregation
-
-The next experiment builds on the proposal's idea that specialized
-agents analyze the available information from different perspectives
-before a prediction agent generates the final shot-success probability.
-It tests whether explicitly measuring disagreements among those
-specialized agents (mean, range, and standard deviation of their
-estimates) helps the prediction agent interpret conflicting evidence.
-
-A completed **4-shot validation pilot** reported a Brier score of
-**0.2657** for disagreement-aware aggregation versus **0.2767** for
-the original multi-agent aggregator (a 0.0110 absolute, 3.98% relative
-reduction), with all 16 predictions completing successfully. However,
-accuracy dropped from 50% to 25%, and four shots are far too few for
-a reliable performance conclusion. See the
-[4-shot pilot report](experiments/h2/03_disagreement_aggregation/pilot_4_shots.md)
-for setup, all condition metrics, and limitations.
-
-A follow-up **10-shot validation run is currently incomplete**: 28 of 40
-planned condition predictions were saved successfully, covering **7 matched
-shots from 4 games**. On those seven shots, the disagreement-aware
-aggregator achieved **0.196086 Brier** versus **0.209529** for the original
-aggregator (paired difference **−0.013443**, approximately **6.42% lower**).
-These are preliminary, unconfirmed findings from an incomplete run, not
-a final 10-shot comparison. See the
-[partial validation report](experiments/h2/03_disagreement_aggregation/validation_10_partial.md).
-
-### Follow-up: fixing LLM overconfidence (Brier score)
-
-The LLM conditions' poor Brier scores come mainly from **overconfidence**:
-on test, `llm_multi` predicted an average make probability of 0.60 when 42%
-of shots were made, even though its ROC-AUC (0.687) matched logistic
-regression's. A validation-only follow-up (100 shots, 50 games, same model,
-seed and data) tested two fixes:
-
-- **Anchoring** each agent with training-split make rates for the shot's
-  distance and defender spacing lowered validation Brier from **0.273 to
-  0.238** (−0.035, 95% CI [−0.067, −0.004]). That beats logistic regression
-  (0.245) and the constant baseline (0.247), close to XGBoost (0.232).
-- **Recalibrating** the frozen test predictions with a map fitted only on
-  validation lowered `llm_multi` from **0.248 to 0.227**. With **both** arms
-  recalibrated, the multi-agent and budget-matched single LLM are **tied**
-  (+0.001 [−0.006, +0.010]), so the published H2 advantage appears to come
-  mostly from lower overconfidence. Both still trail XGBoost (0.206).
-
-See the [follow-up report](experiments/h2/04_brier_followup/README.md).
-
-### Follow-up: a stronger model (GPT-6 Luna)
-
-[Experiment 05](experiments/h2/05_stronger_model/README.md) re-ran the same
-conditions, plus an anchored single-LLM control, with OpenAI `gpt-6-luna` on the
-same validation and test shots. Its test protocol was frozen before any test call.
-
-- Luna beat qwen 4B by **0.032** Brier for multi-agent (CI [−0.055, −0.009]) and
-  **0.056** for the single LLM.
-- With Luna, **multi- and single-agent tie**: anchored −0.0004 [−0.002, +0.001],
-  unanchored −0.002 [−0.008, +0.006]. The multi-agent gain in 02 appears specific to
-  the small, overconfident model.
-- The best LLM (Luna, anchored single, 0.213) beat logistic regression (0.220) but
-  not XGBoost (0.206): +0.007 [−0.003, +0.017].
-
-### Follow-up: shooter history
-
-[Experiment 06](experiments/h2/06_shooter_history/README.md) gave the agents each
-shooter's earlier-game make rates. One arm also gave the player's name. The baselines
-were retrained on the same features.
-
-- History improved the multi-agent system slightly: −0.004 [−0.009, −0.0003]. With a
-  dedicated history specialist, multi-agent then beat the single LLM: −0.004
-  [−0.008, −0.001]. Both effects are small and were not seen on validation.
-- Player names added nothing, and a probe showed GPT-6 Luna has memorized 2014–15
-  season FG% (r = 0.92), so named-player prompts carry contamination.
-- XGBoost (0.206) is still the best model. The best LLM (0.213) ties logistic
-  regression with history.
-
-These exploratory runs do **not** change the frozen held-out H2 results.
-
-### Follow-up: better prompts and XGBoost as a tool
-
-[Experiment 07](experiments/h2/07_prompt_tuning/README.md) tuned the prompts on 500
-validation shots and tested once on **1,000** test shots.
-
-- Rewritten instructions with a make-rate table, plus the 50 most similar training
-  shots, beat the original prompt (−0.003 [−0.006, −0.0002]). They still trail XGBoost
-  (+0.005 [+0.001, +0.008]).
-- Giving the agents the XGBoost estimate as a "statistical model tool" closes the
-  gap. The multi-agent system **ties** XGBoost: 0.2298 vs. 0.2297, Δ +0.0001
-  [−0.002, +0.002]. It does this mostly by copying the tool, and its deviations
-  don't help.
-- Multi-agent and single-agent tie again (−0.0002 [−0.002, +0.002]).
-- The same results hold on the 900 test shots that no earlier experiment used.
-
-The ceiling is in the nine tabular features, not in the prompts.
-
-## Checks
+### Checks
 
 ```bash
 uv run --frozen pytest -q
@@ -320,12 +166,8 @@ uv run --frozen ruff check src tests
 uv run --frozen ruff format --check src tests
 ```
 
-Use `uv run --frozen --all-extras pytest -q` to include the CrewAI integration tests.
+Use `uv run --frozen --all-extras pytest -q` to include optional integration tests.
 
-## Resources
+## Additional documentation
 
-- [Baseline results](reports/day1.md)
-- [H1 results: box features and shot prediction](docs/h1_results.md)
-- [Demo notebook](notebooks/demo.ipynb)
-- [Team roadmap](docs/roadmap.md)
-- [Troubleshooting](docs/troubleshooting.md)
+[Project requirements](docs/PRD.md) · [Technical specification](docs/SPEC.md) · [Roadmap](docs/roadmap.md) · [Troubleshooting](docs/troubleshooting.md)
