@@ -103,6 +103,9 @@ def diagnose_clip(clip: dict) -> dict:
         "gap_tolerant_episode_count": 0,
         "largest_candidate_gap_frames": "",
         "widely_separated_candidates": False,
+        "raw_geometry_candidate_count": 0,
+        "candidates_removed_by_steady": 0,
+        "removed_candidate_frames": "",
     }
 
     if not shooters:
@@ -116,15 +119,23 @@ def diagnose_clip(clip: dict) -> dict:
     key = shooters[0]
     result["shooter_key"] = key
 
-    shooter = steady(boxes(clip[key]))
+    raw_shooter = boxes(clip[key])
+    shooter = steady(raw_shooter)
     ball = boxes(clip.get("ball") or {})
 
     if not np.isfinite(ball).any():
         result["status"] = "no_ball"
         return result
 
+    raw_candidates = release_candidates(raw_shooter, ball)
     candidates = release_candidates(shooter, ball)
     selected = release_frame(shooter, ball)
+
+    removed_candidates = sorted(set(raw_candidates) - set(candidates))
+
+    result["raw_geometry_candidate_count"] = len(raw_candidates)
+    result["candidates_removed_by_steady"] = len(removed_candidates)
+    result["removed_candidate_frames"] = json.dumps(removed_candidates)
 
     # Fail rather than silently disagreeing with the frozen algorithm.
     expected = candidates[-1] if candidates else None
@@ -211,6 +222,9 @@ def write_report(results: list[dict], output: Path) -> None:
         "gap_tolerant_episode_count",
         "largest_candidate_gap_frames",
         "widely_separated_candidates",
+        "raw_geometry_candidate_count",
+        "candidates_removed_by_steady",
+        "removed_candidate_frames",
     ]
 
     output.parent.mkdir(parents=True, exist_ok=True)

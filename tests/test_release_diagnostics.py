@@ -212,3 +212,46 @@ def test_directory_scan_still_records_invalid_json(tmp_path):
     assert len(results) == 1
     assert results[0]["status"] == "invalid_json_or_trajectory"
     assert "error" in results[0]
+
+
+def test_normal_tracking_preserves_release_candidates():
+    shooter, ball = tracks()
+    result = diagnose_clip(make_clip(shooter, ball))
+
+    assert result["candidate_count"] > 0
+    assert result["raw_geometry_candidate_count"] == result["candidate_count"]
+    assert result["candidates_removed_by_steady"] == 0
+    assert json.loads(result["removed_candidate_frames"]) == []
+
+
+def test_steady_filter_can_remove_release_candidates():
+    shooter, ball = tracks()
+
+    # Most frames have ordinary player boxes.
+    # At the shooting sequence, the boxes are unusually tall.
+    shooter[:, 0] = 500
+    shooter[10:18, 0] = 0
+    shooter[10:18, 3] = 250
+
+    # The ball rises strongly after frame 10.
+    ball[11, 1] = 0
+    ball[12, 1] = -40
+    ball[13:20, 1] = -120
+
+    result = diagnose_clip(make_clip(shooter, ball))
+
+    assert result["raw_geometry_candidate_count"] > 0
+    assert result["candidate_count"] == 0
+    assert result["candidates_removed_by_steady"] > 0
+    assert result["status"] == "release_not_found"
+
+
+def test_no_release_has_no_removed_candidates():
+    shooter, ball = tracks()
+    ball[:] = [45.0, 45.0, 10.0, 10.0]
+
+    result = diagnose_clip(make_clip(shooter, ball))
+
+    assert result["raw_geometry_candidate_count"] == 0
+    assert result["candidates_removed_by_steady"] == 0
+    assert json.loads(result["removed_candidate_frames"]) == []
