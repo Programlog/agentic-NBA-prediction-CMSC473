@@ -3,8 +3,10 @@ import json
 import numpy as np
 import pytest
 
+import nba_shots.release_diagnostics as diagnostics
 from nba_shots.basketevent import release_frame
 from nba_shots.release_diagnostics import (
+    ReleaseDetectorMismatchError,
     candidate_episodes,
     diagnose_clip,
     release_candidates,
@@ -162,3 +164,51 @@ def test_no_release_has_no_invented_gap():
     assert result["gap_tolerant_episode_count"] == 0
     assert result["largest_candidate_gap_frames"] == ""
     assert result["widely_separated_candidates"] is False
+
+
+def test_detector_mismatch_raises_explicit_error(monkeypatch):
+    shooter, ball = tracks()
+    clip = make_clip(shooter, ball)
+
+    # Simulate the frozen detector disagreeing with candidate enumeration.
+    monkeypatch.setattr(diagnostics, "release_frame", lambda *_: None)
+
+    with pytest.raises(
+        ReleaseDetectorMismatchError,
+        match="Candidate scan disagrees",
+    ):
+        diagnose_clip(clip)
+
+
+def test_directory_scan_does_not_hide_detector_mismatch(tmp_path, monkeypatch):
+    shooter, ball = tracks()
+
+    source = tmp_path / "clips"
+    source.mkdir()
+    (source / "shot.json").write_text(
+        json.dumps(make_clip(shooter, ball)),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(diagnostics, "release_frame", lambda *_: None)
+
+    with pytest.raises(
+        ReleaseDetectorMismatchError,
+        match="Candidate scan disagrees",
+    ):
+        scan_directory(source)
+
+
+def test_directory_scan_still_records_invalid_json(tmp_path):
+    source = tmp_path / "clips"
+    source.mkdir()
+    (source / "broken.json").write_text(
+        "{ invalid json",
+        encoding="utf-8",
+    )
+
+    results = scan_directory(source)
+
+    assert len(results) == 1
+    assert results[0]["status"] == "invalid_json_or_trajectory"
+    assert "error" in results[0]

@@ -25,6 +25,10 @@ from .basketevent import (
 )
 
 
+class ReleaseDetectorMismatchError(RuntimeError):
+    """Candidate enumeration disagrees with the frozen release detector."""
+
+
 def release_candidates(shooter: np.ndarray, ball: np.ndarray) -> list[int]:
     """Return every frame satisfying the original release criteria."""
     n = min(len(shooter), len(ball))
@@ -125,7 +129,7 @@ def diagnose_clip(clip: dict) -> dict:
     # Fail rather than silently disagreeing with the frozen algorithm.
     expected = candidates[-1] if candidates else None
     if selected != expected:
-        raise ValueError("Candidate scan disagrees with frozen release detector")
+        raise ReleaseDetectorMismatchError("Candidate scan disagrees with frozen release detector")
 
     result["candidate_count"] = len(candidates)
     result["episode_count"] = len(candidate_episodes(candidates))
