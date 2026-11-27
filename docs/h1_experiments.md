@@ -15,6 +15,7 @@ cross-validation.
 - **Test split, scored once** (1,546 shots, 34 later games; six seeds averaged, section 24): Brier
   lower by **0.0007** (-0.0024 to +0.0010), 0.2010 to 0.2003, AUC 0.605 to 0.609. Same direction
   and size, every seed negative, but 34 games cannot confirm an effect this small on their own.
+  Accuracy at a 0.5 threshold is about 0.71 for every model (section 28).
 - **Measurement check** (section 23): release height, the main source of the gain, agrees with an
   independent YOLO pose estimate across all shots (rho 0.51) but only weakly within jump shots
   (rho 0.32). Read it as a box-derived height near release, not a clean measure of posture.
@@ -381,6 +382,31 @@ prediction worse; 3 of 6 surprising misses are correctly measured contested shor
 
 - **Intuition:** the remaining error is mostly chance plus two fixable things: release frames
   detected at moments with no shot, and contests that a body-height distance does not capture.
+
+## 28. Accuracy and reliability of the test predictions
+
+The proposal lists accuracy with Brier score, log loss and ROC-AUC, but section 24 reported only
+the last three. Computed afterwards from the saved six-seed test predictions
+(`reports/basketevent_h1_test/test_predictions_seed_mean.csv`); no model was refit, no prediction
+changed, and the threshold is fixed at 0.5. Script: `scripts/h1_accuracy_reliability.py`. Output:
+`reports/basketevent_h1_accuracy/`.
+
+| Model (test, 1,546 shots) | Accuracy | Shots called a make | Of those, made |
+|---|---|---|---|
+| Constant | 0.707 | 0 | 0 |
+| Logistic regression | 0.709 | 7 | 5 |
+| XGBoost baseline | 0.707 | 0 | 0 |
+| XGBoost + boxes | 0.708 | 5 | 3 |
+
+29.3% of test shots went in (453), so calling every shot a miss scores 0.707. The Brier, log loss
+and AUC recomputed from the same file match section 24 exactly.
+
+Reliability diagram (`reliability.png`, ten equal-count groups of about 155 shots): both XGBoost
+models stay close to the diagonal. Both under-predict their top group (predicted 42%, made 47% for
+the baseline and 51% for the box model).
+
+- **Intuition:** with a 29% make rate and predictions that rarely reach 50%, accuracy cannot
+  tell these models apart. Brier score and log loss remain the right measures for H1.
 
 ## What is left
 

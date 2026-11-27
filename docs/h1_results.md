@@ -54,17 +54,39 @@ side of significance by chance, the test protocol averaged six seeds, decided be
 ## Test-split scores
 
 Fit on the 152 training games (22 Oct–10 Nov 2025), scored once on the 34 test games (16–20 Nov),
-XGBoost probabilities averaged over six seeds. 1,546 shots, 27% made.
+XGBoost probabilities averaged over six seeds. 1,546 shots, 29% made.
 
-| Model | Brier ↓ | Log loss ↓ | ROC-AUC ↑ |
-|---|---|---|---|
-| Constant (training make rate) | 0.2075 | 0.6056 | 0.500 |
-| Logistic regression | 0.2009 | 0.5903 | 0.610 |
-| XGBoost, tabular baseline | 0.2010 | 0.5904 | 0.605 |
-| **XGBoost + 9 box features** | **0.2003** | **0.5888** | 0.609 |
+| Model | Brier ↓ | Log loss ↓ | ROC-AUC ↑ | Accuracy ↑ |
+|---|---|---|---|---|
+| Constant (training make rate) | 0.2075 | 0.6056 | 0.500 | 0.707 |
+| Logistic regression | 0.2009 | 0.5903 | 0.610 | 0.709 |
+| XGBoost, tabular baseline | 0.2010 | 0.5904 | 0.605 | 0.707 |
+| **XGBoost + 9 box features** | **0.2003** | **0.5888** | 0.609 | 0.708 |
 
 The box model has the best Brier score and log loss by small margins; logistic regression edges it
 on AUC. Jump shots are hard to predict: no model exceeds an AUC of 0.61.
+
+**Accuracy** counts a shot as a predicted make when its probability is 0.5 or higher (a fixed
+threshold, not tuned). It barely separates the models. Only 29% of test shots went in, and almost
+no shot gets a predicted chance above 50%: the baseline gives none, the box model 5 (3 went in),
+logistic regression 7 (5 went in). So every model is close to calling every shot a miss, which is
+right 70.7% of the time. This is why we judge the models by Brier score and log loss, which
+reward good probabilities rather than a yes/no call.
+
+**Reliability.** We split the test shots into ten equal groups by predicted probability and
+compared the average prediction in each group with how often those shots went in.
+
+![Reliability diagram, XGBoost baseline vs box model](../reports/basketevent_h1_accuracy/reliability.png)
+
+Both XGBoost models follow the diagonal closely, and the differences between them sit inside
+the error bars. Both under-predict their most confident group: the baseline's top group
+expected 42% and made 47%, the box model's expected 42% and made 51%. The box model's predictions
+are slightly more spread out (18% to 42% across the groups, against 19% to 42%), which matches its
+small Brier gain.
+
+Numbers: `reports/basketevent_h1_accuracy/` (`accuracy.csv`, `summary.json`). These come from the
+saved test predictions; nothing was refit or rescored, and the Brier, log loss and AUC recomputed
+from the same file match the table above exactly.
 
 ## Do the boxes measure what we claim?
 
@@ -189,13 +211,15 @@ python scripts/h1_measurement_check.py measure COHORT COLLECTION OUT --stage tra
   --sample reports/basketevent_h1_measurement/track_sample.txt
 python scripts/h1_measurement_check.py summarize COHORT OUT
 python scripts/h1_test_run.py data/processed/basketevent_cohort_rebuild artifacts/h1_test_run
+# Accuracy and reliability diagram from the saved test predictions
+python scripts/h1_accuracy_reliability.py reports/basketevent_h1_accuracy
 ```
 
 Collection needs a Hugging Face login (`hf auth login`); downloads are rate-limited otherwise.
 
 ## Sources
 
-- `h1_experiments.md`: the full log of all H1 experiments (sections 1–24), including ones that did
+- `h1_experiments.md`: the full log of all H1 experiments (sections 1–28), including ones that did
   not work.
 - `h1_test_protocol.md` and `h1_measurement_check.md`: the pre-registered plans and their results.
 - `reports/basketevent_h1_test/summary.json`: test-split numbers;

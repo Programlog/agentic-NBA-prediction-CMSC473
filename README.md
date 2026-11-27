@@ -19,12 +19,12 @@ Both primary held-out evaluations are complete. Follow-up experiments are report
 
 ### Held-out results (November 23, 2026)
 
-| Model | Brier ↓ | Log loss ↓ | ROC-AUC ↑ |
-| --- | ---: | ---: | ---: |
-| Constant | 0.2075 | 0.6056 | 0.5000 |
-| Logistic regression | 0.2009 | 0.5903 | **0.6100** |
-| XGBoost | 0.2010 | 0.5904 | 0.6048 |
-| XGBoost + CV boxes | **0.2003** | **0.5888** | 0.6089 |
+| Model | Brier ↓ | Log loss ↓ | ROC-AUC ↑ | Accuracy ↑ |
+| --- | ---: | ---: | ---: | ---: |
+| Constant | 0.2075 | 0.6056 | 0.5000 | 0.707 |
+| Logistic regression | 0.2009 | 0.5903 | **0.6100** | **0.709** |
+| XGBoost | 0.2010 | 0.5904 | 0.6048 | 0.707 |
+| XGBoost + CV boxes | **0.2003** | **0.5888** | 0.6089 | 0.708 |
 
 | Evaluation | Brier difference (CV − baseline) | 95% game-bootstrap CI |
 | --- | ---: | --- |
@@ -33,7 +33,9 @@ Both primary held-out evaluations are complete. Follow-up experiments are report
 
 The improvement is consistent in direction but not statistically significant on the held-out test alone. Release height drives much of the gain, yet agrees only weakly with independent pose measurements within jump shots (Spearman 0.32). The cohort over-represents misses. Box features are image-based proxies, not calibrated physical measurements.
 
-[Full H1 results](docs/h1_results.md) · [Frozen protocol](docs/h1_test_protocol.md) · [Test metrics](reports/basketevent_h1_test/summary.json) · [Predictions](reports/basketevent_h1_test/test_predictions_seed_mean.csv) · [Effect estimates](reports/basketevent_h1_test/h1_effect_estimates.png)
+Accuracy uses a fixed 0.5 threshold. Only 29% of test shots went in and almost no prediction reaches 0.5, so every model scores about the same as calling every shot a miss (0.707). For this task Brier score and log loss are the more informative measures. The [reliability diagram](reports/basketevent_h1_accuracy/reliability.png) shows both XGBoost models stay close to calibrated across the range they predict.
+
+[Full H1 results](docs/h1_results.md) · [Frozen protocol](docs/h1_test_protocol.md) · [Test metrics](reports/basketevent_h1_test/summary.json) · [Predictions](reports/basketevent_h1_test/test_predictions_seed_mean.csv) · [Effect estimates](reports/basketevent_h1_test/h1_effect_estimates.png) · [Accuracy and reliability](reports/basketevent_h1_accuracy/)
 
 ### H1 experiment index
 
@@ -68,6 +70,7 @@ The following index covers the numbered experiments in the [full H1 log](docs/h1
 | 25 | [What the box model learned (exploratory, after the test run)](docs/h1_experiments.md#25-what-the-box-model-learned-exploratory-after-the-test-run) | Exploratory follow-up |
 | 26 | [Release-angle pilot (exploratory, after the test run)](docs/h1_experiments.md#26-release-angle-pilot-exploratory-after-the-test-run) | Exploratory follow-up |
 | 27 | [Failure cases (exploratory, after the test run)](docs/h1_experiments.md#27-failure-cases-exploratory-after-the-test-run) | Exploratory follow-up |
+| 28 | [Accuracy and reliability of the test predictions](docs/h1_experiments.md#28-accuracy-and-reliability-of-the-test-predictions) | Added metric (saved predictions) |
 
 ### H1 video pipeline and supporting studies
 
