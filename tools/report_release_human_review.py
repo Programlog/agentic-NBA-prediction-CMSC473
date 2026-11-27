@@ -122,7 +122,7 @@ def build_report(release_path: Path, identity_path: Path) -> str:
         "",
         "## Scope and limitations",
         "",
-        "This report summarizes a **partial manual-review checkpoint**, not a finalized",
+        "This report summarizes a **first-pass manual-review checkpoint**, not a finalized",
         "ground-truth dataset or a detector-accuracy evaluation. The reviewer examined",
         "basketball videos and recorded candidate ball-hand separation intervals.",
         "Some frame interpretations and note wording were assisted by an AI assistant.",
@@ -226,6 +226,40 @@ def build_report(release_path: Path, identity_path: Path) -> str:
             "",
         ]
     )
+
+    # Preserve explicitly uncertain observations, not just their count.
+    if statuses["uncertain"]:
+        lines.extend(
+            [
+                "## Uncertain release observations",
+                "",
+                "| Video path | Annotated player | Identity decision | Reviewer observation |",
+                "|---|---|---|---|",
+            ]
+        )
+        for video_path in sorted(release):
+            rel = release[video_path]
+            if rel["review_status"] != "uncertain":
+                continue
+
+            ident = identity[video_path]
+            lines.append(
+                "| "
+                + " | ".join(
+                    map(
+                        safe_cell,
+                        [
+                            video_path,
+                            ident["player_name"],
+                            ident["identity_decision"],
+                            rel["reviewer_notes"],
+                        ],
+                    )
+                )
+                + " |"
+            )
+        lines.append("")
+
     return "\n".join(lines)
 
 

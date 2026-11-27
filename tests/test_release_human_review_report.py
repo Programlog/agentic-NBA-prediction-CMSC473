@@ -182,3 +182,58 @@ def test_rejects_confirmed_without_observed_action(tmp_path):
     )
     with pytest.raises(ValueError, match="observed_shooter and observed_action"):
         build_report(releases, identities)
+
+
+def test_completed_first_pass_preserves_uncertain_release(tmp_path):
+    releases, identities = fixtures(tmp_path)
+
+    write_csv(
+        releases,
+        RELEASE_HEADER,
+        [
+            ["a.mp4", "79-80", "", "", "Observed separation", "provisional"],
+            ["b.mp4", "", "", "", "Two possible shooting actions", "uncertain"],
+        ],
+    )
+    write_csv(
+        identities,
+        IDENTITY_HEADER,
+        [
+            [
+                "a.mp4",
+                "one_shot_event",
+                "Player A",
+                "TEAM",
+                "Jump Shot",
+                "Missed jumper",
+                "confirmed",
+                "Player A",
+                "Jump Shot",
+                "Reviewer confirmed event",
+            ],
+            [
+                "b.mp4",
+                "one_shot_event",
+                "Player B",
+                "TEAM",
+                "Jump Shot",
+                "Made jumper",
+                "confirmed",
+                "Player B",
+                "Jump Shot",
+                "Event confirmed; release ambiguous",
+            ],
+        ],
+    )
+
+    report = build_report(releases, identities)
+
+    assert "first-pass manual-review checkpoint" in report
+    assert "Sample clips: **2**" in report
+    assert "Provisional release intervals: **1**" in report
+    assert "Uncertain release clips: **1**" in report
+    assert "Unreviewed release clips: **0**" in report
+    assert "User-confirmed event identities: **2**" in report
+    assert "## Uncertain release observations" in report
+    assert "Two possible shooting actions" in report
+    assert "b.mp4" in report
