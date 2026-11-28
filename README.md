@@ -2,6 +2,38 @@
 
 CMSC473 research project investigating whether video-derived features and multi-agent LLMs improve NBA shot-make probability estimates.
 
+
+## Start here: Results, reproducibility, and demonstration
+
+This repository contains two completed primary research evaluations: H1 compares tabular XGBoost with a computer-vision-enhanced version, while H2 compares multi-agent and single-agent LLM approaches against traditional machine-learning references.
+
+For a quick review of the project, use the following resources:
+
+| Resource | What it provides |
+| --- | --- |
+| [H1 results](docs/h1_results.md) | Frozen computer-vision comparison, Brier scores, confidence intervals, calibration, and limitations |
+| [H2 results](experiments/h2/02_final_test_100/README.md) | Frozen multi-agent versus single-agent comparison, statistical evidence, and traditional ML baselines |
+| [Proposal completion audit](docs/proposal_completion_audit.md) | Comparison of the original proposal with the implemented and evaluated work |
+| [Research-claim consistency audit](docs/final_research_claim_audit.md) | Supported findings, required qualifications, and claims that should not be made |
+| [Reproducibility audit](docs/final_reproducibility_audit.md) | Verified tests, dependency-lock consistency, committed artifacts, and independent-reproduction limitations |
+| [Demo-readiness guide](docs/final_demo_readiness.md) | Verified CLI help commands, available visualizations, external requirements, and recommended demonstration sequence |
+| [Demo notebook](notebooks/demo.ipynb) | Existing notebook for exploring the tabular modeling workflow; execution was not independently verified in the final audit |
+
+### Key figures
+
+- **H1:** [Held-out effect estimates](reports/basketevent_h1_test/h1_effect_estimates.png) and [prediction reliability](reports/basketevent_h1_accuracy/reliability.png).
+- **H2:** [Frozen model comparison](experiments/h2/02_final_test_100/report/figures/h2_1_brier_all_models.png) and [paired effect intervals](experiments/h2/02_final_test_100/report/figures/h2_2_effect_intervals.png).
+
+### Important interpretation boundaries
+
+- H1 found a small improvement from video-box-derived features, but its held-out confidence interval includes zero.
+- H2 found a multi-agent advantage over the budget-matched single-agent LLM in the frozen experiment, but XGBoost remained the stronger predictor.
+- H1 and H2 use different datasets and shot cohorts. Their scores must not be presented as a unified, directly comparable model leaderboard.
+- The video-box features are image-based proxies, not independently validated physical shooting measurements.
+- Local automated tests and CLI help checks passed during the final audits, but complete independent end-to-end reproduction was not established.
+
+For setup commands and detailed experiment instructions, see [Setup and reproduction](#setup-and-reproduction) below.
+
 ## Research questions and results
 
 | Hypothesis | Comparison | Main finding |
@@ -175,4 +207,8 @@ Use `uv run --frozen --all-extras pytest -q` to include optional integration tes
 
 ## Additional documentation
 
-[Project requirements](docs/PRD.md) · [Technical specification](docs/SPEC.md) · [Roadmap](docs/roadmap.md) · [Troubleshooting](docs/troubleshooting.md)
+**Project planning:** [Project requirements](docs/PRD.md) · [Technical specification](docs/SPEC.md) · [Roadmap](docs/roadmap.md)
+
+**Research completion:** [Proposal completion audit](docs/proposal_completion_audit.md) · [Research-claim audit](docs/final_research_claim_audit.md)
+
+**Reproducibility and demonstration:** [Reproducibility audit](docs/final_reproducibility_audit.md) · [Demo-readiness guide](docs/final_demo_readiness.md) · [Troubleshooting](docs/troubleshooting.md)
