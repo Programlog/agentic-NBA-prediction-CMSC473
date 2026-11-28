@@ -1,0 +1,33 @@
+name: Repository Integrity
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-integrity:
+    name: Documentation and artifact integrity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install integrity test dependencies
+        run: python -m pip install "pytest>=8.3,<10" "pandas>=2.2,<3"
+
+      - name: Run repository integrity tests
+        run: python -m pytest tests/test_repository_integrity.py -q
+
+      - name: Check documentation links and artifacts
+        run: python tools/check_repository_integrity.py

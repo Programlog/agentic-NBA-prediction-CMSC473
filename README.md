@@ -205,6 +205,24 @@ uv run --frozen ruff format --check src tests
 
 Use `uv run --frozen --all-extras pytest -q` to include optional integration tests.
 
+### Repository integrity checks
+
+Run the offline repository integrity checker to verify required research artifacts and supported local Markdown links:
+
+```bash
+python tools/check_repository_integrity.py
+```
+
+Run its dedicated regression tests:
+
+```bash
+python -m pytest tests/test_repository_integrity.py -q
+```
+
+The checker validates committed documentation and selected H1/H2 result artifacts. It does not check external websites, reproduce experimental results, or verify every Markdown syntax variant.
+
+These checks also run automatically through [GitHub Actions](.github/workflows/repository-integrity.yml) on pull requests and pushes to `main`. The workflow requires no NBA datasets, API credentials, GPU, or LLM service.
+
 ## Additional documentation
 
 **Project planning:** [Project requirements](docs/PRD.md) · [Technical specification](docs/SPEC.md) · [Roadmap](docs/roadmap.md)
